@@ -12,17 +12,7 @@ interface HornetDropdownProps {
 
 export default function HornetDropdown({ categorias = [] }: HornetDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const handleEnter = () => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    setIsOpen(true);
-  };
-
-  const handleLeave = () => {
-    timeoutRef.current = setTimeout(() => setIsOpen(false), 300);
-  };
 
   const handleClick = () => {
     setIsOpen((prev) => !prev);
@@ -55,8 +45,6 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
     <div
       ref={containerRef}
       className="relative"
-      onMouseEnter={handleEnter}
-      onMouseLeave={handleLeave}
     >
       {/* Trigger */}
       <button
