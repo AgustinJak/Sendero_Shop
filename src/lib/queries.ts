@@ -1,5 +1,5 @@
-import { createServerSupabaseClient } from "./supabase-server";
-import type { Producto, Categoria } from "@/types";
+import { createServerSupabaseClient, createServiceRoleClient } from "./supabase-server";
+import type { Producto, Categoria, Coleccion } from "@/types";
 
 // --- Productos ---
 
@@ -215,4 +215,85 @@ export async function getAvailableFilters(): Promise<AvailableFilters> {
     precio_min: precios.length ? Math.min(...precios) : 0,
     precio_max: precios.length ? Math.max(...precios) : 0,
   };
+}
+
+// --- Colecciones ---
+
+export async function getColecciones(): Promise<Coleccion[]> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data } = await supabase
+    .from("colecciones")
+    .select("*")
+    .eq("activa", true)
+    .order("orden", { ascending: true });
+
+  return (data as Coleccion[]) || [];
+}
+
+export async function getColeccionBySlug(
+  slug: string
+): Promise<(Coleccion & { productos: Producto[] }) | null> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data: coleccion, error } = await supabase
+    .from("colecciones")
+    .select("*")
+    .eq("slug", slug)
+    .eq("activa", true)
+    .single();
+
+  if (error || !coleccion) return null;
+
+  const col = coleccion as Coleccion;
+  let productos: Producto[] = [];
+
+  if (col.tipo === "manual") {
+    // Fetch manually assigned products
+    const { data } = await supabase
+      .from("coleccion_productos")
+      .select("producto_id, orden")
+      .eq("coleccion_id", col.id)
+      .order("orden", { ascending: true });
+
+    if (data && data.length > 0) {
+      const ids = data.map((cp) => cp.producto_id);
+      const { data: prods } = await supabase
+        .from("productos")
+        .select("*, producto_imagenes(id, url, orden, alt_text)")
+        .in("id", ids)
+        .eq("activo", true);
+
+      // Maintain manual order
+      const prodMap = new Map((prods || []).map((p) => [p.id, p]));
+      productos = ids
+        .map((id) => prodMap.get(id))
+        .filter(Boolean) as unknown as Producto[];
+    }
+  } else if (col.tipo === "automatica" && col.regla) {
+    // Build query from rules
+    let query = supabase
+      .from("productos")
+      .select("*, producto_imagenes(id, url, orden, alt_text)")
+      .eq("activo", true);
+
+    if (col.regla.anime) query = query.ilike("anime", col.regla.anime);
+    if (col.regla.personaje) query = query.ilike("personaje", col.regla.personaje);
+    if (col.regla.categoria_slug) {
+      const { data: cat } = await supabase
+        .from("categorias")
+        .select("id")
+        .eq("slug", col.regla.categoria_slug)
+        .single();
+      if (cat) query = query.eq("categoria_id", cat.id);
+    }
+    if (col.regla.tamano) query = query.eq("tamano", col.regla.tamano);
+
+    query = query.order("created_at", { ascending: false }).limit(50);
+
+    const { data } = await query;
+    productos = (data as unknown as Producto[]) || [];
+  }
+
+  return { ...col, productos };
 }

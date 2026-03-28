@@ -1,0 +1,417 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+
+interface ColeccionRow {
+  id: string;
+  nombre: string;
+  slug: string;
+  descripcion: string | null;
+  tipo: "automatica" | "manual";
+  regla: Record<string, string> | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  activa: boolean;
+  orden: number;
+  coleccion_productos: { producto_id: string }[];
+}
+
+interface ProductoOption {
+  id: string;
+  nombre: string;
+  slug: string;
+}
+
+interface Props {
+  colecciones: ColeccionRow[];
+  productos: ProductoOption[];
+}
+
+const EMPTY_FORM = {
+  nombre: "",
+  slug: "",
+  descripcion: "",
+  tipo: "manual" as "manual" | "automatica",
+  regla_anime: "",
+  regla_personaje: "",
+  regla_categoria_slug: "",
+  regla_tamano: "",
+  meta_title: "",
+  meta_description: "",
+  activa: true,
+  orden: 0,
+  producto_ids: [] as string[],
+};
+
+export default function ColeccionesManager({ colecciones, productos }: Props) {
+  const router = useRouter();
+  const [editing, setEditing] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState(EMPTY_FORM);
+
+  function toSlug(str: string) {
+    return str
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  }
+
+  function openNew() {
+    setForm(EMPTY_FORM);
+    setEditing(null);
+    setShowForm(true);
+  }
+
+  function openEdit(col: ColeccionRow) {
+    setForm({
+      nombre: col.nombre,
+      slug: col.slug,
+      descripcion: col.descripcion || "",
+      tipo: col.tipo,
+      regla_anime: col.regla?.anime || "",
+      regla_personaje: col.regla?.personaje || "",
+      regla_categoria_slug: col.regla?.categoria_slug || "",
+      regla_tamano: col.regla?.tamano || "",
+      meta_title: col.meta_title || "",
+      meta_description: col.meta_description || "",
+      activa: col.activa,
+      orden: col.orden,
+      producto_ids: col.coleccion_productos.map((cp) => cp.producto_id),
+    });
+    setEditing(col.id);
+    setShowForm(true);
+  }
+
+  function buildBody() {
+    const regla =
+      form.tipo === "automatica"
+        ? {
+            ...(form.regla_anime ? { anime: form.regla_anime } : {}),
+            ...(form.regla_personaje ? { personaje: form.regla_personaje } : {}),
+            ...(form.regla_categoria_slug ? { categoria_slug: form.regla_categoria_slug } : {}),
+            ...(form.regla_tamano ? { tamano: form.regla_tamano } : {}),
+          }
+        : null;
+
+    return {
+      nombre: form.nombre,
+      slug: form.slug,
+      descripcion: form.descripcion || null,
+      tipo: form.tipo,
+      regla,
+      meta_title: form.meta_title || null,
+      meta_description: form.meta_description || null,
+      activa: form.activa,
+      orden: form.orden,
+      producto_ids: form.tipo === "manual" ? form.producto_ids : [],
+    };
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+
+    const url = editing
+      ? `/api/admin/colecciones/${editing}`
+      : "/api/admin/colecciones";
+
+    const res = await fetch(url, {
+      method: editing ? "PATCH" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildBody()),
+    });
+
+    setLoading(false);
+    if (res.ok) {
+      setShowForm(false);
+      router.refresh();
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("¿Eliminar esta colección?")) return;
+    await fetch(`/api/admin/colecciones/${id}`, { method: "DELETE" });
+    router.refresh();
+  }
+
+  async function toggleActiva(col: ColeccionRow) {
+    await fetch(`/api/admin/colecciones/${col.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ activa: !col.activa }),
+    });
+    router.refresh();
+  }
+
+  function toggleProduct(pid: string) {
+    setForm((f) => ({
+      ...f,
+      producto_ids: f.producto_ids.includes(pid)
+        ? f.producto_ids.filter((id) => id !== pid)
+        : [...f.producto_ids, pid],
+    }));
+  }
+
+  return (
+    <div className="space-y-6">
+      <button
+        onClick={openNew}
+        className="px-4 py-2 bg-purpura hover:bg-purpura/80 text-niebla text-sm font-medium rounded-lg transition-colors"
+      >
+        + Nueva colección
+      </button>
+
+      {/* List */}
+      <div className="space-y-3">
+        {colecciones.map((col) => (
+          <div
+            key={col.id}
+            className="bg-navy-deep border border-lavanda/10 rounded-xl p-4 flex items-center justify-between"
+          >
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-niebla font-medium">{col.nombre}</h3>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-lavanda/10 text-lavanda/60">
+                  {col.tipo}
+                </span>
+                {!col.activa && (
+                  <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/10 text-red-400">
+                    inactiva
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-lavanda/50 mt-1">
+                /{col.slug} · {col.coleccion_productos.length} productos
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => toggleActiva(col)}
+                className="text-xs px-3 py-1 border border-lavanda/20 rounded-lg text-lavanda-light hover:bg-lavanda/10 transition-colors"
+              >
+                {col.activa ? "Desactivar" : "Activar"}
+              </button>
+              <button
+                onClick={() => openEdit(col)}
+                className="text-xs px-3 py-1 border border-lavanda/20 rounded-lg text-lavanda-light hover:bg-lavanda/10 transition-colors"
+              >
+                Editar
+              </button>
+              <button
+                onClick={() => handleDelete(col.id)}
+                className="text-xs px-3 py-1 border border-red-500/30 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+        {colecciones.length === 0 && (
+          <p className="text-lavanda/40 text-sm text-center py-8">
+            No hay colecciones creadas
+          </p>
+        )}
+      </div>
+
+      {/* Form Modal */}
+      {showForm && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-start justify-center pt-16 overflow-y-auto">
+          <form
+            onSubmit={handleSubmit}
+            className="bg-navy-deep border border-lavanda/20 rounded-xl p-6 w-full max-w-2xl space-y-4 mb-16"
+          >
+            <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+              {editing ? "Editar" : "Nueva"} colección
+            </h2>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-lavanda/60 mb-1">Nombre</label>
+                <input
+                  value={form.nombre}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      nombre: e.target.value,
+                      slug: editing ? form.slug : toSlug(e.target.value),
+                    })
+                  }
+                  className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-lavanda/60 mb-1">Slug</label>
+                <input
+                  value={form.slug}
+                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs text-lavanda/60 mb-1">Descripción</label>
+              <textarea
+                value={form.descripcion}
+                onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+                rows={3}
+                className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+              />
+            </div>
+
+            {/* Tipo */}
+            <div>
+              <label className="block text-xs text-lavanda/60 mb-1">Tipo</label>
+              <div className="flex gap-2">
+                {(["manual", "automatica"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setForm({ ...form, tipo: t })}
+                    className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+                      form.tipo === t
+                        ? "border-purpura bg-purpura/10 text-niebla"
+                        : "border-lavanda/10 text-lavanda-light"
+                    }`}
+                  >
+                    {t === "manual" ? "Manual" : "Automática"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Automatic rules */}
+            {form.tipo === "automatica" && (
+              <div className="grid grid-cols-2 gap-4 bg-navy/50 rounded-lg p-4 border border-lavanda/10">
+                <p className="col-span-2 text-xs text-lavanda/60">
+                  Reglas — los productos que coincidan se incluyen automáticamente
+                </p>
+                <div>
+                  <label className="block text-xs text-lavanda/60 mb-1">Anime</label>
+                  <input
+                    value={form.regla_anime}
+                    onChange={(e) => setForm({ ...form, regla_anime: e.target.value })}
+                    placeholder="Ej: One Piece"
+                    className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-lavanda/60 mb-1">Personaje</label>
+                  <input
+                    value={form.regla_personaje}
+                    onChange={(e) => setForm({ ...form, regla_personaje: e.target.value })}
+                    className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-lavanda/60 mb-1">Categoría (slug)</label>
+                  <input
+                    value={form.regla_categoria_slug}
+                    onChange={(e) => setForm({ ...form, regla_categoria_slug: e.target.value })}
+                    className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-lavanda/60 mb-1">Tamaño</label>
+                  <input
+                    value={form.regla_tamano}
+                    onChange={(e) => setForm({ ...form, regla_tamano: e.target.value })}
+                    className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Manual product selection */}
+            {form.tipo === "manual" && (
+              <div>
+                <label className="block text-xs text-lavanda/60 mb-2">
+                  Productos ({form.producto_ids.length} seleccionados)
+                </label>
+                <div className="max-h-48 overflow-y-auto bg-navy/50 rounded-lg border border-lavanda/10 p-2 space-y-1">
+                  {productos.map((p) => (
+                    <label
+                      key={p.id}
+                      className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-lavanda/5 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={form.producto_ids.includes(p.id)}
+                        onChange={() => toggleProduct(p.id)}
+                        className="accent-purpura"
+                      />
+                      <span className="text-sm text-lavanda-light">{p.nombre}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* SEO */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-lavanda/60 mb-1">Meta título (SEO)</label>
+                <input
+                  value={form.meta_title}
+                  onChange={(e) => setForm({ ...form, meta_title: e.target.value })}
+                  className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-lavanda/60 mb-1">Orden</label>
+                <input
+                  type="number"
+                  value={form.orden}
+                  onChange={(e) => setForm({ ...form, orden: Number(e.target.value) })}
+                  className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs text-lavanda/60 mb-1">Meta descripción (SEO)</label>
+              <textarea
+                value={form.meta_description}
+                onChange={(e) => setForm({ ...form, meta_description: e.target.value })}
+                rows={2}
+                className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+              />
+            </div>
+
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.activa}
+                onChange={(e) => setForm({ ...form, activa: e.target.checked })}
+                className="accent-purpura"
+              />
+              <span className="text-sm text-lavanda-light">Activa</span>
+            </label>
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 py-2 bg-purpura hover:bg-purpura/80 text-niebla font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                {loading ? "Guardando..." : editing ? "Guardar cambios" : "Crear colección"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-6 py-2 border border-lavanda/20 text-lavanda-light rounded-lg hover:bg-lavanda/10 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </div>
+  );
+}

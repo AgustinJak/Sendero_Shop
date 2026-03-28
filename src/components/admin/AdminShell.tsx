@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/admin/pedidos", label: "Pedidos", icon: PedidosIcon },
   { href: "/admin/productos", label: "Productos", icon: ProductosIcon },
   { href: "/admin/categorias", label: "Categorías", icon: CategoriasIcon },
+  { href: "/admin/colecciones", label: "Colecciones", icon: ColeccionesIcon },
   { href: "/admin/config", label: "Configuración", icon: ConfigIcon },
 ];
 
@@ -152,6 +153,14 @@ function CategoriasIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z" />
+    </svg>
+  );
+}
+
+function ColeccionesIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 3.75 9v.878m0 0c.235-.083.487-.128.75-.128h15c.263 0 .515.045.75.128M3.75 9.878A2.25 2.25 0 0 0 2.25 12v6a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-6a2.25 2.25 0 0 0-2.25-2.25H4.5c-.263 0-.515.045-.75.128Z" />
     </svg>
   );
 }

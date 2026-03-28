@@ -18,6 +18,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select("slug")
     .eq("activo", true);
 
+  // Fetch all active collections
+  const { data: colecciones } = await supabase
+    .from("colecciones")
+    .select("slug, updated_at")
+    .eq("activa", true);
+
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
     {
@@ -50,5 +56,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.6,
   }));
 
-  return [...staticPages, ...productPages, ...categoryPages];
+  // Collection pages
+  const collectionPages: MetadataRoute.Sitemap = (colecciones || []).map((c) => ({
+    url: `${SITE_URL}/coleccion/${c.slug}`,
+    lastModified: new Date(c.updated_at),
+    changeFrequency: "weekly" as const,
+    priority: 0.7,
+  }));
+
+  return [...staticPages, ...productPages, ...categoryPages, ...collectionPages];
 }
