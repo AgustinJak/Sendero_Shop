@@ -1,10 +1,11 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getProductos, getAvailableFilters, getCategoriasTree } from "@/lib/queries";
+import { getProductos, getAvailableFilters, getCategoriasTree, getBanners } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
 import FilterSidebar from "@/components/catalogo/FilterSidebar";
 import SortSelect from "@/components/catalogo/SortSelect";
+import CatalogBanner from "@/components/home/CatalogBanner";
 
 export const metadata: Metadata = {
   title: "Catálogo",
@@ -27,7 +28,7 @@ interface Props {
 export default async function CatalogoPage({ searchParams }: Props) {
   const params = await searchParams;
 
-  const [{ productos, total, page, totalPages }, availableFilters, categorias] =
+  const [{ productos, total, page, totalPages }, availableFilters, categorias, catalogoBanners] =
     await Promise.all([
       getProductos({
         categoria: params.categoria,
@@ -42,10 +43,16 @@ export default async function CatalogoPage({ searchParams }: Props) {
       }),
       getAvailableFilters(),
       getCategoriasTree(),
+      getBanners("catalogo_top"),
     ]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Banner catálogo */}
+      {catalogoBanners.length > 0 && (
+        <CatalogBanner banner={catalogoBanners[0]} />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>

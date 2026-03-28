@@ -3,6 +3,8 @@ import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/layout/WhatsAppButton";
 import { CartProvider } from "@/components/carrito/CartProvider";
 import CartDrawer from "@/components/carrito/CartDrawer";
+import PopupBanner from "@/components/home/PopupBanner";
+import { getBanners } from "@/lib/queries";
 
 const organizationLd = {
   "@context": "https://schema.org",
@@ -25,11 +27,13 @@ const websiteLd = {
   url: "https://sendero3d.com",
 };
 
-export default function StorefrontLayout({
+export default async function StorefrontLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const popupBanners = await getBanners("popup");
+
   return (
     <CartProvider>
       <Header />
@@ -37,6 +41,7 @@ export default function StorefrontLayout({
       <Footer />
       <WhatsAppButton />
       <CartDrawer />
+      {popupBanners.length > 0 && <PopupBanner banner={popupBanners[0]} />}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd) }}
