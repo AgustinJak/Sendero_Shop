@@ -28,12 +28,22 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createServiceRoleClient();
 
-    // Generar número de pedido
-    const { count } = await supabase
-      .from("pedidos")
-      .select("*", { count: "exact", head: true });
+    // Generar número de pedido usando contador persistente en configuracion
+    // Esto garantiza que los números nunca se repiten aunque se eliminen pedidos
+    const { data: counterRow } = await supabase
+      .from("configuracion")
+      .select("value")
+      .eq("key", "pedido_counter")
+      .single();
 
-    const numeroPedido = `SS-${String((count || 0) + 1).padStart(5, "0")}`;
+    const nextNum = counterRow ? parseInt(counterRow.value, 10) + 1 : 1;
+
+    // Upsert the counter
+    await supabase
+      .from("configuracion")
+      .upsert({ key: "pedido_counter", value: String(nextNum) }, { onConflict: "key" });
+
+    const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
 
     // Crear pedido
     const { data: pedido, error: pedidoError } = await supabase
