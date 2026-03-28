@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -11,6 +12,8 @@ interface Props {
 }
 
 export default function RichTextEditor({ content, onChange }: Props) {
+  const [, forceUpdate] = useState(0);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -26,6 +29,9 @@ export default function RichTextEditor({ content, onChange }: Props) {
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML());
+    },
+    onTransaction: () => {
+      forceUpdate((n) => n + 1);
     },
     editorProps: {
       attributes: {
@@ -44,16 +50,25 @@ export default function RichTextEditor({ content, onChange }: Props) {
     editor.chain().focus().setLink({ href: url }).run();
   }
 
+  // Prevent mousedown from stealing focus from editor
+  function preventFocusLoss(e: React.MouseEvent) {
+    e.preventDefault();
+  }
+
   return (
     <div className="bg-navy-deep border border-lavanda/20 rounded-lg overflow-hidden focus-within:border-purpura transition-colors">
       {/* Toolbar */}
-      <div className="flex flex-wrap gap-0.5 px-2 py-1.5 border-b border-lavanda/10 bg-navy-deep/50">
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div
+        className="flex flex-wrap gap-0.5 px-2 py-1.5 border-b border-lavanda/10 bg-navy-deep/50"
+        onMouseDown={preventFocusLoss}
+      >
         <ToolbarBtn
           active={editor.isActive("bold")}
           onClick={() => editor.chain().focus().toggleBold().run()}
           title="Negrita"
         >
-          B
+          <strong>B</strong>
         </ToolbarBtn>
         <ToolbarBtn
           active={editor.isActive("italic")}
