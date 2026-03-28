@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useCart } from "@/hooks/useCart";
+import { useCartContext } from "@/components/carrito/CartProvider";
 import type { Producto, VarianteSeleccion } from "@/types";
 
 interface AddToCartButtonProps {
@@ -16,7 +16,7 @@ export default function AddToCartButton({
   selecciones,
   precioFinal,
 }: AddToCartButtonProps) {
-  const { addItem } = useCart();
+  const { addItem } = useCartContext();
   const [added, setAdded] = useState(false);
 
   // Verificar que todas las variantes requeridas estén seleccionadas
