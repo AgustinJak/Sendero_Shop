@@ -1,9 +1,8 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
-import ProductoForm from "@/components/admin/ProductoForm";
-import ProductoImagenes from "@/components/admin/ProductoImagenes";
 import { getCategoriasTree } from "@/lib/queries";
 import type { Producto } from "@/types";
+import EditarProductoClient from "./EditarProductoClient";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -30,17 +29,10 @@ export default async function EditarProductoPage({ params }: Props) {
         Editar: {producto.nombre}
       </h1>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2">
-          <ProductoForm producto={producto as Producto} categorias={categorias} />
-        </div>
-        <div>
-          <ProductoImagenes
-            productoId={producto.id}
-            imagenes={producto.imagenes || []}
-          />
-        </div>
-      </div>
+      <EditarProductoClient
+        producto={producto as Producto}
+        categorias={categorias}
+      />
     </div>
   );
 }

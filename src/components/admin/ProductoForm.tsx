@@ -1,16 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Producto, Categoria } from "@/types";
 import { slugify } from "@/lib/utils";
 
-interface Props {
-  producto?: Producto;
-  categorias: Categoria[];
-}
-
-interface FormData {
+export interface ProductoFormData {
   nombre: string;
   slug: string;
   descripcion: string;
@@ -30,12 +25,18 @@ interface FormData {
   meta_description: string;
 }
 
-export default function ProductoForm({ producto, categorias }: Props) {
+interface Props {
+  producto?: Producto;
+  categorias: Categoria[];
+  onFormChange?: (data: ProductoFormData) => void;
+}
+
+export default function ProductoForm({ producto, categorias, onFormChange }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [form, setForm] = useState<FormData>({
+  const [form, setForm] = useState<ProductoFormData>({
     nombre: producto?.nombre || "",
     slug: producto?.slug || "",
     descripcion: producto?.descripcion || "",
@@ -55,6 +56,11 @@ export default function ProductoForm({ producto, categorias }: Props) {
     meta_description: producto?.meta_description || "",
   });
 
+  // Notify parent of form changes for preview
+  useEffect(() => {
+    onFormChange?.(form);
+  }, [form, onFormChange]);
+
   // Auto-slug from nombre
   function handleNombreChange(nombre: string) {
     setForm((prev) => ({
@@ -64,7 +70,7 @@ export default function ProductoForm({ producto, categorias }: Props) {
     }));
   }
 
-  function updateField<K extends keyof FormData>(key: K, value: FormData[K]) {
+  function updateField<K extends keyof ProductoFormData>(key: K, value: ProductoFormData[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -85,12 +91,18 @@ export default function ProductoForm({ producto, categorias }: Props) {
         body: JSON.stringify(form),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        const data = await res.json();
         throw new Error(data.error || "Error al guardar");
       }
 
-      router.push("/admin/productos");
+      // If creating, redirect to edit page so user can upload images
+      if (!producto && data.id) {
+        router.push(`/admin/productos/${data.id}`);
+      } else {
+        router.push("/admin/productos");
+      }
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error desconocido");
