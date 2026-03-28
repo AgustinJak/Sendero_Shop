@@ -4,20 +4,21 @@ export async function sendEmail({
   to,
   subject,
   html,
+  from,
 }: {
   to: string;
   subject: string;
   html: string;
+  from?: string;
 }): Promise<boolean> {
-  // Skip if Gmail is not configured
   if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    console.log(`[Email] Skipped (no GMAIL config): ${subject} → ${to}`);
+    console.log(`[Email] Skipped (no SMTP config): ${subject} → ${to}`);
     return false;
   }
 
   try {
     await transporter.sendMail({
-      from: FROM_EMAIL,
+      from: from || FROM_EMAIL,
       to,
       subject,
       html,

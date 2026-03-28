@@ -10,4 +10,7 @@ export const transporter = nodemailer.createTransport({
   },
 });
 
-export const FROM_EMAIL = `"Sendero Shop" <${process.env.SMTP_USER}>`;
+// Remitentes por propósito
+export const FROM_VENTAS = '"Sendero Shop" <ventas@sendero3d.com>';
+export const FROM_AYUDA = '"Sendero Shop — Ayuda" <ayuda@sendero3d.com>';
+export const FROM_EMAIL = FROM_VENTAS; // default
