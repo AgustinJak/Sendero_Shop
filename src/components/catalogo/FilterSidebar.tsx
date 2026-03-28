@@ -3,13 +3,15 @@
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useCallback } from "react";
 import type { AvailableFilters } from "@/lib/queries";
+import type { Categoria } from "@/types";
 import { slugify } from "@/lib/utils";
 
 interface FilterSidebarProps {
   filters: AvailableFilters;
+  categorias?: Categoria[];
 }
 
-export default function FilterSidebar({ filters }: FilterSidebarProps) {
+export default function FilterSidebar({ filters, categorias = [] }: FilterSidebarProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -36,6 +38,8 @@ export default function FilterSidebar({ filters }: FilterSidebarProps) {
     (k) => k !== "orden" && k !== "page"
   ).length;
 
+  const currentCategoria = searchParams.get("categoria");
+
   return (
     <aside className="space-y-6">
       {activeCount > 0 && (
@@ -45,6 +49,38 @@ export default function FilterSidebar({ filters }: FilterSidebarProps) {
         >
           Limpiar filtros ({activeCount})
         </button>
+      )}
+
+      {/* Categorías */}
+      {categorias.length > 0 && (
+        <FilterSection title="Categoría">
+          {categorias.map((cat) => (
+            <div key={cat.slug}>
+              <FilterCheckbox
+                label={cat.nombre}
+                checked={currentCategoria === cat.slug}
+                onChange={(checked) =>
+                  updateFilter("categoria", checked ? cat.slug : null)
+                }
+              />
+              {/* Subcategorías */}
+              {cat.children && cat.children.length > 0 && (
+                <div className="ml-5 mt-1 space-y-1">
+                  {cat.children.map((sub) => (
+                    <FilterCheckbox
+                      key={sub.slug}
+                      label={sub.nombre}
+                      checked={currentCategoria === sub.slug}
+                      onChange={(checked) =>
+                        updateFilter("categoria", checked ? sub.slug : null)
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </FilterSection>
       )}
 
       {/* Anime */}

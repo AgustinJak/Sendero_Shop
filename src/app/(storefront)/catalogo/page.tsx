@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
-import { getProductos, getAvailableFilters } from "@/lib/queries";
+import { getProductos, getAvailableFilters, getCategoriasTree } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
 import FilterSidebar from "@/components/catalogo/FilterSidebar";
 import SortSelect from "@/components/catalogo/SortSelect";
@@ -18,9 +18,10 @@ interface Props {
 export default async function CatalogoPage({ searchParams }: Props) {
   const params = await searchParams;
 
-  const [{ productos, total, page, totalPages }, availableFilters] =
+  const [{ productos, total, page, totalPages }, availableFilters, categorias] =
     await Promise.all([
       getProductos({
+        categoria: params.categoria,
         anime: params.anime,
         personaje: params.personaje,
         tamano: params.tamano,
@@ -31,6 +32,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
         page: params.page ? Number(params.page) : 1,
       }),
       getAvailableFilters(),
+      getCategoriasTree(),
     ]);
 
   return (
@@ -55,7 +57,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
         {/* Sidebar — Desktop */}
         <div className="hidden lg:block w-56 shrink-0">
           <Suspense>
-            <FilterSidebar filters={availableFilters} />
+            <FilterSidebar filters={availableFilters} categorias={categorias} />
           </Suspense>
         </div>
 
