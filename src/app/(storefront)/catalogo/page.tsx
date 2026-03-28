@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { getProductos, getAvailableFilters, getCategoriasTree } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
+import TrackItemList from "@/components/productos/TrackItemList";
 import FilterSidebar from "@/components/catalogo/FilterSidebar";
 import SortSelect from "@/components/catalogo/SortSelect";
 
@@ -72,6 +73,15 @@ export default async function CatalogoPage({ searchParams }: Props) {
         {/* Grid */}
         <div className="flex-1">
           <ProductGrid productos={productos} />
+          <TrackItemList
+            listName="Catálogo"
+            products={productos.map((p) => ({
+              id: p.id,
+              name: p.nombre,
+              price: p.precio_oferta || p.precio,
+              category: (p.categoria as unknown as { nombre: string })?.nombre,
+            }))}
+          />
 
           {/* Paginación */}
           {totalPages > 1 && (

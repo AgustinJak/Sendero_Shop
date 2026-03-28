@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useCartContext } from "@/components/carrito/CartProvider";
 import { formatPrice, calcularRecargoMP, validarDNI } from "@/lib/utils";
+import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 import type {
   CheckoutData,
   DatosPersonales,
@@ -26,6 +27,22 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
   const [step, setStep] = useState<Step>("datos");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const trackedCheckout = useRef(false);
+
+  // Track begin_checkout once
+  useEffect(() => {
+    if (trackedCheckout.current || itemCount === 0) return;
+    trackedCheckout.current = true;
+    trackBeginCheckout(
+      cart.items.map((i) => ({
+        id: i.producto_id,
+        name: i.nombre,
+        price: i.precio_unitario,
+        quantity: i.cantidad,
+      })),
+      cart.subtotal
+    );
+  }, [cart, itemCount]);
 
   // Form state
   const [datos, setDatos] = useState<DatosPersonales>({
@@ -138,6 +155,17 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
         return;
       }
 
+      trackPurchase({
+        id: result.id,
+        total,
+        shipping: costoEnvio,
+        items: cart.items.map((i) => ({
+          id: i.producto_id,
+          name: i.nombre,
+          price: i.precio_unitario,
+          quantity: i.cantidad,
+        })),
+      });
       clearCart();
       router.push(`/pedido/${result.id}`);
     } catch {

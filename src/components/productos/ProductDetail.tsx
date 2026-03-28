@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import type { Producto, VarianteSeleccion } from "@/types";
 import { formatPrice, whatsappLink } from "@/lib/utils";
+import { trackViewItem } from "@/lib/analytics";
 import ProductGallery from "./ProductGallery";
 import VariantSelector from "./VariantSelector";
 import AddToCartButton from "./AddToCartButton";
@@ -13,6 +14,16 @@ interface ProductDetailProps {
 
 export default function ProductDetail({ producto }: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
+
+  useEffect(() => {
+    trackViewItem({
+      id: producto.id,
+      name: producto.nombre,
+      price: producto.precio_oferta || producto.precio,
+      category: producto.categoria?.nombre,
+      anime: producto.anime,
+    });
+  }, [producto]);
 
   const precioFinal = useMemo(() => {
     const adicionales = selecciones.reduce(
