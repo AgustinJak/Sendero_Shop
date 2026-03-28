@@ -122,8 +122,21 @@ export async function POST(req: NextRequest) {
       })),
     };
 
+    // Fetch bank details for transfer orders
+    let datosBancarios: { cbu?: string; alias?: string } | undefined;
+    if (metodo_pago === "transferencia") {
+      const { data: config } = await supabase.from("configuracion").select("key, value").in("key", ["cbu", "alias"]);
+      if (config?.length) {
+        datosBancarios = {};
+        config.forEach((c: { key: string; value: string }) => {
+          if (c.key === "cbu") datosBancarios!.cbu = c.value;
+          if (c.key === "alias") datosBancarios!.alias = c.value;
+        });
+      }
+    }
+
     // Email al cliente
-    const clientEmail = pedidoConfirmadoEmail(fullPedido);
+    const clientEmail = pedidoConfirmadoEmail(fullPedido, datosBancarios);
     sendEmail({ to: datos_personales.email, ...clientEmail });
 
     // Email al admin

@@ -138,6 +138,32 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
           Guardar notas
         </button>
       </div>
+
+      {/* Delete (only cancelled) */}
+      {pedido.estado === "cancelado" && (
+        <div className="bg-red-500/5 rounded-xl border border-red-500/10 p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-red-400">Eliminar pedido</h2>
+          <p className="text-xs text-lavanda/40">
+            Este pedido está cancelado. Los pedidos cancelados se eliminan automáticamente después de 48h.
+          </p>
+          <button
+            onClick={async () => {
+              if (!confirm("¿Eliminar este pedido permanentemente?")) return;
+              setLoading(true);
+              try {
+                const res = await fetch(`/api/admin/pedidos/${pedido.id}`, { method: "DELETE" });
+                if (res.ok) router.push("/admin/pedidos");
+              } finally {
+                setLoading(false);
+              }
+            }}
+            disabled={loading}
+            className="w-full py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm rounded-lg transition-colors disabled:opacity-50"
+          >
+            Eliminar permanentemente
+          </button>
+        </div>
+      )}
     </>
   );
 }

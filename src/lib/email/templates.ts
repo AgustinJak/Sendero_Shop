@@ -13,6 +13,22 @@ const COLORS = {
   ambar: "#D4A853",
 };
 
+const SITE_URL = "https://sendero3d.com";
+
+function pedidoLink(pedidoId: string): string {
+  return `${SITE_URL}/pedido/${pedidoId}`;
+}
+
+function verPedidoButton(pedidoId: string): string {
+  return `
+    <p style="margin:20px 0 0;text-align:center;">
+      <a href="${pedidoLink(pedidoId)}"
+         style="display:inline-block;padding:10px 24px;background-color:${COLORS.purpura};color:${COLORS.niebla};text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
+        Ver mi pedido
+      </a>
+    </p>`;
+}
+
 function baseLayout(content: string): string {
   return `
 <!DOCTYPE html>
@@ -121,7 +137,10 @@ function totalsBlock(pedido: Pedido): string {
 // ==========================================
 // Email: Pedido confirmado (al cliente)
 // ==========================================
-export function pedidoConfirmadoEmail(pedido: Pedido & { items: PedidoItem[] }): {
+export function pedidoConfirmadoEmail(
+  pedido: Pedido & { items: PedidoItem[] },
+  datosBancarios?: { cbu?: string; alias?: string }
+): {
   subject: string;
   html: string;
 } {
@@ -178,16 +197,27 @@ export function pedidoConfirmadoEmail(pedido: Pedido & { items: PedidoItem[] }):
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;">
       <tr>
         <td style="padding:16px;">
-          <p style="margin:0 0 8px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Datos para transferencia</p>
-          <p style="margin:0;color:${COLORS.lavanda};font-size:13px;">
-            Te enviaremos los datos bancarios por WhatsApp para que puedas completar el pago.
-            Tenés 48 horas para realizarlo.
+          <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Datos para transferencia</p>
+          ${datosBancarios?.cbu ? `<p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">CBU</p><p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-family:monospace;">${datosBancarios.cbu}</p>` : ""}
+          ${datosBancarios?.alias ? `<p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Alias</p><p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-family:monospace;">${datosBancarios.alias}</p>` : ""}
+          <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Monto a transferir</p>
+          <p style="margin:0 0 12px;color:${COLORS.ambar};font-size:18px;font-weight:bold;">${formatPrice(pedido.total)}</p>
+          <p style="margin:0 0 12px;color:${COLORS.lavanda};font-size:13px;">
+            Tenés <strong style="color:${COLORS.niebla};">48 horas</strong> para enviar el comprobante. Después el pedido se cancela automáticamente.
+          </p>
+          <p style="margin:0;text-align:center;">
+            <a href="https://wa.me/5491125502785?text=${encodeURIComponent(`Hola! Te envío el comprobante del pedido ${pedido.numero_pedido} por ${formatPrice(pedido.total)}`)}"
+               style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
+              Enviar comprobante por WhatsApp
+            </a>
           </p>
         </td>
       </tr>
     </table>`
         : ""
     }
+
+    ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
       Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
@@ -225,6 +255,8 @@ export function pagoRecibidoEmail(pedido: Pedido): {
     <p style="margin:0;color:${COLORS.lavanda};font-size:14px;">
       Tu pedido ya está <strong style="color:#4ade80;">en producción</strong>. Te avisaremos cuando esté listo.
     </p>
+
+    ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
       Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
@@ -288,6 +320,8 @@ export function pedidoEnviadoEmail(pedido: Pedido): {
       }
     </p>
 
+    ${verPedidoButton(pedido.id)}
+
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
       Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
@@ -295,6 +329,64 @@ export function pedidoEnviadoEmail(pedido: Pedido): {
 
   return {
     subject: `Tu pedido ${pedido.numero_pedido} fue enviado — Sendero Shop`,
+    html: baseLayout(content),
+  };
+}
+
+// ==========================================
+// Email: Pedido cancelado (al cliente)
+// ==========================================
+export function pedidoCanceladoEmail(
+  pedido: Pedido,
+  motivo?: string
+): { subject: string; html: string } {
+  const content = `
+    <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">Tu pedido fue cancelado</h2>
+    <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
+      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, lamentamos informarte que tu pedido fue cancelado.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
+      <tr>
+        <td style="padding:16px;text-align:center;">
+          <p style="margin:0;color:${COLORS.lavanda};font-size:12px;text-transform:uppercase;letter-spacing:1px;">Pedido</p>
+          <p style="margin:4px 0 0;color:${COLORS.ambar};font-size:24px;font-weight:bold;font-family:monospace;">${pedido.numero_pedido}</p>
+        </td>
+      </tr>
+    </table>
+
+    ${
+      motivo
+        ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;margin-bottom:16px;">
+      <tr>
+        <td style="padding:16px;">
+          <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Motivo</p>
+          <p style="margin:0;color:${COLORS.niebla};font-size:14px;">${motivo}</p>
+        </td>
+      </tr>
+    </table>`
+        : ""
+    }
+
+    <p style="margin:0 0 24px;color:${COLORS.lavanda};font-size:14px;">
+      Si fue un error o cambiaste de opinión, podés volver a hacer tu pedido en cualquier momento.
+    </p>
+
+    <p style="margin:0;text-align:center;">
+      <a href="${SITE_URL}/catalogo"
+         style="display:inline-block;padding:12px 28px;background-color:${COLORS.ambar};color:${COLORS.navyDeep};text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
+        Volver a comprar
+      </a>
+    </p>
+
+    <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+    </p>
+  `;
+
+  return {
+    subject: `Pedido ${pedido.numero_pedido} cancelado — Sendero Shop`,
     html: baseLayout(content),
   };
 }

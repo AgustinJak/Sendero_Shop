@@ -67,6 +67,11 @@ export default function Footer() {
                   Contacto
                 </Link>
               </li>
+              <li>
+                <Link href="/mi-pedido" className="text-sm text-lavanda-light hover:text-niebla transition-colors">
+                  Buscar mi pedido
+                </Link>
+              </li>
             </ul>
           </div>
 
