@@ -10,7 +10,7 @@ export async function sendEmail({
   html: string;
 }): Promise<boolean> {
   // Skip if Gmail is not configured
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
     console.log(`[Email] Skipped (no GMAIL config): ${subject} → ${to}`);
     return false;
   }

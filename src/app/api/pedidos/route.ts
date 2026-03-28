@@ -127,9 +127,9 @@ export async function POST(req: NextRequest) {
     sendEmail({ to: datos_personales.email, ...clientEmail });
 
     // Email al admin
-    if (process.env.GMAIL_USER) {
+    if (process.env.SMTP_USER) {
       const adminEmail = nuevoPedidoAdminEmail(fullPedido);
-      sendEmail({ to: process.env.GMAIL_USER, ...adminEmail });
+      sendEmail({ to: process.env.SMTP_USER, ...adminEmail });
     }
 
     return NextResponse.json({

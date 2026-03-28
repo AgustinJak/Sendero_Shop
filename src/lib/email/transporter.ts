@@ -1,11 +1,13 @@
 import nodemailer from "nodemailer";
 
 export const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.hostinger.com",
+  port: 465,
+  secure: true,
   auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASSWORD,
   },
 });
 
-export const FROM_EMAIL = `"Sendero Shop" <${process.env.GMAIL_USER}>`;
+export const FROM_EMAIL = `"Sendero Shop" <${process.env.SMTP_USER}>`;
