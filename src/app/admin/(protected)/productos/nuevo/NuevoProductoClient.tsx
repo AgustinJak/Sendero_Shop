@@ -37,9 +37,17 @@ export default function NuevoProductoClient({
             }}
           />
         )}
-        <p className="mt-3 text-xs text-lavanda/40 text-center">
-          Las imágenes se agregan después de crear el producto
-        </p>
+        {/* Variant placeholder */}
+        <div className="mt-4 bg-navy-deep/50 border border-lavanda/10 rounded-xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla/40 uppercase tracking-wider">
+              Variantes
+            </h3>
+          </div>
+          <p className="text-xs text-lavanda/40 text-center py-3">
+            Las variantes e imágenes se agregan después de crear el producto.
+          </p>
+        </div>
       </div>
     </div>
   );

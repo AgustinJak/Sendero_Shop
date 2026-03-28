@@ -214,10 +214,10 @@ function FilterPill({
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+      className={`px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95 ${
         active
           ? "bg-purpura text-niebla shadow-sm shadow-purpura/20"
-          : "bg-lavanda/5 text-lavanda-light border border-lavanda/15 hover:border-purpura/40 hover:text-niebla"
+          : "bg-lavanda/5 text-lavanda-light border border-lavanda/15 hover:border-purpura/40 hover:text-niebla hover:bg-lavanda/10"
       }`}
     >
       {label}
