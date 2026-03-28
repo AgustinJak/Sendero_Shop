@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getProductos, getAvailableFilters, getCategoriasTree, getBanners } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
-import FilterSidebar from "@/components/catalogo/FilterSidebar";
+import FilterSidebar, { MobileFilterToggle } from "@/components/catalogo/FilterSidebar";
 import SortSelect from "@/components/catalogo/SortSelect";
 import CatalogBanner from "@/components/home/CatalogBanner";
 
@@ -62,9 +62,14 @@ export default async function CatalogoPage({ searchParams }: Props) {
           </p>
         </div>
 
-        <Suspense>
-          <SortSelect />
-        </Suspense>
+        <div className="flex items-center gap-3">
+          <Suspense>
+            <MobileFilterToggle filters={availableFilters} categorias={categorias} />
+          </Suspense>
+          <Suspense>
+            <SortSelect />
+          </Suspense>
+        </div>
       </div>
 
       <div className="flex gap-8">

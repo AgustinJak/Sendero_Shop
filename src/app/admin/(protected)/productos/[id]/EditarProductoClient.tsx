@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import ProductoForm, { type ProductoFormData } from "@/components/admin/ProductoForm";
 import ProductoImagenes from "@/components/admin/ProductoImagenes";
 import ProductoPreview from "@/components/admin/ProductoPreview";
+import VariantesManager from "@/components/admin/VariantesManager";
 import type { Producto } from "@/types";
 import type { Categoria } from "@/types";
 
@@ -37,6 +38,10 @@ export default function EditarProductoClient({
         <ProductoImagenes
           productoId={producto.id}
           imagenes={producto.imagenes || []}
+        />
+        <VariantesManager
+          productoId={producto.id}
+          grupos={producto.variante_grupos || []}
         />
         {formData && (
           <ProductoPreview
