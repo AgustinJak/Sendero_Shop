@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Inter, Cinzel } from "next/font/google";
+import ServiceWorkerRegister from "@/components/layout/ServiceWorkerRegister";
 import "./globals.css";
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
@@ -18,7 +19,22 @@ const cinzel = Cinzel({
   weight: ["400", "700"],
 });
 
+export const viewport: Viewport = {
+  themeColor: "#6b21a8",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
+  manifest: "/manifest.webmanifest",
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Sendero Shop",
+  },
   metadataBase: new URL("https://sendero3d.com"),
   title: {
     default: "Sendero Shop — Figuras y Accesorios Impresos en 3D",
@@ -92,6 +108,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           </noscript>
         )}
         {children}
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
