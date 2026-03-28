@@ -147,12 +147,12 @@ export async function POST(req: NextRequest) {
 
     // Email al cliente
     const clientEmail = pedidoConfirmadoEmail(fullPedido, datosBancarios);
-    sendEmail({ to: datos_personales.email, ...clientEmail });
+    await sendEmail({ to: datos_personales.email, ...clientEmail });
 
     // Email al admin
     if (process.env.SMTP_USER) {
       const adminEmail = nuevoPedidoAdminEmail(fullPedido);
-      sendEmail({ to: process.env.SMTP_USER, ...adminEmail });
+      await sendEmail({ to: process.env.SMTP_USER, ...adminEmail });
     }
 
     return NextResponse.json({

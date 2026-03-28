@@ -54,14 +54,14 @@ export async function PATCH(
       const p = pedido as Pedido;
       if (updates.estado === "pago_confirmado") {
         const email = pagoRecibidoEmail(p);
-        sendEmail({ to: p.email, ...email });
+        await sendEmail({ to: p.email, ...email });
       } else if (updates.estado === "enviado") {
         const email = pedidoEnviadoEmail(p);
-        sendEmail({ to: p.email, ...email });
+        await sendEmail({ to: p.email, ...email });
       } else if (updates.estado === "cancelado") {
         const motivo = body.motivo_cancelacion || undefined;
         const email = pedidoCanceladoEmail(p, motivo);
-        sendEmail({ to: p.email, ...email });
+        await sendEmail({ to: p.email, ...email });
       }
     }
   }

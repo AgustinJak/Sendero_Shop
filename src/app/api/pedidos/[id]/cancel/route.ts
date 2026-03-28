@@ -48,7 +48,7 @@ export async function POST(
 
   // Send cancellation email
   const email = pedidoCanceladoEmail(p, "Cancelado por el cliente");
-  sendEmail({ to: p.email, ...email });
+  await sendEmail({ to: p.email, ...email });
 
   return NextResponse.json({ ok: true });
 }
