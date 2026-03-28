@@ -1,26 +1,47 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  /* Paleta Sendero Shop — Hollow Knight */
+  --color-navy: #1C2541;
+  --color-navy-deep: #0F1729;
+  --color-lavanda: #8B85B2;
+  --color-lavanda-light: #B8B3D1;
+  --color-niebla: #E8E6F0;
+  --color-purpura: #6C63A0;
+  --color-ambar: #D4A853;
+  --color-ambar-light: #E8C97A;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Fuentes */
+  --font-display: var(--font-cinzel);
+  --font-body: var(--font-inter);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-navy);
+  color: var(--color-niebla);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Scrollbar estilizado */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-navy-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-lavanda);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-purpura);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-purpura);
+  color: var(--color-niebla);
 }

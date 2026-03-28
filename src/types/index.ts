@@ -1,0 +1,191 @@
+// ==========================================
+// Sendero Shop — TypeScript Types
+// ==========================================
+
+// --- Categorías ---
+export interface Categoria {
+  id: string;
+  nombre: string;
+  slug: string;
+  parent_id: string | null;
+  imagen_url: string | null;
+  orden: number;
+  activo: boolean;
+  created_at: string;
+  // Relaciones
+  children?: Categoria[];
+  parent?: Categoria;
+}
+
+// --- Productos ---
+export interface Producto {
+  id: string;
+  nombre: string;
+  slug: string;
+  descripcion: string;
+  precio: number;
+  precio_oferta: number | null;
+  categoria_id: string | null;
+  activo: boolean;
+  destacado: boolean;
+  stock_tipo: "print-on-demand" | "limitado";
+  tiempo_produccion: number;
+  created_at: string;
+  updated_at: string;
+  // Relaciones
+  imagenes?: ProductoImagen[];
+  variante_grupos?: VarianteGrupo[];
+  categoria?: Categoria;
+}
+
+export interface ProductoImagen {
+  id: string;
+  producto_id: string;
+  url: string;
+  orden: number;
+  alt_text: string | null;
+}
+
+// --- Variantes (combinables) ---
+export interface VarianteGrupo {
+  id: string;
+  producto_id: string;
+  nombre: string;
+  orden: number;
+  // Relaciones
+  opciones?: VarianteOpcion[];
+}
+
+export interface VarianteOpcion {
+  id: string;
+  grupo_id: string;
+  valor: string;
+  precio_adicional: number;
+  imagen_url: string | null;
+  activo: boolean;
+  orden: number;
+}
+
+// Selección del usuario en el carrito
+export interface VarianteSeleccion {
+  grupo_id: string;
+  grupo_nombre: string;
+  opcion_id: string;
+  opcion_valor: string;
+  precio_adicional: number;
+}
+
+// --- Carrito ---
+export interface CartItem {
+  producto_id: string;
+  nombre: string;
+  slug: string;
+  imagen_url: string;
+  precio_base: number;
+  opciones: VarianteSeleccion[];
+  cantidad: number;
+  // Calculado
+  precio_unitario: number; // base + sum(adicionales)
+  subtotal: number; // unitario * cantidad
+}
+
+export interface Cart {
+  items: CartItem[];
+  subtotal: number;
+}
+
+// --- Pedidos ---
+export type EstadoPedido =
+  | "pendiente_pago"
+  | "pago_confirmado"
+  | "en_produccion"
+  | "impreso"
+  | "enviado"
+  | "entregado"
+  | "cancelado";
+
+export type MetodoEnvio = "retiro" | "correo_argentino" | "andreani";
+export type MetodoPago = "mercadopago" | "transferencia" | "efectivo";
+
+export interface DireccionEnvio {
+  calle: string;
+  numero: string;
+  piso: string;
+  departamento: string;
+  codigo_postal: string;
+  localidad: string;
+  provincia: string;
+}
+
+export interface Pedido {
+  id: string;
+  numero_pedido: string;
+  estado: EstadoPedido;
+  nombre_cliente: string;
+  dni: string;
+  email: string;
+  telefono: string;
+  direccion_envio: DireccionEnvio | null;
+  metodo_envio: MetodoEnvio;
+  costo_envio: number;
+  metodo_pago: MetodoPago;
+  recargo_mp: number;
+  subtotal: number;
+  total: number;
+  mp_preference_id: string | null;
+  mp_payment_id: string | null;
+  tracking_code: string | null;
+  tracking_url: string | null;
+  notas: string | null;
+  cancelado_at: string | null;
+  created_at: string;
+  updated_at: string;
+  // Relaciones
+  items?: PedidoItem[];
+}
+
+export interface PedidoItem {
+  id: string;
+  pedido_id: string;
+  producto_id: string;
+  nombre_producto: string;
+  cantidad: number;
+  precio_unitario: number;
+  opciones_seleccionadas: VarianteSeleccion[];
+  subtotal: number;
+}
+
+// --- Envíos ---
+export interface EnvioZona {
+  id: string;
+  nombre_zona: string;
+  provincias: string[];
+  codigos_postales: string | null;
+  correo_argentino_domicilio: number;
+  correo_argentino_sucursal: number;
+  andreani_domicilio: number;
+  andreani_sucursal: number;
+  activo: boolean;
+}
+
+// --- Configuración ---
+export interface Configuracion {
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+// --- Checkout ---
+export interface DatosPersonales {
+  nombre_completo: string;
+  dni: string;
+  email: string;
+  telefono: string;
+}
+
+export interface CheckoutData {
+  datos_personales: DatosPersonales;
+  metodo_envio: MetodoEnvio;
+  direccion_envio: DireccionEnvio | null;
+  metodo_pago: MetodoPago;
+}
