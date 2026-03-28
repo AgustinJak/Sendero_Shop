@@ -1,5 +1,5 @@
 import { createServerSupabaseClient, createServiceRoleClient } from "./supabase-server";
-import type { Producto, Categoria, Coleccion } from "@/types";
+import type { Producto, Categoria, Coleccion, Banner } from "@/types";
 
 // --- Productos ---
 
@@ -296,4 +296,30 @@ export async function getColeccionBySlug(
   }
 
   return { ...col, productos };
+}
+
+// --- Banners ---
+
+export async function getBanners(
+  posicion?: Banner["posicion"]
+): Promise<Banner[]> {
+  const supabase = await createServerSupabaseClient();
+  const now = new Date().toISOString();
+
+  let query = supabase
+    .from("banners")
+    .select("*")
+    .eq("activo", true)
+    .order("orden", { ascending: true });
+
+  if (posicion) {
+    query = query.eq("posicion", posicion);
+  }
+
+  // Filter by date range (null means no limit)
+  query = query.or(`fecha_inicio.is.null,fecha_inicio.lte.${now}`);
+  query = query.or(`fecha_fin.is.null,fecha_fin.gte.${now}`);
+
+  const { data } = await query;
+  return (data as Banner[]) || [];
 }

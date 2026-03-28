@@ -1,0 +1,83 @@
+"use client";
+
+import { motion } from "framer-motion";
+import Link from "next/link";
+
+export default function HomeHero() {
+  return (
+    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+      {/* Partículas flotantes */}
+      <div className="absolute inset-0 pointer-events-none">
+        {Array.from({ length: 20 }).map((_, i) => (
+          <motion.div
+            key={i}
+            className="absolute w-1 h-1 bg-lavanda/40 rounded-full"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              y: [0, -30, 0],
+              opacity: [0.2, 0.8, 0.2],
+              scale: [1, 1.5, 1],
+            }}
+            transition={{
+              duration: 3 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 3,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <motion.h1
+          className="font-[family-name:var(--font-cinzel)] text-4xl sm:text-5xl md:text-6xl font-bold text-niebla mb-6 leading-tight"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          Sendero de los Sueños
+        </motion.h1>
+
+        <motion.p
+          className="text-lg sm:text-xl text-lavanda-light mb-8 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          Figuras, katanas y accesorios impresos en 3D inspirados en tus
+          franquicias favoritas. Cada pieza es única, fabricada a pedido para
+          vos.
+        </motion.p>
+
+        <motion.div
+          className="flex flex-col sm:flex-row gap-4 justify-center"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+        >
+          <Link
+            href="/catalogo"
+            className="group relative inline-flex items-center justify-center px-8 py-3 bg-purpura hover:bg-purpura/80 text-niebla font-semibold rounded-lg overflow-hidden transition-colors"
+          >
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
+            <span className="relative">Ver Catálogo</span>
+          </Link>
+
+          <a
+            href="https://wa.me/5491125502785?text=Hola!%20Quiero%20consultar%20por%20un%20producto"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center px-8 py-3 border border-lavanda/30 text-lavanda-light hover:bg-lavanda/10 rounded-lg transition-colors"
+          >
+            Consultanos
+          </a>
+        </motion.div>
+      </div>
+
+      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-navy to-transparent" />
+    </section>
+  );
+}
