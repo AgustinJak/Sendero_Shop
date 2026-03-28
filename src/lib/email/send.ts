@@ -25,7 +25,9 @@ export async function sendEmail({
     console.log(`[Email] Sent: ${subject} → ${to}`);
     return true;
   } catch (error) {
-    console.error(`[Email] Error sending to ${to}:`, error);
+    const err = error as Error;
+    console.error(`[Email] Error sending to ${to}: ${err.message}`);
+    console.error(`[Email] Error details:`, JSON.stringify({ name: err.name, message: err.message, stack: err.stack?.slice(0, 300) }));
     return false;
   }
 }
