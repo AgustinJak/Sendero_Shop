@@ -9,6 +9,14 @@ export const metadata: Metadata = {
   title: "Catálogo",
   description:
     "Explorá nuestro catálogo de figuras, katanas y accesorios impresos en 3D. Envío a todo Argentina.",
+  openGraph: {
+    title: "Catálogo — Sendero Shop",
+    description:
+      "Figuras, katanas y accesorios impresos en 3D. Filtrá por anime, categoría y precio.",
+  },
+  alternates: {
+    canonical: "https://sendero3d.com/catalogo",
+  },
 };
 
 interface Props {

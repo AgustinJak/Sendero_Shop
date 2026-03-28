@@ -34,7 +34,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: producto.nombre,
       description,
       type: "website",
+      url: `https://sendero3d.com/producto/${slug}`,
+      images: imagen ? [{ url: imagen.url, alt: producto.nombre }] : [],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: producto.nombre,
+      description,
       images: imagen ? [imagen.url] : [],
+    },
+    alternates: {
+      canonical: `https://sendero3d.com/producto/${slug}`,
     },
   };
 }
@@ -49,21 +59,46 @@ export default async function ProductoPage({ params }: Props) {
 
   const imagen = producto.imagenes?.sort((a, b) => a.orden - b.orden)[0];
 
-  // JSON-LD Structured Data
+  // JSON-LD Structured Data — Product
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: producto.nombre,
     image: producto.imagenes?.map((i) => i.url) || [],
     description: producto.descripcion?.replace(/<[^>]*>/g, "") || "",
+    sku: producto.sku || undefined,
     brand: { "@type": "Brand", name: "Sendero 3D" },
     offers: {
       "@type": "Offer",
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/producto/${producto.slug}`,
+      url: `https://sendero3d.com/producto/${producto.slug}`,
       priceCurrency: "ARS",
       price: producto.precio_oferta || producto.precio,
       availability: "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: "Sendero Shop" },
     },
+  };
+
+  // JSON-LD — BreadcrumbList
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Inicio", item: "https://sendero3d.com" },
+      { "@type": "ListItem", position: 2, name: "Catálogo", item: "https://sendero3d.com/catalogo" },
+      ...(producto.categoria
+        ? [{
+            "@type": "ListItem",
+            position: 3,
+            name: producto.categoria.nombre,
+            item: `https://sendero3d.com/catalogo?categoria=${producto.categoria.slug}`,
+          }]
+        : []),
+      {
+        "@type": "ListItem",
+        position: producto.categoria ? 4 : 3,
+        name: producto.nombre,
+      },
+    ],
   };
 
   return (
@@ -98,6 +133,10 @@ export default async function ProductoPage({ params }: Props) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
       />
     </div>
   );
