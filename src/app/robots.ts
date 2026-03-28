@@ -7,6 +7,9 @@ export default function robots(): MetadataRoute.Robots {
       allow: "/",
       disallow: ["/admin/", "/api/", "/checkout/"],
     },
-    sitemap: "https://sendero3d.com/sitemap.xml",
+    sitemap: [
+      "https://sendero3d.com/sitemap.xml",
+      "https://sendero3d.com/feed/google-shopping.xml",
+    ],
   };
 }
