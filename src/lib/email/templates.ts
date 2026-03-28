@@ -63,6 +63,9 @@ function baseLayout(content: string): string {
               <p style="margin:4px 0 0;font-size:11px;color:${COLORS.lavanda}88;">
                 Villa Crespo, CABA, Argentina
               </p>
+              <p style="margin:8px 0 0;font-size:10px;color:${COLORS.lavanda}66;">
+                Si este email llegó a spam, marcalo como "No es spam" para recibir futuras actualizaciones.
+              </p>
             </td>
           </tr>
         </table>

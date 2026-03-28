@@ -198,6 +198,10 @@ export default async function PedidoPage({ params }: Props) {
         )}
 
         <p className="text-xs text-lavanda/40">
+          Te enviamos un resumen a <span className="text-lavanda/60">{p.email}</span>.
+          Si no lo ves, revisá tu carpeta de spam.
+        </p>
+        <p className="text-xs text-lavanda/40">
           ¿Dudas? Escribinos por{" "}
           <a href={whatsappLink(`Hola, tengo una consulta sobre el pedido ${p.numero_pedido}`)} className="text-ambar hover:underline" target="_blank" rel="noopener noreferrer">
             WhatsApp
