@@ -21,7 +21,7 @@ export function trackViewItem(product: {
   name: string;
   price: number;
   category?: string;
-  anime?: string | null;
+  linea?: string | null;
 }) {
   push({ ecommerce: null }); // clear previous ecommerce data
   push({
@@ -37,7 +37,7 @@ export function trackViewItem(product: {
           item_brand: "Sendero 3D",
           price: product.price,
           quantity: 1,
-          ...(product.anime ? { item_category2: product.anime } : {}),
+          ...(product.linea ? { item_category2: product.linea } : {}),
         },
       ],
     },

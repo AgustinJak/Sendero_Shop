@@ -15,7 +15,7 @@ export async function PATCH(
   const allowedFields = [
     "nombre", "slug", "descripcion", "precio", "precio_oferta",
     "categoria_id", "activo", "destacado", "stock_tipo", "tiempo_produccion",
-    "anime", "personaje", "tamano", "peso_gr", "sku",
+    "linea", "tamano", "peso_gr", "sku",
     "meta_title", "meta_description",
   ];
 

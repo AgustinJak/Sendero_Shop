@@ -5,8 +5,7 @@ import type { Producto, Categoria, Coleccion, Banner } from "@/types";
 
 export interface ProductFilters {
   categoria?: string;
-  anime?: string;
-  personaje?: string;
+  linea?: string;
   precio_min?: number;
   precio_max?: number;
   tamano?: string;
@@ -55,7 +54,7 @@ export async function getProductos(
   let query = supabase
     .from("productos")
     .select(
-      `*, producto_imagenes(id, url, orden, alt_text), categoria:categorias(id, nombre, slug)`,
+      `*, imagenes:producto_imagenes(id, url, orden, alt_text), categoria:categorias(id, nombre, slug)`,
       { count: "exact" }
     )
     .eq("activo", true)
@@ -64,11 +63,8 @@ export async function getProductos(
   if (categoriaIds.length > 0) {
     query = query.in("categoria_id", categoriaIds);
   }
-  if (filters.anime) {
-    query = query.ilike("anime", filters.anime.replace(/-/g, " "));
-  }
-  if (filters.personaje) {
-    query = query.ilike("personaje", filters.personaje.replace(/-/g, " "));
+  if (filters.linea) {
+    query = query.ilike("linea", filters.linea.replace(/-/g, " "));
   }
   if (filters.precio_min) {
     query = query.gte("precio", filters.precio_min);
@@ -127,7 +123,7 @@ export async function getProductoBySlug(
     .from("productos")
     .select(
       `*,
-      producto_imagenes(id, url, orden, alt_text),
+      imagenes:producto_imagenes(id, url, orden, alt_text),
       categoria:categorias(id, nombre, slug),
       variante_grupos(id, producto_id, nombre, orden,
         opciones:variante_opciones(id, grupo_id, valor, precio_adicional, imagen_url, activo, orden)
@@ -148,7 +144,7 @@ export async function getProductosDestacados(
 
   const { data } = await supabase
     .from("productos")
-    .select(`*, producto_imagenes(id, url, orden, alt_text)`)
+    .select(`*, imagenes:producto_imagenes(id, url, orden, alt_text)`)
     .eq("activo", true)
     .eq("destacado", true)
     .order("created_at", { ascending: false })
@@ -184,9 +180,7 @@ export async function getCategoriasTree(): Promise<Categoria[]> {
 // --- Filtros disponibles (para sidebar) ---
 
 export interface AvailableFilters {
-  animes: string[];
-  personajes: string[];
-  tamanos: string[];
+  lineas: string[];
   precio_min: number;
   precio_max: number;
 }
@@ -196,22 +190,18 @@ export async function getAvailableFilters(): Promise<AvailableFilters> {
 
   const { data } = await supabase
     .from("productos")
-    .select("anime, personaje, tamano, precio")
+    .select("linea, precio")
     .eq("activo", true);
 
   if (!data) {
-    return { animes: [], personajes: [], tamanos: [], precio_min: 0, precio_max: 0 };
+    return { lineas: [], precio_min: 0, precio_max: 0 };
   }
 
-  const animes = [...new Set(data.map((p) => p.anime).filter(Boolean))] as string[];
-  const personajes = [...new Set(data.map((p) => p.personaje).filter(Boolean))] as string[];
-  const tamanos = [...new Set(data.map((p) => p.tamano).filter(Boolean))] as string[];
+  const lineas = [...new Set(data.map((p) => p.linea).filter(Boolean))] as string[];
   const precios = data.map((p) => p.precio).filter(Boolean) as number[];
 
   return {
-    animes: animes.sort(),
-    personajes: personajes.sort(),
-    tamanos: tamanos.sort(),
+    lineas: lineas.sort(),
     precio_min: precios.length ? Math.min(...precios) : 0,
     precio_max: precios.length ? Math.max(...precios) : 0,
   };
@@ -260,7 +250,7 @@ export async function getColeccionBySlug(
       const ids = data.map((cp) => cp.producto_id);
       const { data: prods } = await supabase
         .from("productos")
-        .select("*, producto_imagenes(id, url, orden, alt_text)")
+        .select("*, imagenes:producto_imagenes(id, url, orden, alt_text)")
         .in("id", ids)
         .eq("activo", true);
 
@@ -274,16 +264,16 @@ export async function getColeccionBySlug(
     // Build query from rules
     let query = supabase
       .from("productos")
-      .select("*, producto_imagenes(id, url, orden, alt_text)")
+      .select("*, imagenes:producto_imagenes(id, url, orden, alt_text)")
       .eq("activo", true);
 
-    if (col.regla.anime) query = query.ilike("anime", col.regla.anime);
-    if (col.regla.personaje) query = query.ilike("personaje", col.regla.personaje);
-    if (col.regla.categoria_slug) {
+    if (col.regla.linea) query = query.ilike("linea", col.regla.linea);
+    if (col.regla.categoria_slug || col.regla.categoria) {
+      const catSlug = col.regla.categoria_slug || col.regla.categoria;
       const { data: cat } = await supabase
         .from("categorias")
         .select("id")
-        .eq("slug", col.regla.categoria_slug)
+        .eq("slug", catSlug)
         .single();
       if (cat) query = query.eq("categoria_id", cat.id);
     }

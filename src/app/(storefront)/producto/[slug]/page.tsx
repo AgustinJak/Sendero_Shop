@@ -24,7 +24,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = producto.meta_title || `${producto.nombre} — Sendero Shop`;
   const description =
     producto.meta_description ||
-    `${producto.nombre}${producto.anime ? ` de ${producto.anime}` : ""}, impreso en 3D. ${formatPrice(producto.precio)}. Envío a todo Argentina.`;
+    `${producto.nombre}${producto.linea ? ` de ${producto.linea}` : ""}, impreso en 3D. ${formatPrice(producto.precio)}. Envío a todo Argentina.`;
   const imagen = producto.imagenes?.sort((a, b) => a.orden - b.orden)[0];
 
   return {

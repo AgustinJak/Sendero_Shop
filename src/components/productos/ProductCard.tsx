@@ -55,9 +55,9 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
         </div>
 
         <div className="p-4">
-          {producto.anime && (
+          {producto.linea && (
             <p className="text-xs text-lavanda/60 mb-1 uppercase tracking-wider">
-              {producto.anime}
+              {producto.linea}
             </p>
           )}
 

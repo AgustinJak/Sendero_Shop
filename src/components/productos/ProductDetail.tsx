@@ -21,7 +21,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
       name: producto.nombre,
       price: producto.precio_oferta || producto.precio,
       category: producto.categoria?.nombre,
-      anime: producto.anime,
+      linea: producto.linea,
     });
   }, [producto]);
 
@@ -47,10 +47,9 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
       {/* Info */}
       <div className="space-y-6">
         {/* Breadcrumb inline */}
-        {producto.anime && (
+        {producto.linea && (
           <p className="text-sm text-lavanda/60 uppercase tracking-wider">
-            {producto.anime}
-            {producto.personaje && ` — ${producto.personaje}`}
+            {producto.linea}
           </p>
         )}
 

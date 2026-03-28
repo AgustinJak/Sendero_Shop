@@ -6,8 +6,7 @@ interface PreviewData {
   nombre: string;
   precio: number;
   precio_oferta: number | null;
-  anime: string;
-  personaje: string;
+  linea: string;
   tamano: string;
   descripcion: string;
   destacado: boolean;
@@ -58,9 +57,9 @@ export default function ProductoPreview({ data }: { data: PreviewData }) {
             )}
           </div>
           <div className="p-3">
-            {data.anime && (
+            {data.linea && (
               <p className="text-[10px] text-lavanda/60 mb-0.5 uppercase tracking-wider">
-                {data.anime}
+                {data.linea}
               </p>
             )}
             <h3 className="text-xs font-medium text-niebla truncate">
@@ -94,10 +93,9 @@ export default function ProductoPreview({ data }: { data: PreviewData }) {
           Detalle del producto
         </p>
         <div className="bg-navy-deep rounded-xl border border-lavanda/10 p-4 space-y-3">
-          {data.anime && (
+          {data.linea && (
             <p className="text-[10px] text-lavanda/60 uppercase tracking-wider">
-              {data.anime}
-              {data.personaje && ` — ${data.personaje}`}
+              {data.linea}
             </p>
           )}
 

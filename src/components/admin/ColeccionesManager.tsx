@@ -33,8 +33,7 @@ const EMPTY_FORM = {
   slug: "",
   descripcion: "",
   tipo: "manual" as "manual" | "automatica",
-  regla_anime: "",
-  regla_personaje: "",
+  regla_linea: "",
   regla_categoria_slug: "",
   regla_tamano: "",
   meta_title: "",
@@ -72,9 +71,8 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
       slug: col.slug,
       descripcion: col.descripcion || "",
       tipo: col.tipo,
-      regla_anime: col.regla?.anime || "",
-      regla_personaje: col.regla?.personaje || "",
-      regla_categoria_slug: col.regla?.categoria_slug || "",
+      regla_linea: col.regla?.linea || "",
+      regla_categoria_slug: col.regla?.categoria_slug || col.regla?.categoria || "",
       regla_tamano: col.regla?.tamano || "",
       meta_title: col.meta_title || "",
       meta_description: col.meta_description || "",
@@ -90,8 +88,7 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
     const regla =
       form.tipo === "automatica"
         ? {
-            ...(form.regla_anime ? { anime: form.regla_anime } : {}),
-            ...(form.regla_personaje ? { personaje: form.regla_personaje } : {}),
+            ...(form.regla_linea ? { linea: form.regla_linea } : {}),
             ...(form.regla_categoria_slug ? { categoria_slug: form.regla_categoria_slug } : {}),
             ...(form.regla_tamano ? { tamano: form.regla_tamano } : {}),
           }
@@ -293,19 +290,11 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
                   Reglas — los productos que coincidan se incluyen automáticamente
                 </p>
                 <div>
-                  <label className="block text-xs text-lavanda/60 mb-1">Anime</label>
+                  <label className="block text-xs text-lavanda/60 mb-1">Línea</label>
                   <input
-                    value={form.regla_anime}
-                    onChange={(e) => setForm({ ...form, regla_anime: e.target.value })}
-                    placeholder="Ej: One Piece"
-                    className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-lavanda/60 mb-1">Personaje</label>
-                  <input
-                    value={form.regla_personaje}
-                    onChange={(e) => setForm({ ...form, regla_personaje: e.target.value })}
+                    value={form.regla_linea}
+                    onChange={(e) => setForm({ ...form, regla_linea: e.target.value })}
+                    placeholder="Ej: One Piece, Minimalista"
                     className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
                   />
                 </div>

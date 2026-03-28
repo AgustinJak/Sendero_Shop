@@ -63,7 +63,6 @@ export default function FilterSidebar({ filters, categorias = [] }: FilterSideba
                   updateFilter("categoria", checked ? cat.slug : null)
                 }
               />
-              {/* Subcategorías */}
               {cat.children && cat.children.length > 0 && (
                 <div className="ml-5 mt-1 space-y-1">
                   {cat.children.map((sub) => (
@@ -83,48 +82,16 @@ export default function FilterSidebar({ filters, categorias = [] }: FilterSideba
         </FilterSection>
       )}
 
-      {/* Anime */}
-      {filters.animes.length > 0 && (
-        <FilterSection title="Anime">
-          {filters.animes.map((anime) => (
+      {/* Línea */}
+      {filters.lineas.length > 0 && (
+        <FilterSection title="Línea">
+          {filters.lineas.map((linea) => (
             <FilterCheckbox
-              key={anime}
-              label={anime}
-              checked={searchParams.get("anime") === slugify(anime)}
+              key={linea}
+              label={linea}
+              checked={searchParams.get("linea") === slugify(linea)}
               onChange={(checked) =>
-                updateFilter("anime", checked ? slugify(anime) : null)
-              }
-            />
-          ))}
-        </FilterSection>
-      )}
-
-      {/* Personaje */}
-      {filters.personajes.length > 0 && (
-        <FilterSection title="Personaje">
-          {filters.personajes.map((personaje) => (
-            <FilterCheckbox
-              key={personaje}
-              label={personaje}
-              checked={searchParams.get("personaje") === slugify(personaje)}
-              onChange={(checked) =>
-                updateFilter("personaje", checked ? slugify(personaje) : null)
-              }
-            />
-          ))}
-        </FilterSection>
-      )}
-
-      {/* Tamaño */}
-      {filters.tamanos.length > 0 && (
-        <FilterSection title="Tamaño">
-          {filters.tamanos.map((tamano) => (
-            <FilterCheckbox
-              key={tamano}
-              label={tamano}
-              checked={searchParams.get("tamano") === tamano}
-              onChange={(checked) =>
-                updateFilter("tamano", checked ? tamano : null)
+                updateFilter("linea", checked ? slugify(linea) : null)
               }
             />
           ))}

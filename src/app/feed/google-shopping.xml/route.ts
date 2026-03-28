@@ -23,7 +23,7 @@ export async function GET() {
     .select(
       `
       id, nombre, slug, descripcion, precio, precio_oferta,
-      sku, anime, personaje, tamano, peso_gr, stock_tipo,
+      sku, linea, tamano, peso_gr, stock_tipo,
       categoria:categorias(nombre),
       imagenes:producto_imagenes(url, orden)
     `
@@ -70,12 +70,8 @@ ${additionalImages ? additionalImages + "\n" : ""}      <g:availability>in_stock
           ? `\n      <g:product_type>${escapeXml(categoria.nombre)}</g:product_type>`
           : ""
       }${
-        p.anime
-          ? `\n      <g:custom_label_0>${escapeXml(p.anime)}</g:custom_label_0>`
-          : ""
-      }${
-        p.personaje
-          ? `\n      <g:custom_label_1>${escapeXml(p.personaje)}</g:custom_label_1>`
+        p.linea
+          ? `\n      <g:custom_label_0>${escapeXml(p.linea)}</g:custom_label_0>`
           : ""
       }${
         p.tamano

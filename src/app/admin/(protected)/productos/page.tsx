@@ -7,7 +7,7 @@ export default async function ProductosAdminPage() {
 
   const { data: productos } = await supabase
     .from("productos")
-    .select("id, nombre, slug, precio, precio_oferta, activo, destacado, anime, categoria:categorias(nombre), imagenes:producto_imagenes(url, orden)")
+    .select("id, nombre, slug, precio, precio_oferta, activo, destacado, linea, categoria:categorias(nombre), imagenes:producto_imagenes(url, orden)")
     .order("created_at", { ascending: false });
 
   return (
@@ -32,7 +32,7 @@ export default async function ProductosAdminPage() {
                 <tr className="border-b border-lavanda/10 text-lavanda/60 text-xs uppercase tracking-wider">
                   <th className="text-left px-4 py-3">Producto</th>
                   <th className="text-left px-4 py-3">Categoría</th>
-                  <th className="text-left px-4 py-3">Anime</th>
+                  <th className="text-left px-4 py-3">Línea</th>
                   <th className="text-right px-4 py-3">Precio</th>
                   <th className="text-center px-4 py-3">Estado</th>
                   <th className="text-center px-4 py-3">Acciones</th>
@@ -67,7 +67,7 @@ export default async function ProductosAdminPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3 text-lavanda/60">{cat?.nombre || "—"}</td>
-                      <td className="px-4 py-3 text-lavanda/60">{prod.anime || "—"}</td>
+                      <td className="px-4 py-3 text-lavanda/60">{prod.linea || "—"}</td>
                       <td className="px-4 py-3 text-right">
                         {prod.precio_oferta ? (
                           <div>

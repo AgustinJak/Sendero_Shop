@@ -32,9 +32,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
     await Promise.all([
       getProductos({
         categoria: params.categoria,
-        anime: params.anime,
-        personaje: params.personaje,
-        tamano: params.tamano,
+        linea: params.linea,
         precio_min: params.precio_min ? Number(params.precio_min) : undefined,
         precio_max: params.precio_max ? Number(params.precio_max) : undefined,
         busqueda: params.q,

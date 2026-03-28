@@ -19,8 +19,7 @@ export interface ProductoFormData {
   destacado: boolean;
   stock_tipo: "print-on-demand" | "limitado";
   tiempo_produccion: number;
-  anime: string;
-  personaje: string;
+  linea: string;
   tamano: string;
   peso_gr: number | null;
   sku: string;
@@ -50,8 +49,7 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     destacado: producto?.destacado ?? false,
     stock_tipo: producto?.stock_tipo || "print-on-demand",
     tiempo_produccion: producto?.tiempo_produccion || 7,
-    anime: producto?.anime || "",
-    personaje: producto?.personaje || "",
+    linea: producto?.linea || "",
     tamano: producto?.tamano || "",
     peso_gr: producto?.peso_gr ?? null,
     sku: producto?.sku || "",
@@ -206,23 +204,15 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
         </div>
       </div>
 
-      {/* Anime, Personaje, Tamaño */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Línea, Tamaño */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-lavanda/60 mb-1">Anime</label>
+          <label className="block text-sm text-lavanda/60 mb-1">Línea</label>
           <input
             type="text"
-            value={form.anime}
-            onChange={(e) => updateField("anime", e.target.value)}
-            className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
-          />
-        </div>
-        <div>
-          <label className="block text-sm text-lavanda/60 mb-1">Personaje</label>
-          <input
-            type="text"
-            value={form.personaje}
-            onChange={(e) => updateField("personaje", e.target.value)}
+            value={form.linea}
+            onChange={(e) => updateField("linea", e.target.value)}
+            placeholder="Ej: One Piece, Minimalista, Decoración"
             className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
           />
         </div>

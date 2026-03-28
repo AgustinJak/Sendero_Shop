@@ -30,8 +30,7 @@ export interface Producto {
   destacado: boolean;
   stock_tipo: "print-on-demand" | "limitado";
   tiempo_produccion: number;
-  anime: string | null;
-  personaje: string | null;
+  linea: string | null;
   tamano: string | null;
   peso_gr: number | null;
   sku: string | null;
