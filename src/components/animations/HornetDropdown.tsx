@@ -4,48 +4,13 @@ import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import type { Categoria } from "@/types";
 
-// Categorías placeholder — se reemplazarán con datos de Supabase
-const PLACEHOLDER_CATEGORIES = [
-  {
-    nombre: "Anime",
-    slug: "anime",
-    children: [
-      { nombre: "One Piece", slug: "anime/one-piece" },
-      { nombre: "Demon Slayer", slug: "anime/demon-slayer" },
-      { nombre: "Bleach", slug: "anime/bleach" },
-      { nombre: "Dragon Ball", slug: "anime/dragon-ball" },
-    ],
-  },
-  {
-    nombre: "Cine",
-    slug: "cine",
-    children: [
-      { nombre: "Star Wars", slug: "cine/star-wars" },
-      { nombre: "Marvel", slug: "cine/marvel" },
-    ],
-  },
-  {
-    nombre: "Videojuegos",
-    slug: "videojuegos",
-    children: [
-      { nombre: "Hollow Knight", slug: "videojuegos/hollow-knight" },
-      { nombre: "Elden Ring", slug: "videojuegos/elden-ring" },
-    ],
-  },
-  {
-    nombre: "Katanas",
-    slug: "katanas",
-    children: [],
-  },
-  {
-    nombre: "Figuras",
-    slug: "figuras",
-    children: [],
-  },
-];
+interface HornetDropdownProps {
+  categorias?: Categoria[];
+}
 
-export default function HornetDropdown() {
+export default function HornetDropdown({ categorias = [] }: HornetDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -139,7 +104,7 @@ export default function HornetDropdown() {
                 transition={{ duration: 0.2, delay: 0.05 }}
               >
                 <div className="p-3">
-                  {PLACEHOLDER_CATEGORIES.map((cat, index) => (
+                  {categorias.map((cat, index) => (
                     <motion.div
                       key={cat.slug}
                       initial={{ opacity: 0, x: -10 }}
@@ -151,12 +116,12 @@ export default function HornetDropdown() {
                     >
                       <div className="group">
                         <Link
-                          href={`/categorias/${cat.slug}`}
+                          href={`/catalogo?categoria=${cat.slug}`}
                           className="flex items-center justify-between px-3 py-2 rounded-lg text-niebla hover:bg-lavanda/10 transition-colors font-[family-name:var(--font-cinzel)] text-sm"
                           onClick={() => setIsOpen(false)}
                         >
                           {cat.nombre}
-                          {cat.children.length > 0 && (
+                          {cat.children && cat.children.length > 0 && (
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               viewBox="0 0 16 16"
@@ -171,12 +136,12 @@ export default function HornetDropdown() {
                             </svg>
                           )}
                         </Link>
-                        {cat.children.length > 0 && (
+                        {cat.children && cat.children.length > 0 && (
                           <div className="ml-4 border-l border-lavanda/10 pl-2">
                             {cat.children.map((sub) => (
                               <Link
                                 key={sub.slug}
-                                href={`/categorias/${sub.slug}`}
+                                href={`/catalogo?categoria=${sub.slug}`}
                                 className="block px-3 py-1.5 text-xs text-lavanda-light hover:text-niebla hover:bg-lavanda/5 rounded-md transition-colors"
                                 onClick={() => setIsOpen(false)}
                               >
@@ -192,7 +157,7 @@ export default function HornetDropdown() {
 
                 <div className="border-t border-lavanda/10 px-3 py-2">
                   <Link
-                    href="/categorias"
+                    href="/catalogo"
                     className="block text-center text-xs text-lavanda hover:text-niebla transition-colors py-1"
                     onClick={() => setIsOpen(false)}
                   >

@@ -31,6 +31,27 @@ export async function getProductos(
   const limit = filters.limit || 20;
   const offset = (page - 1) * limit;
 
+  // Si hay filtro de categoría por slug, resolver IDs (incluye hijas)
+  let categoriaIds: string[] = [];
+  if (filters.categoria) {
+    // Buscar la categoría padre
+    const { data: parent } = await supabase
+      .from("categorias")
+      .select("id")
+      .eq("slug", filters.categoria)
+      .single();
+
+    if (parent) {
+      // Buscar hijas de esa categoría
+      const { data: children } = await supabase
+        .from("categorias")
+        .select("id")
+        .eq("parent_id", parent.id);
+
+      categoriaIds = [parent.id, ...(children?.map((c) => c.id) || [])];
+    }
+  }
+
   let query = supabase
     .from("productos")
     .select(
@@ -40,8 +61,8 @@ export async function getProductos(
     .eq("activo", true)
     .range(offset, offset + limit - 1);
 
-  if (filters.categoria) {
-    query = query.eq("categoria:categorias.slug", filters.categoria);
+  if (categoriaIds.length > 0) {
+    query = query.in("categoria_id", categoriaIds);
   }
   if (filters.anime) {
     query = query.ilike("anime", filters.anime.replace(/-/g, " "));
