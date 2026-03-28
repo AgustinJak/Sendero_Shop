@@ -46,9 +46,18 @@ export async function POST(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Send cancellation email
+  // Send cancellation email to customer
   const email = pedidoCanceladoEmail(p, "Cancelado por el cliente");
   await sendEmail({ to: p.email, ...email });
+
+  // Notify admin
+  if (process.env.SMTP_USER) {
+    await sendEmail({
+      to: process.env.SMTP_USER,
+      subject: `Pedido ${p.numero_pedido} cancelado por el cliente`,
+      html: email.html,
+    });
+  }
 
   return NextResponse.json({ ok: true });
 }
