@@ -30,6 +30,13 @@ export interface Producto {
   destacado: boolean;
   stock_tipo: "print-on-demand" | "limitado";
   tiempo_produccion: number;
+  anime: string | null;
+  personaje: string | null;
+  tamano: string | null;
+  peso_gr: number | null;
+  sku: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   created_at: string;
   updated_at: string;
   // Relaciones
@@ -173,6 +180,38 @@ export interface Configuracion {
   key: string;
   value: string;
   updated_at: string;
+}
+
+// --- Colecciones ---
+export interface Coleccion {
+  id: string;
+  nombre: string;
+  slug: string;
+  descripcion: string | null;
+  tipo: "automatica" | "manual";
+  regla: Record<string, string> | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  imagen_cover: string | null;
+  activa: boolean;
+  orden: number;
+  created_at: string;
+  // Relaciones
+  productos?: Producto[];
+}
+
+// --- Banners ---
+export interface Banner {
+  id: string;
+  titulo: string | null;
+  subtitulo: string | null;
+  imagen_url: string | null;
+  link: string | null;
+  posicion: "hero" | "catalogo_top" | "popup";
+  activo: boolean;
+  fecha_inicio: string | null;
+  fecha_fin: string | null;
+  orden: number;
 }
 
 // --- Checkout ---

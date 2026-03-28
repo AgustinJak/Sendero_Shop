@@ -1,0 +1,140 @@
+"use client";
+
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useCallback } from "react";
+import type { AvailableFilters } from "@/lib/queries";
+import { slugify } from "@/lib/utils";
+
+interface FilterSidebarProps {
+  filters: AvailableFilters;
+}
+
+export default function FilterSidebar({ filters }: FilterSidebarProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const updateFilter = useCallback(
+    (key: string, value: string | null) => {
+      const params = new URLSearchParams(searchParams.toString());
+      if (value) {
+        params.set(key, value);
+      } else {
+        params.delete(key);
+      }
+      params.delete("page");
+      router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [router, pathname, searchParams]
+  );
+
+  const clearAll = useCallback(() => {
+    router.push(pathname, { scroll: false });
+  }, [router, pathname]);
+
+  const activeCount = Array.from(searchParams.keys()).filter(
+    (k) => k !== "orden" && k !== "page"
+  ).length;
+
+  return (
+    <aside className="space-y-6">
+      {activeCount > 0 && (
+        <button
+          onClick={clearAll}
+          className="text-sm text-ambar hover:text-ambar-light transition-colors"
+        >
+          Limpiar filtros ({activeCount})
+        </button>
+      )}
+
+      {/* Anime */}
+      {filters.animes.length > 0 && (
+        <FilterSection title="Anime">
+          {filters.animes.map((anime) => (
+            <FilterCheckbox
+              key={anime}
+              label={anime}
+              checked={searchParams.get("anime") === slugify(anime)}
+              onChange={(checked) =>
+                updateFilter("anime", checked ? slugify(anime) : null)
+              }
+            />
+          ))}
+        </FilterSection>
+      )}
+
+      {/* Personaje */}
+      {filters.personajes.length > 0 && (
+        <FilterSection title="Personaje">
+          {filters.personajes.map((personaje) => (
+            <FilterCheckbox
+              key={personaje}
+              label={personaje}
+              checked={searchParams.get("personaje") === slugify(personaje)}
+              onChange={(checked) =>
+                updateFilter("personaje", checked ? slugify(personaje) : null)
+              }
+            />
+          ))}
+        </FilterSection>
+      )}
+
+      {/* Tamaño */}
+      {filters.tamanos.length > 0 && (
+        <FilterSection title="Tamaño">
+          {filters.tamanos.map((tamano) => (
+            <FilterCheckbox
+              key={tamano}
+              label={tamano}
+              checked={searchParams.get("tamano") === tamano}
+              onChange={(checked) =>
+                updateFilter("tamano", checked ? tamano : null)
+              }
+            />
+          ))}
+        </FilterSection>
+      )}
+    </aside>
+  );
+}
+
+function FilterSection({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-3">
+        {title}
+      </h3>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function FilterCheckbox({
+  label,
+  checked,
+  onChange,
+}: {
+  label: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center gap-2 cursor-pointer group">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="w-4 h-4 rounded border-lavanda/30 bg-navy-deep text-purpura focus:ring-purpura/50 accent-purpura"
+      />
+      <span className="text-sm text-lavanda-light group-hover:text-niebla transition-colors">
+        {label}
+      </span>
+    </label>
+  );
+}

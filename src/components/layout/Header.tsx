@@ -24,7 +24,7 @@ export default function Header() {
           {/* Nav Desktop */}
           <div className="hidden md:flex items-center gap-8">
             <Link
-              href="/productos"
+              href="/catalogo"
               className="text-lavanda-light hover:text-niebla transition-colors"
             >
               Catálogo
@@ -138,7 +138,7 @@ export default function Header() {
             >
               <div className="flex flex-col gap-4 py-4">
                 <Link
-                  href="/productos"
+                  href="/catalogo"
                   className="text-lavanda-light hover:text-niebla transition-colors"
                   onClick={() => setMenuOpen(false)}
                 >

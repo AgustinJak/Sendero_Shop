@@ -60,3 +60,5 @@ Desktop.ini
 
 # Claude Code config (local)
 .claude/settings.local.json
+
+.vercel
