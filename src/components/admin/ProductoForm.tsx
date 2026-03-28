@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Producto, Categoria } from "@/types";
 import { slugify } from "@/lib/utils";
+import dynamic from "next/dynamic";
+
+const RichTextEditor = dynamic(() => import("./RichTextEditor"), { ssr: false });
 
 export interface ProductoFormData {
   nombre: string;
@@ -155,11 +158,9 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
       {/* Descripción */}
       <div>
         <label className="block text-sm text-lavanda/60 mb-1">Descripción</label>
-        <textarea
-          value={form.descripcion}
-          onChange={(e) => updateField("descripcion", e.target.value)}
-          rows={4}
-          className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura resize-none"
+        <RichTextEditor
+          content={form.descripcion}
+          onChange={(html) => updateField("descripcion", html)}
         />
       </div>
 

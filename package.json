@@ -11,6 +11,11 @@
   "dependencies": {
     "@supabase/ssr": "^0.9.0",
     "@supabase/supabase-js": "^2.100.1",
+    "@tiptap/extension-link": "^3.21.0",
+    "@tiptap/extension-underline": "^3.21.0",
+    "@tiptap/pm": "^3.21.0",
+    "@tiptap/react": "^3.21.0",
+    "@tiptap/starter-kit": "^3.21.0",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "mercadopago": "^2.12.0",
