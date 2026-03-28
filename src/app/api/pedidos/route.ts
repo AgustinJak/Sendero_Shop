@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
+import { sendEmail } from "@/lib/email/send";
+import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
 
 export async function POST(req: NextRequest) {
   try {
@@ -86,6 +88,48 @@ export async function POST(req: NextRequest) {
       // Rollback: delete the pedido
       await supabase.from("pedidos").delete().eq("id", pedido.id);
       return NextResponse.json({ error: "Error al crear los items del pedido" }, { status: 500 });
+    }
+
+    // Send emails (non-blocking)
+    const fullPedido = {
+      ...body,
+      id: pedido.id,
+      numero_pedido: pedido.numero_pedido,
+      estado: "pendiente_pago" as const,
+      nombre_cliente: datos_personales.nombre_completo,
+      dni: datos_personales.dni,
+      email: datos_personales.email,
+      telefono: datos_personales.telefono,
+      direccion_envio,
+      metodo_envio,
+      costo_envio: costoEnvio,
+      metodo_pago,
+      recargo_mp: recargoMP,
+      subtotal,
+      total,
+      mp_preference_id: null,
+      mp_payment_id: null,
+      tracking_code: null,
+      tracking_url: null,
+      notas: null,
+      cancelado_at: null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      items: pedidoItems.map((pi: Record<string, unknown>, i: number) => ({
+        ...pi,
+        id: `temp-${i}`,
+        opciones_seleccionadas: items[i].opciones,
+      })),
+    };
+
+    // Email al cliente
+    const clientEmail = pedidoConfirmadoEmail(fullPedido);
+    sendEmail({ to: datos_personales.email, ...clientEmail });
+
+    // Email al admin
+    if (process.env.GMAIL_USER) {
+      const adminEmail = nuevoPedidoAdminEmail(fullPedido);
+      sendEmail({ to: process.env.GMAIL_USER, ...adminEmail });
     }
 
     return NextResponse.json({

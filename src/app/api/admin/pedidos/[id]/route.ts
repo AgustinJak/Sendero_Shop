@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { sendEmail } from "@/lib/email/send";
+import { pagoRecibidoEmail, pedidoEnviadoEmail } from "@/lib/email/templates";
+import type { Pedido } from "@/types";
 
 export async function PATCH(
   req: NextRequest,
@@ -37,6 +40,26 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  // Send transactional emails on state changes
+  if (updates.estado === "pago_confirmado" || updates.estado === "enviado") {
+    const { data: pedido } = await serviceClient
+      .from("pedidos")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (pedido) {
+      const p = pedido as Pedido;
+      if (updates.estado === "pago_confirmado") {
+        const email = pagoRecibidoEmail(p);
+        sendEmail({ to: p.email, ...email });
+      } else if (updates.estado === "enviado") {
+        const email = pedidoEnviadoEmail(p);
+        sendEmail({ to: p.email, ...email });
+      }
+    }
   }
 
   return NextResponse.json({ ok: true });
