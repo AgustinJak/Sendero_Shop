@@ -129,10 +129,15 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
         body: fd,
       });
 
+      const data = await res.json();
       if (res.ok) {
-        const { url } = await res.json();
-        setForm((f) => ({ ...f, imagen_cover: url }));
+        setForm((f) => ({ ...f, imagen_cover: data.url }));
+        router.refresh();
+      } else {
+        alert(`Error al subir imagen: ${data.error || res.statusText}`);
       }
+    } catch (err) {
+      alert(`Error: ${err instanceof Error ? err.message : "desconocido"}`);
     } finally {
       setUploadingCover(false);
       e.target.value = "";
