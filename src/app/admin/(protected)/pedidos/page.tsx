@@ -10,6 +10,7 @@ const ESTADO_LABELS: Record<EstadoPedido, string> = {
   en_produccion: "En producción",
   impreso: "Impreso",
   enviado: "Enviado",
+  esperando_retiro: "Esperando retiro",
   entregado: "Entregado",
   cancelado: "Cancelado",
 };
@@ -20,6 +21,7 @@ const ESTADO_COLORS: Record<EstadoPedido, string> = {
   en_produccion: "text-blue-400 bg-blue-400/10",
   impreso: "text-purple-400 bg-purple-400/10",
   enviado: "text-cyan-400 bg-cyan-400/10",
+  esperando_retiro: "text-orange-400 bg-orange-400/10",
   entregado: "text-emerald-400 bg-emerald-400/10",
   cancelado: "text-red-400 bg-red-400/10",
 };

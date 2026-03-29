@@ -1,8 +1,13 @@
 "use client";
 
-import type { EstadoPedido } from "@/types";
+import type { EstadoPedido, MetodoEnvio } from "@/types";
 
-const STEPS: { key: EstadoPedido; label: string }[] = [
+interface TimelineStep {
+  key: EstadoPedido;
+  label: string;
+}
+
+const STEPS_ENVIO: TimelineStep[] = [
   { key: "pendiente_pago", label: "Pendiente de pago" },
   { key: "pago_confirmado", label: "Pago confirmado" },
   { key: "en_produccion", label: "En producción" },
@@ -11,17 +16,30 @@ const STEPS: { key: EstadoPedido; label: string }[] = [
   { key: "entregado", label: "Entregado" },
 ];
 
-const STATE_ORDER: Record<EstadoPedido, number> = {
-  pendiente_pago: 0,
-  pago_confirmado: 1,
-  en_produccion: 2,
-  impreso: 3,
-  enviado: 4,
-  entregado: 5,
-  cancelado: -1,
-};
+const STEPS_RETIRO: TimelineStep[] = [
+  { key: "pendiente_pago", label: "Pendiente de pago" },
+  { key: "pago_confirmado", label: "Pago confirmado" },
+  { key: "en_produccion", label: "En producción" },
+  { key: "impreso", label: "Impreso" },
+  { key: "esperando_retiro", label: "Esperando retiro" },
+  { key: "entregado", label: "Retirado" },
+];
 
-export default function OrderTimeline({ estado }: { estado: EstadoPedido }) {
+function getStateOrder(steps: TimelineStep[]): Record<string, number> {
+  const order: Record<string, number> = { cancelado: -1 };
+  steps.forEach((s, i) => {
+    order[s.key] = i;
+  });
+  return order;
+}
+
+export default function OrderTimeline({
+  estado,
+  metodoEnvio,
+}: {
+  estado: EstadoPedido;
+  metodoEnvio?: MetodoEnvio;
+}) {
   if (estado === "cancelado") {
     return (
       <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 rounded-xl p-4">
@@ -38,7 +56,10 @@ export default function OrderTimeline({ estado }: { estado: EstadoPedido }) {
     );
   }
 
-  const currentIndex = STATE_ORDER[estado];
+  const isRetiro = metodoEnvio === "retiro";
+  const STEPS = isRetiro ? STEPS_RETIRO : STEPS_ENVIO;
+  const STATE_ORDER = getStateOrder(STEPS);
+  const currentIndex = STATE_ORDER[estado] ?? 0;
 
   return (
     <div className="space-y-0">

@@ -14,6 +14,7 @@ const ESTADO_LABELS: Record<EstadoPedido, string> = {
   en_produccion: "En producción",
   impreso: "Impreso",
   enviado: "Enviado",
+  esperando_retiro: "Esperando retiro",
   entregado: "Entregado",
   cancelado: "Cancelado",
 };

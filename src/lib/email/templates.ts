@@ -337,6 +337,60 @@ export function pedidoEnviadoEmail(pedido: Pedido): {
 }
 
 // ==========================================
+// Email: Pedido listo para retirar (al cliente)
+// ==========================================
+export function pedidoListoRetiroEmail(pedido: Pedido): {
+  subject: string;
+  html: string;
+} {
+  const content = `
+    <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">Tu pedido está listo para retirar</h2>
+    <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
+      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, tu pedido ya está listo y te esperamos para que lo retires.
+    </p>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
+      <tr>
+        <td style="padding:16px;text-align:center;">
+          <p style="margin:0;color:${COLORS.lavanda};font-size:12px;text-transform:uppercase;letter-spacing:1px;">Pedido</p>
+          <p style="margin:4px 0 0;color:${COLORS.ambar};font-size:24px;font-weight:bold;font-family:monospace;">${pedido.numero_pedido}</p>
+        </td>
+      </tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;margin-bottom:16px;">
+      <tr>
+        <td style="padding:16px;">
+          <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Punto de retiro</p>
+          <p style="margin:0;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Villa Crespo, CABA</p>
+          <p style="margin:8px 0 0;color:${COLORS.lavanda};font-size:13px;">
+            Coordiná el horario de retiro por WhatsApp para que te esperemos.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin:0;text-align:center;">
+      <a href="https://wa.me/5491125502785?text=${encodeURIComponent(`Hola! Quiero coordinar el retiro del pedido ${pedido.numero_pedido}`)}"
+         style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
+        Coordinar retiro por WhatsApp
+      </a>
+    </p>
+
+    ${verPedidoButton(pedido.id)}
+
+    <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+    </p>
+  `;
+
+  return {
+    subject: `Tu pedido ${pedido.numero_pedido} está listo para retirar — Sendero Shop`,
+    html: baseLayout(content),
+  };
+}
+
+// ==========================================
 // Email: Pedido cancelado (al cliente)
 // ==========================================
 export function pedidoCanceladoEmail(

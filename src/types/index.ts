@@ -107,6 +107,7 @@ export type EstadoPedido =
   | "en_produccion"
   | "impreso"
   | "enviado"
+  | "esperando_retiro"
   | "entregado"
   | "cancelado";
 

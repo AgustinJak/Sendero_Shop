@@ -10,6 +10,7 @@ const ESTADO_LABELS: Record<EstadoPedido, string> = {
   en_produccion: "En producción",
   impreso: "Impreso",
   enviado: "Enviado",
+  esperando_retiro: "Esperando retiro",
   entregado: "Entregado",
   cancelado: "Cancelado",
 };
@@ -20,19 +21,35 @@ const ESTADO_COLORS: Record<EstadoPedido, string> = {
   en_produccion: "text-blue-400 bg-blue-400/10 border-blue-400/20",
   impreso: "text-purple-400 bg-purple-400/10 border-purple-400/20",
   enviado: "text-cyan-400 bg-cyan-400/10 border-cyan-400/20",
+  esperando_retiro: "text-orange-400 bg-orange-400/10 border-orange-400/20",
   entregado: "text-emerald-400 bg-emerald-400/10 border-emerald-400/20",
   cancelado: "text-red-400 bg-red-400/10 border-red-400/20",
 };
 
-const TRANSITIONS: Record<EstadoPedido, EstadoPedido[]> = {
+// Transiciones base — las de "impreso" se ajustan dinámicamente según método de envío
+const BASE_TRANSITIONS: Record<EstadoPedido, EstadoPedido[]> = {
   pendiente_pago: ["pago_confirmado", "cancelado"],
   pago_confirmado: ["en_produccion", "cancelado"],
   en_produccion: ["impreso", "cancelado"],
-  impreso: ["enviado"],
+  impreso: ["enviado", "esperando_retiro"], // se filtra en runtime
   enviado: ["entregado"],
+  esperando_retiro: ["entregado"],
   entregado: [],
   cancelado: [],
 };
+
+function getTransitions(pedido: Pedido): EstadoPedido[] {
+  const transitions = BASE_TRANSITIONS[pedido.estado] || [];
+  if (pedido.estado === "impreso") {
+    // Retiro en persona → solo "esperando_retiro", envío → solo "enviado"
+    if (pedido.metodo_envio === "retiro") {
+      return transitions.filter((t) => t !== "enviado");
+    } else {
+      return transitions.filter((t) => t !== "esperando_retiro");
+    }
+  }
+  return transitions;
+}
 
 export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const router = useRouter();
@@ -40,7 +57,7 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const [trackingCode, setTrackingCode] = useState(pedido.tracking_code || "");
   const [notas, setNotas] = useState(pedido.notas || "");
 
-  const possibleTransitions = TRANSITIONS[pedido.estado] || [];
+  const possibleTransitions = getTransitions(pedido);
 
   async function updatePedido(updates: Record<string, unknown>) {
     setLoading(true);
