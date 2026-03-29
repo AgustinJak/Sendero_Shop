@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
-import { pagoRecibidoEmail, pedidoEnviadoEmail, pedidoListoRetiroEmail, pedidoCanceladoEmail } from "@/lib/email/templates";
+import { pagoRecibidoEmail, pedidoEnviadoEmail, pedidoListoRetiroEmail, pedidoEntregadoEmail, pedidoCanceladoEmail } from "@/lib/email/templates";
 import type { Pedido } from "@/types";
 
 export async function PATCH(
@@ -45,7 +45,7 @@ export async function PATCH(
     }
 
     // Send transactional emails on state changes
-    const emailStates = ["pago_confirmado", "enviado", "esperando_retiro", "cancelado"];
+    const emailStates = ["pago_confirmado", "enviado", "esperando_retiro", "entregado", "cancelado"];
     if (emailStates.includes(updates.estado as string)) {
       const { data: pedido } = await serviceClient
         .from("pedidos")
@@ -63,6 +63,9 @@ export async function PATCH(
           await sendEmail({ to: p.email, ...email });
         } else if (updates.estado === "esperando_retiro") {
           const email = pedidoListoRetiroEmail(p);
+          await sendEmail({ to: p.email, ...email });
+        } else if (updates.estado === "entregado") {
+          const email = pedidoEntregadoEmail(p);
           await sendEmail({ to: p.email, ...email });
         } else if (updates.estado === "cancelado") {
           const motivo = body.motivo_cancelacion || undefined;

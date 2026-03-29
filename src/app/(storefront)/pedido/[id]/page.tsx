@@ -30,6 +30,19 @@ export default async function PedidoPage({ params }: Props) {
 
   const p = pedido as Pedido & { items: PedidoItem[] };
 
+  // Load product slugs for review links
+  const productSlugs: Record<string, string> = {};
+  if (p.estado === "entregado" && p.items?.length) {
+    const productIds = p.items.map((i) => i.producto_id);
+    const { data: productos } = await supabase
+      .from("productos")
+      .select("id, slug")
+      .in("id", productIds);
+    productos?.forEach((prod: { id: string; slug: string }) => {
+      productSlugs[prod.id] = prod.slug;
+    });
+  }
+
   // Load bank config for transfers
   const { data: config } = await supabase.from("configuracion").select("*");
   const cfg: Record<string, string> = {};
@@ -181,6 +194,34 @@ export default async function PedidoPage({ params }: Props) {
           <p className="text-lavanda/60">Pago: {metodoPagoLabel}</p>
         </div>
       </div>
+
+      {/* Review CTA — solo para pedidos entregados */}
+      {p.estado === "entregado" && p.items && p.items.length > 0 && (
+        <div className="bg-purpura/10 border border-purpura/20 rounded-xl p-6 text-center space-y-3">
+          <div className="text-2xl">⭐</div>
+          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+            ¿Qué te pareció tu compra?
+          </h2>
+          <p className="text-sm text-lavanda-light">
+            Tu opinión nos ayuda a mejorar y ayuda a otros compradores. Dejá una reseña en los productos que recibiste.
+          </p>
+          <div className="flex flex-wrap justify-center gap-2 pt-1">
+            {p.items.map((item) => {
+              const slug = productSlugs[item.producto_id];
+              if (!slug) return null;
+              return (
+                <Link
+                  key={item.id}
+                  href={`/producto/${slug}`}
+                  className="px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-sm font-medium rounded-lg transition-colors"
+                >
+                  Reseñar &quot;{item.nombre_producto}&quot;
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="text-center space-y-4">
