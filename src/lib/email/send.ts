@@ -5,11 +5,13 @@ export async function sendEmail({
   subject,
   html,
   from,
+  replyTo,
 }: {
   to: string;
   subject: string;
   html: string;
   from?: string;
+  replyTo?: string;
 }): Promise<boolean> {
   if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
     console.log(`[Email] Skipped (no SMTP config): ${subject} → ${to}`);
@@ -22,6 +24,7 @@ export async function sendEmail({
       to,
       subject,
       html,
+      ...(replyTo && { replyTo }),
     });
     console.log(`[Email] Sent: ${subject} → ${to}`);
     return true;
