@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: "/admin/productos", label: "Productos", icon: ProductosIcon },
   { href: "/admin/categorias", label: "Categorías", icon: CategoriasIcon },
   { href: "/admin/colecciones", label: "Colecciones", icon: ColeccionesIcon },
+  { href: "/admin/reviews", label: "Reseñas", icon: ReviewsIcon },
   { href: "/admin/banners", label: "Banners", icon: BannersIcon },
   { href: "/admin/config", label: "Configuración", icon: ConfigIcon },
 ];
@@ -170,6 +171,14 @@ function ColeccionesIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
       <path strokeLinecap="round" strokeLinejoin="round" d="M6 6.878V6a2.25 2.25 0 0 1 2.25-2.25h7.5A2.25 2.25 0 0 1 18 6v.878m-12 0c.235-.083.487-.128.75-.128h10.5c.263 0 .515.045.75.128m-12 0A2.25 2.25 0 0 0 3.75 9v.878m0 0c.235-.083.487-.128.75-.128h15c.263 0 .515.045.75.128M3.75 9.878A2.25 2.25 0 0 0 2.25 12v6a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18v-6a2.25 2.25 0 0 0-2.25-2.25H4.5c-.263 0-.515.045-.75.128Z" />
+    </svg>
+  );
+}
+
+function ReviewsIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z" />
     </svg>
   );
 }

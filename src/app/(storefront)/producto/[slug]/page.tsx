@@ -4,6 +4,8 @@ import { cache } from "react";
 import { getProductoBySlug } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
 import ProductDetail from "@/components/productos/ProductDetail";
+import ReviewList from "@/components/reviews/ReviewList";
+import { createServiceRoleClient } from "@/lib/supabase-server";
 
 const getProducto = cache(async (slug: string) => {
   return getProductoBySlug(slug);
@@ -59,6 +61,20 @@ export default async function ProductoPage({ params }: Props) {
 
   const imagen = producto.imagenes?.sort((a, b) => a.orden - b.orden)[0];
 
+  // Fetch approved reviews for JSON-LD aggregateRating
+  const supabase = await createServiceRoleClient();
+  const { data: reviewsData } = await supabase
+    .from("reviews")
+    .select("rating")
+    .eq("producto_id", producto.id)
+    .eq("aprobado", true);
+
+  const reviewCount = reviewsData?.length || 0;
+  const avgRating =
+    reviewCount > 0
+      ? reviewsData!.reduce((acc: number, r: { rating: number }) => acc + r.rating, 0) / reviewCount
+      : 0;
+
   // JSON-LD Structured Data — Product
   const jsonLd = {
     "@context": "https://schema.org",
@@ -76,6 +92,17 @@ export default async function ProductoPage({ params }: Props) {
       availability: "https://schema.org/InStock",
       seller: { "@type": "Organization", name: "Sendero Shop" },
     },
+    ...(reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avgRating.toFixed(1),
+            reviewCount,
+            bestRating: 5,
+            worstRating: 1,
+          },
+        }
+      : {}),
   };
 
   // JSON-LD — BreadcrumbList
@@ -128,6 +155,9 @@ export default async function ProductoPage({ params }: Props) {
       </nav>
 
       <ProductDetail producto={producto} />
+
+      {/* Reviews */}
+      <ReviewList productoId={producto.id} />
 
       {/* JSON-LD */}
       <script

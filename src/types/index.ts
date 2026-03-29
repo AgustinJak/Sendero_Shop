@@ -214,6 +214,21 @@ export interface Banner {
   orden: number;
 }
 
+// --- Reviews ---
+export interface Review {
+  id: string;
+  producto_id: string;
+  pedido_id: string | null;
+  nombre_cliente: string;
+  email: string;
+  rating: number;
+  comentario: string | null;
+  aprobado: boolean;
+  created_at: string;
+  // Relaciones (join)
+  producto?: { nombre: string; slug: string };
+}
+
 // --- Checkout ---
 export interface DatosPersonales {
   nombre_completo: string;
