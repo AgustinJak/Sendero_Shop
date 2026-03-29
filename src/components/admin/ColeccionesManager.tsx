@@ -393,20 +393,23 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
                 </div>
               )}
               {editing ? (
-                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
-                  uploadingCover
-                    ? "bg-lavanda/10 text-lavanda/40"
-                    : "bg-purpura/10 border border-purpura/30 text-purpura hover:bg-purpura/20"
-                }`}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleCoverUpload}
-                    disabled={uploadingCover}
-                    className="hidden"
-                  />
-                  {uploadingCover ? "Subiendo..." : "Subir imagen"}
-                </label>
+                <div className="space-y-1">
+                  <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                    uploadingCover
+                      ? "bg-lavanda/10 text-lavanda/40"
+                      : "bg-purpura/10 border border-purpura/30 text-purpura hover:bg-purpura/20"
+                  }`}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleCoverUpload}
+                      disabled={uploadingCover}
+                      className="hidden"
+                    />
+                    {uploadingCover ? "Subiendo..." : "Subir imagen"}
+                  </label>
+                  <p className="text-xs text-lavanda/30">Recomendado: 800 x 500 px</p>
+                </div>
               ) : (
                 <p className="text-xs text-lavanda/40">
                   Guardá la colección primero para subir una imagen.
