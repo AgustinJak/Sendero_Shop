@@ -15,6 +15,7 @@ interface ColeccionRow {
   activa: boolean;
   orden: number;
   coleccion_productos: { producto_id: string }[];
+  _auto_count: number | null;
 }
 
 interface ProductoOption {
@@ -182,7 +183,7 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
                 )}
               </div>
               <p className="text-sm text-lavanda/50 mt-1">
-                /{col.slug} · {col.coleccion_productos.length} productos
+                /{col.slug} · {col.tipo === "automatica" && col._auto_count !== null ? col._auto_count : col.coleccion_productos.length} productos
               </p>
             </div>
             <div className="flex gap-2">
