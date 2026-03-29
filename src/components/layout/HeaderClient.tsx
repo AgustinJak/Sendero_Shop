@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import HornetDropdown from "@/components/animations/HornetDropdown";
 import CartBadge from "@/components/carrito/CartBadge";
@@ -12,7 +13,24 @@ interface HeaderClientProps {
 }
 
 export default function HeaderClient({ categorias }: HeaderClientProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (!q) return;
+    router.push(`/catalogo?q=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+    setSearchQuery("");
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-navy-deep/95 backdrop-blur-sm border-b border-lavanda/10">
@@ -57,6 +75,7 @@ export default function HeaderClient({ categorias }: HeaderClientProps) {
             {/* Buscador */}
             <button
               aria-label="Buscar"
+              onClick={() => setSearchOpen(true)}
               className="text-lavanda-light hover:text-niebla transition-colors"
             >
               <svg
@@ -175,6 +194,66 @@ export default function HeaderClient({ categorias }: HeaderClientProps) {
           )}
         </AnimatePresence>
       </nav>
+
+      {/* Search overlay */}
+      <AnimatePresence>
+        {searchOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="fixed inset-0 z-[60] bg-navy-deep/95 backdrop-blur-md flex items-start justify-center pt-24 px-4"
+            onClick={() => setSearchOpen(false)}
+          >
+            <motion.form
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              onSubmit={handleSearch}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-lg"
+            >
+              <div className="relative">
+                <svg
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-lavanda/50"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
+                </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Buscar productos..."
+                  className="w-full pl-12 pr-12 py-4 bg-navy border border-lavanda/20 rounded-xl text-lg text-niebla placeholder:text-lavanda/40 focus:outline-none focus:border-purpura"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSearchOpen(false)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-lavanda/50 hover:text-niebla transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-center text-xs text-lavanda/40 mt-3">
+                Presioná Enter para buscar
+              </p>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }
