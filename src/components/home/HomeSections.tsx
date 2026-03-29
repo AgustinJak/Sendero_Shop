@@ -2,7 +2,76 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
-import type { Categoria } from "@/types";
+import Image from "next/image";
+import type { Categoria, Coleccion } from "@/types";
+
+/* ── Colecciones con banner/imagen ── */
+
+export function CollectionsSection({ colecciones }: { colecciones: Coleccion[] }) {
+  const items = colecciones.slice(0, 3);
+
+  if (items.length === 0) return null;
+
+  return (
+    <section className="py-16 px-4 max-w-7xl mx-auto">
+      <motion.h2
+        className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla mb-8 text-center"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        Colecciones
+      </motion.h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
+        {items.map((col, i) => (
+          <motion.div
+            key={col.id}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.4, delay: i * 0.1 }}
+            whileHover={{ scale: 1.02 }}
+          >
+            <Link
+              href={`/coleccion/${col.slug}`}
+              className="block relative group rounded-xl overflow-hidden border border-lavanda/10 hover:border-purpura/40 transition-all"
+            >
+              <div className="aspect-[16/10] relative bg-navy-deep">
+                {col.imagen_cover ? (
+                  <Image
+                    src={col.imagen_cover}
+                    alt={col.nombre}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-purpura/20 via-navy-deep to-navy" />
+                )}
+                {/* Overlay gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/90 via-navy-deep/30 to-transparent" />
+                {/* Content */}
+                <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
+                  <h3 className="font-[family-name:var(--font-cinzel)] text-lg sm:text-xl font-bold text-niebla group-hover:text-ambar transition-colors">
+                    {col.nombre}
+                  </h3>
+                  {col.descripcion && (
+                    <p className="text-xs sm:text-sm text-lavanda-light/70 mt-1 line-clamp-2">
+                      {col.descripcion}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </Link>
+          </motion.div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/* ── Categorías ── */
 
 export function CategoriesSection({ categorias }: { categorias: Categoria[] }) {
   const items = categorias.length > 0 ? categorias : [];
@@ -10,7 +79,7 @@ export function CategoriesSection({ categorias }: { categorias: Categoria[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="py-16 px-4 max-w-7xl mx-auto">
+    <section className="pb-16 px-4 max-w-7xl mx-auto">
       <motion.h2
         className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla mb-8 text-center"
         initial={{ opacity: 0, y: 20 }}

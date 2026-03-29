@@ -12,6 +12,7 @@ interface ColeccionRow {
   regla: Record<string, string> | null;
   meta_title: string | null;
   meta_description: string | null;
+  imagen_cover: string | null;
   activa: boolean;
   orden: number;
   coleccion_productos: { producto_id: string }[];
@@ -39,6 +40,7 @@ const EMPTY_FORM = {
   regla_tamano: "",
   meta_title: "",
   meta_description: "",
+  imagen_cover: "" as string,
   activa: true,
   orden: 0,
   producto_ids: [] as string[],
@@ -49,6 +51,7 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
   const [editing, setEditing] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [form, setForm] = useState(EMPTY_FORM);
 
   function toSlug(str: string) {
@@ -77,6 +80,7 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
       regla_tamano: col.regla?.tamano || "",
       meta_title: col.meta_title || "",
       meta_description: col.meta_description || "",
+      imagen_cover: col.imagen_cover || "",
       activa: col.activa,
       orden: col.orden,
       producto_ids: col.coleccion_productos.map((cp) => cp.producto_id),
@@ -103,10 +107,36 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
       regla,
       meta_title: form.meta_title || null,
       meta_description: form.meta_description || null,
+      imagen_cover: form.imagen_cover || null,
       activa: form.activa,
       orden: form.orden,
       producto_ids: form.tipo === "manual" ? form.producto_ids : [],
     };
+  }
+
+  async function handleCoverUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !editing) return;
+
+    setUploadingCover(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("coleccion_id", editing);
+
+      const res = await fetch("/api/admin/colecciones/cover", {
+        method: "POST",
+        body: fd,
+      });
+
+      if (res.ok) {
+        const { url } = await res.json();
+        setForm((f) => ({ ...f, imagen_cover: url }));
+      }
+    } finally {
+      setUploadingCover(false);
+      e.target.value = "";
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -342,6 +372,47 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
                 </div>
               </div>
             )}
+
+            {/* Cover image */}
+            <div>
+              <label className="block text-xs text-lavanda/60 mb-1">Imagen de portada</label>
+              {form.imagen_cover && (
+                <div className="relative mb-2 rounded-lg overflow-hidden">
+                  <img
+                    src={form.imagen_cover}
+                    alt="Cover"
+                    className="w-full h-32 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, imagen_cover: "" })}
+                    className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 text-white text-xs px-2 py-1 rounded transition-colors"
+                  >
+                    Quitar
+                  </button>
+                </div>
+              )}
+              {editing ? (
+                <label className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
+                  uploadingCover
+                    ? "bg-lavanda/10 text-lavanda/40"
+                    : "bg-purpura/10 border border-purpura/30 text-purpura hover:bg-purpura/20"
+                }`}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleCoverUpload}
+                    disabled={uploadingCover}
+                    className="hidden"
+                  />
+                  {uploadingCover ? "Subiendo..." : "Subir imagen"}
+                </label>
+              ) : (
+                <p className="text-xs text-lavanda/40">
+                  Guardá la colección primero para subir una imagen.
+                </p>
+              )}
+            </div>
 
             {/* SEO */}
             <div className="grid grid-cols-2 gap-4">

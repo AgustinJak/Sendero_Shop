@@ -1,15 +1,16 @@
-import { getBanners, getProductosDestacados, getCategorias } from "@/lib/queries";
+import { getBanners, getProductosDestacados, getCategorias, getColecciones } from "@/lib/queries";
 import HeroBanners from "@/components/home/HeroBanners";
 import HomeHero from "@/components/home/HomeHero";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
-import { CategoriesSection, WhatsAppCTA } from "@/components/home/HomeSections";
+import { CategoriesSection, CollectionsSection, WhatsAppCTA } from "@/components/home/HomeSections";
 
 export default async function Home() {
-  const [heroBanners, destacados, categorias] = await Promise.all([
+  const [heroBanners, destacados, categorias, colecciones] = await Promise.all([
     getBanners("hero"),
     getProductosDestacados(8),
     getCategorias(),
+    getColecciones(),
   ]);
 
   return (
@@ -39,7 +40,8 @@ export default async function Home() {
         </section>
       )}
 
-      {/* Categorías */}
+      {/* Colecciones + Categorías */}
+      <CollectionsSection colecciones={colecciones} />
       <CategoriesSection categorias={categorias} />
 
       {/* CTA WhatsApp */}
