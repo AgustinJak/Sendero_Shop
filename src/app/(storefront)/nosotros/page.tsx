@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Nosotros",
   description:
-    "Conoce a Sendero Shop: figuras y accesorios impresos en 3D con dedicación artesanal. Producción a pedido desde Buenos Aires.",
+    "Conoce a Sendero Shop: figuras y accesorios impresos en 3D. Producción a pedido desde Buenos Aires.",
   alternates: { canonical: "https://sendero3d.com/nosotros" },
 };
 
@@ -19,7 +19,7 @@ export default function NosotrosPage() {
           <strong className="text-niebla">Sendero Shop</strong> nace de la
           pasión por la impresión 3D y la cultura geek. Desde Buenos Aires,
           diseñamos y fabricamos figuras, katanas, accesorios y piezas
-          decorativas con dedicación artesanal.
+          decorativas.
         </p>
 
         <p>
@@ -48,7 +48,7 @@ export default function NosotrosPage() {
               {
                 step: "03",
                 title: "Acabado",
-                desc: "Lijado, pintura y acabado final para un resultado premium.",
+                desc: "Aplicamos el acabado final para un resultado premium.",
               },
             ].map((item) => (
               <div key={item.step} className="text-center">

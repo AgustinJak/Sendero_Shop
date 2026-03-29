@@ -35,7 +35,7 @@ export default function TerminosPage() {
           <p>
             Los precios están expresados en pesos argentinos (ARS) e incluyen IVA cuando corresponda.
             Sendero Shop se reserva el derecho de modificar precios sin previo aviso. Los medios de
-            pago aceptados son: MercadoPago, transferencia bancaria y efectivo (solo retiro en persona).
+            pago aceptados son: MercadoPago, Tarjeta de Debito/Creadito, transferencia bancaria y efectivo (solo retiro en persona).
           </p>
         </Section>
 
@@ -60,7 +60,7 @@ export default function TerminosPage() {
           <p>
             Por la naturaleza artesanal de los productos impresos en 3D, no se aceptan devoluciones
             por arrepentimiento salvo lo dispuesto por la Ley 24.240 de Defensa del Consumidor. En
-            caso de productos defectuosos o dañados durante el envío, contactar dentro de las 48h
+            caso de productos defectuosos o dañados durante el envío, contactar dentro de las 24h
             de recibido con fotos del producto.
           </p>
         </Section>
