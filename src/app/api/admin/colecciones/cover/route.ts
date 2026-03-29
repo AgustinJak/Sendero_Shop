@@ -16,14 +16,13 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createServiceRoleClient();
 
-  // Upload to storage
+  // Upload to storage — use "productos" bucket (same as product images)
   const ext = file.name.split(".").pop() || "jpg";
   const fileName = `colecciones/${coleccionId}-${Date.now()}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error: uploadError } = await supabase.storage
-    .from("imagenes")
-    .upload(fileName, buffer, {
+    .from("productos")
+    .upload(fileName, file, {
       contentType: file.type,
       upsert: true,
     });
@@ -33,7 +32,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: urlData } = supabase.storage
-    .from("imagenes")
+    .from("productos")
     .getPublicUrl(fileName);
 
   // Update collection with cover URL
