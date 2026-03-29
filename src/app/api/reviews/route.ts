@@ -39,6 +39,25 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createServiceRoleClient();
 
+  // Verificar que el email tenga un pedido entregado con este producto
+  const { data: pedidosEntregados } = await supabase
+    .from("pedidos")
+    .select("id, items:pedido_items(producto_id)")
+    .eq("email", email)
+    .eq("estado", "entregado");
+
+  const tieneCompra = pedidosEntregados?.some((pedido) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (pedido.items as any[])?.some((item: { producto_id: string }) => item.producto_id === producto_id)
+  );
+
+  if (!tieneCompra) {
+    return NextResponse.json(
+      { error: "Solo clientes que recibieron este producto pueden dejar una reseña." },
+      { status: 403 }
+    );
+  }
+
   // Verificar que no tenga ya un review para este producto con el mismo email
   const { data: existing } = await supabase
     .from("reviews")
@@ -51,9 +70,15 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Ya dejaste una reseña para este producto" }, { status: 409 });
   }
 
+  // Buscar el pedido_id correspondiente
+  const pedidoMatch = pedidosEntregados?.find((pedido) =>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (pedido.items as any[])?.some((item: { producto_id: string }) => item.producto_id === producto_id)
+  );
+
   const { error } = await supabase.from("reviews").insert({
     producto_id,
-    pedido_id: pedido_id || null,
+    pedido_id: pedidoMatch?.id || null,
     nombre_cliente,
     email,
     rating: Number(rating),

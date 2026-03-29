@@ -12,7 +12,7 @@ export default function ReviewForm({ productoId }: ReviewFormProps) {
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
   const [comentario, setComentario] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error" | "duplicate">("idle");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error" | "duplicate" | "no_compra">("idle");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -36,6 +36,11 @@ export default function ReviewForm({ productoId }: ReviewFormProps) {
           comentario: comentario || null,
         }),
       });
+
+      if (res.status === 403) {
+        setStatus("no_compra");
+        return;
+      }
 
       if (res.status === 409) {
         setStatus("duplicate");
@@ -80,6 +85,23 @@ export default function ReviewForm({ productoId }: ReviewFormProps) {
         <p className="text-sm text-lavanda-light">
           Solo se permite una reseña por producto.
         </p>
+      </div>
+    );
+  }
+
+  if (status === "no_compra") {
+    return (
+      <div className="bg-ambar/10 border border-ambar/20 rounded-xl p-6 text-center">
+        <p className="text-ambar font-semibold mb-1">No encontramos una compra con ese email</p>
+        <p className="text-sm text-lavanda-light">
+          Solo clientes que recibieron este producto pueden dejar una reseña. Asegurate de usar el mismo email con el que hiciste tu pedido.
+        </p>
+        <button
+          onClick={() => setStatus("idle")}
+          className="mt-3 text-xs text-purpura hover:text-purpura/80 transition-colors"
+        >
+          Intentar con otro email
+        </button>
       </div>
     );
   }
