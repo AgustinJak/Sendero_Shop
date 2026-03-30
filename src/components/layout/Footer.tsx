@@ -17,7 +17,7 @@ export default function Footer() {
             {/* Redes sociales */}
             <div className="flex gap-4 mt-4">
               <a
-                href="https://instagram.com"
+                href="https://www.instagram.com/sendero.3d/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram"
@@ -28,7 +28,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="https://tiktok.com"
+                href="https://www.tiktok.com/@aguspiun"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok"
