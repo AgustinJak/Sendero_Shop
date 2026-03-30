@@ -27,20 +27,29 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+  const path = request.nextUrl.pathname;
+  const isAdminPage = path.startsWith("/admin");
+  const isLoginPage = path === "/admin/login";
+  const isAdminApi = path.startsWith("/api/admin");
 
-  if (isAdminRoute && !isLoginPage && !user) {
+  // Protect admin pages
+  if (isAdminPage && !isLoginPage && !user) {
     return NextResponse.redirect(new URL("/admin/login", request.url));
   }
 
+  // Redirect logged-in users away from login
   if (isLoginPage && user) {
     return NextResponse.redirect(new URL("/admin", request.url));
+  }
+
+  // Protect admin API routes
+  if (isAdminApi && !user) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/admin/:path*"],
+  matcher: ["/admin/:path*", "/api/admin/:path*"],
 };
