@@ -36,34 +36,36 @@ export async function POST(req: NextRequest) {
     }
 
     // Build MP preference items
-    const items = pedido.items.map((item: {
+    const items: { id: string; title: string; quantity: number; unit_price: number; currency_id: string }[] = pedido.items.map((item: {
       nombre_producto: string;
       cantidad: number;
       precio_unitario: number;
-      subtotal: number;
     }) => ({
-      title: item.nombre_producto,
-      quantity: item.cantidad,
-      unit_price: item.precio_unitario,
+      id: pedido_id,
+      title: item.nombre_producto.slice(0, 256),
+      quantity: Number(item.cantidad),
+      unit_price: Number(item.precio_unitario),
       currency_id: "ARS",
     }));
 
     // Add shipping as item if > 0
-    if (pedido.costo_envio > 0) {
+    if (Number(pedido.costo_envio) > 0) {
       items.push({
+        id: "envio",
         title: "Costo de envío",
         quantity: 1,
-        unit_price: pedido.costo_envio,
+        unit_price: Number(pedido.costo_envio),
         currency_id: "ARS",
       });
     }
 
     // Add MP surcharge as item if > 0
-    if (pedido.recargo_mp > 0) {
+    if (Number(pedido.recargo_mp) > 0) {
       items.push({
+        id: "recargo-mp",
         title: "Recargo MercadoPago",
         quantity: 1,
-        unit_price: pedido.recargo_mp,
+        unit_price: Number(pedido.recargo_mp),
         currency_id: "ARS",
       });
     }
@@ -100,7 +102,8 @@ export async function POST(req: NextRequest) {
       preference_id: result.id,
     });
   } catch (err) {
-    console.error("MP create-preference error:", err);
-    return NextResponse.json({ error: "Error al crear preferencia de pago" }, { status: 500 });
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("MP create-preference error:", message, err);
+    return NextResponse.json({ error: `Error al crear preferencia de pago: ${message}` }, { status: 500 });
   }
 }
