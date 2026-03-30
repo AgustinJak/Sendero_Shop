@@ -101,9 +101,10 @@ export async function POST(req: NextRequest) {
       init_point: result.init_point,
       preference_id: result.id,
     });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error("MP create-preference error:", message, err);
-    return NextResponse.json({ error: `Error al crear preferencia de pago: ${message}` }, { status: 500 });
+  } catch (err: unknown) {
+    const errObj = err as Record<string, unknown>;
+    const message = errObj?.message || errObj?.cause || JSON.stringify(err);
+    console.error("MP create-preference error:", JSON.stringify(err, null, 2));
+    return NextResponse.json({ error: `Error MP: ${message}` }, { status: 500 });
   }
 }
