@@ -282,7 +282,6 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
               {([
                 { value: "retiro" as MetodoEnvio, label: "Retiro en persona", desc: "Villa Crespo, CABA — Gratis" },
                 { value: "correo_argentino" as MetodoEnvio, label: "Correo Argentino", desc: "3-7 días hábiles" },
-                { value: "andreani" as MetodoEnvio, label: "Andreani", desc: "2-5 días hábiles" },
               ]).map((opt) => (
                 <label
                   key={opt.value}
