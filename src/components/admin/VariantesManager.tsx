@@ -398,10 +398,11 @@ export default function VariantesManager({ productoId, grupos: initialGrupos, pr
               </p>
 
               {reglas.map((regla, ri) => {
-                // Get grupo of opcion_key to filter cuando options to other groups
-                const opcionInfo = allOpciones.find((o) => o.key === regla.opcion_key);
-                const filteredCuando = allOpciones.filter(
-                  (o) => o.key !== regla.opcion_key && (!opcionInfo || o.grupoNombre !== opcionInfo.grupoNombre)
+                // "cuando" = la condición (ej: Tamaño: 95cm)
+                const cuandoInfo = allOpciones.find((o) => o.key === regla.cuando_opcion_key);
+                // "entonces" = opciones de OTROS grupos (ej: Funda: Con funda)
+                const opcionesEntonces = allOpciones.filter(
+                  (o) => !cuandoInfo || o.grupoNombre !== cuandoInfo.grupoNombre
                 );
 
                 return (
@@ -410,7 +411,15 @@ export default function VariantesManager({ productoId, grupos: initialGrupos, pr
                       <span className="text-lavanda/50 whitespace-nowrap">Cuando</span>
                       <select
                         value={regla.cuando_opcion_key}
-                        onChange={(e) => updateRegla(ri, "cuando_opcion_key", e.target.value)}
+                        onChange={(e) => {
+                          updateRegla(ri, "cuando_opcion_key", e.target.value);
+                          // Reset opcion_key si pertenece al mismo grupo que la nueva condición
+                          const newCuando = allOpciones.find((o) => o.key === e.target.value);
+                          const currentOpcion = allOpciones.find((o) => o.key === regla.opcion_key);
+                          if (newCuando && currentOpcion && newCuando.grupoNombre === currentOpcion.grupoNombre) {
+                            updateRegla(ri, "opcion_key", "");
+                          }
+                        }}
                         className="flex-1 px-2 py-1.5 bg-navy border border-lavanda/15 rounded-lg text-xs text-lavanda-light focus:outline-none focus:border-purpura"
                       >
                         <option value="">Seleccionar condición...</option>
@@ -429,7 +438,7 @@ export default function VariantesManager({ productoId, grupos: initialGrupos, pr
                         className="flex-1 px-2 py-1.5 bg-navy border border-lavanda/15 rounded-lg text-xs text-lavanda-light focus:outline-none focus:border-purpura"
                       >
                         <option value="">Seleccionar opción...</option>
-                        {filteredCuando.map((o) => (
+                        {opcionesEntonces.map((o) => (
                           <option key={o.key} value={o.key}>
                             {o.label}
                           </option>
