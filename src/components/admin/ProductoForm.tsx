@@ -84,13 +84,26 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     onFormChange?.(form);
   }, [form, onFormChange]);
 
+  const [skuSeq, setSkuSeq] = useState<number | null>(null);
+
+  // Fetch next SKU sequence number on mount (only for new products)
+  useEffect(() => {
+    if (!producto) {
+      fetch("/api/admin/productos/next-sku")
+        .then((r) => r.json())
+        .then((data) => setSkuSeq(data.next || 1))
+        .catch(() => setSkuSeq(1));
+    }
+  }, [producto]);
+
   // Auto-generate SKU
   function generateSku(nombre: string, linea: string, categoriaId: string): string {
     const cat = flatCategorias.find((c) => c.id === categoriaId);
     const parts = ["SS"];
     if (linea) parts.push(linea.slice(0, 3).toUpperCase().replace(/\s/g, ""));
     if (cat) parts.push(cat.nombre.slice(0, 3).toUpperCase().replace(/\s/g, ""));
-    if (nombre) parts.push(nombre.slice(0, 4).toUpperCase().replace(/\s/g, ""));
+    const seq = skuSeq ?? 1;
+    parts.push(String(seq).padStart(3, "0"));
     return parts.join("-");
   }
 
