@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import type { Producto, Categoria } from "@/types";
-import { slugify } from "@/lib/utils";
+import { slugify, formatPrice } from "@/lib/utils";
 import dynamic from "next/dynamic";
 
 const RichTextEditor = dynamic(() => import("./RichTextEditor"), { ssr: false });
@@ -38,6 +38,16 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // Flatten categorías for select (defined early for use in auto-generation)
+  const flatCategorias: { id: string; nombre: string; depth: number }[] = [];
+  function flattenCats(cats: Categoria[], depth = 0) {
+    for (const cat of cats) {
+      flatCategorias.push({ id: cat.id, nombre: cat.nombre, depth });
+      if (cat.children) flattenCats(cat.children, depth + 1);
+    }
+  }
+  flattenCats(categorias);
+
   const [form, setForm] = useState<ProductoFormData>({
     nombre: producto?.nombre || "",
     slug: producto?.slug || "",
@@ -57,14 +67,68 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     meta_description: producto?.meta_description || "",
   });
 
+  // Track which fields the user has manually edited
+  const [manualEdits, setManualEdits] = useState<Set<string>>(() => {
+    const edits = new Set<string>();
+    // If editing existing product, mark non-empty fields as manually edited
+    if (producto) {
+      if (producto.sku) edits.add("sku");
+      if (producto.meta_title) edits.add("meta_title");
+      if (producto.meta_description) edits.add("meta_description");
+    }
+    return edits;
+  });
+
   // Notify parent of form changes for preview
   useEffect(() => {
     onFormChange?.(form);
   }, [form, onFormChange]);
 
+  // Auto-generate SKU
+  function generateSku(nombre: string, linea: string, categoriaId: string): string {
+    const cat = flatCategorias.find((c) => c.id === categoriaId);
+    const parts = ["SS"];
+    if (linea) parts.push(linea.slice(0, 3).toUpperCase().replace(/\s/g, ""));
+    if (cat) parts.push(cat.nombre.slice(0, 3).toUpperCase().replace(/\s/g, ""));
+    if (nombre) parts.push(nombre.slice(0, 4).toUpperCase().replace(/\s/g, ""));
+    return parts.join("-");
+  }
+
+  // Auto-generate meta title
+  function generateMetaTitle(nombre: string): string {
+    if (!nombre) return "";
+    return `${nombre} — Sendero Shop`;
+  }
+
+  // Auto-generate meta description
+  function generateMetaDesc(nombre: string, linea: string, precio: number): string {
+    if (!nombre) return "";
+    const parts = [nombre];
+    if (linea) parts.push(`de ${linea}`);
+    parts.push("impreso en 3D");
+    if (precio > 0) parts.push(formatPrice(precio));
+    parts.push("Envío a todo Argentina");
+    return parts.join(", ") + ".";
+  }
+
+  // Auto-fill generated fields
+  function autoFill(data: ProductoFormData): ProductoFormData {
+    const updated = { ...data };
+    if (!manualEdits.has("sku")) {
+      updated.sku = generateSku(data.nombre, data.linea, data.categoria_id);
+    }
+    if (!manualEdits.has("meta_title")) {
+      updated.meta_title = generateMetaTitle(data.nombre);
+    }
+    if (!manualEdits.has("meta_description")) {
+      updated.meta_description = generateMetaDesc(data.nombre, data.linea, data.precio);
+    }
+    return updated;
+  }
+
   // Auto-slug from nombre
   function handleNombreChange(nombre: string) {
-    setForm((prev) => ({
+    setForm((prev) => autoFill({
       ...prev,
       nombre,
       slug: producto ? prev.slug : slugify(nombre),
@@ -72,6 +136,20 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
   }
 
   function updateField<K extends keyof ProductoFormData>(key: K, value: ProductoFormData[K]) {
+    setForm((prev) => autoFill({ ...prev, [key]: value }));
+  }
+
+  // For manually editable auto-fields
+  function updateAutoField<K extends keyof ProductoFormData>(key: K, value: ProductoFormData[K]) {
+    setManualEdits((prev) => {
+      const next = new Set(prev);
+      if (value === "" || value === null) {
+        next.delete(key); // empty = go back to auto
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
     setForm((prev) => ({ ...prev, [key]: value }));
   }
 
@@ -111,16 +189,6 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
       setLoading(false);
     }
   }
-
-  // Flatten categorías for select
-  const flatCategorias: { id: string; nombre: string; depth: number }[] = [];
-  function flattenCats(cats: Categoria[], depth = 0) {
-    for (const cat of cats) {
-      flatCategorias.push({ id: cat.id, nombre: cat.nombre, depth });
-      if (cat.children) flattenCats(cat.children, depth + 1);
-    }
-  }
-  flattenCats(categorias);
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 max-w-3xl">
@@ -230,11 +298,14 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
       {/* SKU, Peso, Tiempo producción */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="block text-sm text-lavanda/60 mb-1">SKU</label>
+          <label className="block text-sm text-lavanda/60 mb-1">
+            SKU {!manualEdits.has("sku") && <span className="text-lavanda/30 text-xs">(auto)</span>}
+          </label>
           <input
             type="text"
             value={form.sku}
-            onChange={(e) => updateField("sku", e.target.value)}
+            onChange={(e) => updateAutoField("sku", e.target.value)}
+            placeholder="Se genera automáticamente"
             className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
           />
         </div>
@@ -277,20 +348,26 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
       <div className="space-y-3">
         <h3 className="text-sm font-semibold text-niebla">SEO</h3>
         <div>
-          <label className="block text-sm text-lavanda/60 mb-1">Meta title</label>
+          <label className="block text-sm text-lavanda/60 mb-1">
+            Meta title {!manualEdits.has("meta_title") && <span className="text-lavanda/30 text-xs">(auto)</span>}
+          </label>
           <input
             type="text"
             value={form.meta_title}
-            onChange={(e) => updateField("meta_title", e.target.value)}
+            onChange={(e) => updateAutoField("meta_title", e.target.value)}
+            placeholder="Se genera automáticamente"
             className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
           />
         </div>
         <div>
-          <label className="block text-sm text-lavanda/60 mb-1">Meta description</label>
+          <label className="block text-sm text-lavanda/60 mb-1">
+            Meta description {!manualEdits.has("meta_description") && <span className="text-lavanda/30 text-xs">(auto)</span>}
+          </label>
           <textarea
             value={form.meta_description}
-            onChange={(e) => updateField("meta_description", e.target.value)}
+            onChange={(e) => updateAutoField("meta_description", e.target.value)}
             rows={2}
+            placeholder="Se genera automáticamente"
             className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura resize-none"
           />
         </div>
