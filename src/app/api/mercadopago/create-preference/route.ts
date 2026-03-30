@@ -70,17 +70,22 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://sendero3d.com";
+    const siteUrl = "https://sendero3d.com";
+
+    const backUrls = {
+      success: `${siteUrl}/pedido/${pedido_id}?pago=aprobado`,
+      failure: `${siteUrl}/pedido/${pedido_id}?pago=rechazado`,
+      pending: `${siteUrl}/pedido/${pedido_id}?pago=pendiente`,
+    };
+
+    console.log("MP preference backUrls:", JSON.stringify(backUrls));
+    console.log("MP preference items:", JSON.stringify(items));
 
     const preference = new Preference(client);
     const result = await preference.create({
       body: {
         items,
-        back_urls: {
-          success: `${siteUrl}/pedido/${pedido_id}?pago=aprobado`,
-          failure: `${siteUrl}/pedido/${pedido_id}?pago=rechazado`,
-          pending: `${siteUrl}/pedido/${pedido_id}?pago=pendiente`,
-        },
+        back_urls: backUrls,
         auto_return: "approved",
         external_reference: pedido_id,
         notification_url: `${siteUrl}/api/mercadopago/webhook`,
