@@ -6,6 +6,7 @@ import { formatPrice, whatsappLink } from "@/lib/utils";
 import type { Pedido, PedidoItem } from "@/types";
 import OrderTimeline from "@/components/pedido/OrderTimeline";
 import CancelOrderButton from "@/components/pedido/CancelOrderButton";
+import MercadoPagoButton from "@/components/pedido/MercadoPagoButton";
 
 export const metadata: Metadata = {
   title: "Mi pedido",
@@ -84,6 +85,23 @@ export default async function PedidoPage({ params }: Props) {
         </h2>
         <OrderTimeline estado={p.estado} metodoEnvio={p.metodo_envio} />
       </div>
+
+      {/* MercadoPago payment block */}
+      {p.metodo_pago === "mercadopago" && p.estado === "pendiente_pago" && (
+        <div className="bg-[#009ee3]/10 border border-[#009ee3]/20 rounded-xl p-6 space-y-3">
+          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+            Completá tu pago
+          </h2>
+          <p className="text-sm text-lavanda-light">
+            Tu pedido está reservado. Hacé clic en el botón para pagar con MercadoPago.
+          </p>
+          <div className="flex justify-between text-sm">
+            <span className="text-lavanda/60">Monto a pagar</span>
+            <span className="text-[#009ee3] font-bold text-lg">{formatPrice(p.total)}</span>
+          </div>
+          <MercadoPagoButton pedidoId={p.id} />
+        </div>
+      )}
 
       {/* Transfer payment block */}
       {esTransferencia && p.estado === "pendiente_pago" && (

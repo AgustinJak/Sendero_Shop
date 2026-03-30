@@ -155,6 +155,39 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
         return;
       }
 
+      // If MercadoPago, redirect to MP checkout
+      if (metodoPago === "mercadopago") {
+        const mpRes = await fetch("/api/mercadopago/create-preference", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pedido_id: result.id }),
+        });
+
+        const mpData = await mpRes.json();
+
+        if (!mpRes.ok || !mpData.init_point) {
+          setError("Error al conectar con MercadoPago. Podés reintentar desde tu pedido.");
+          clearCart();
+          router.push(`/pedido/${result.id}`);
+          return;
+        }
+
+        trackPurchase({
+          id: result.id,
+          total,
+          shipping: costoEnvio,
+          items: cart.items.map((i) => ({
+            id: i.producto_id,
+            name: i.nombre,
+            price: i.precio_unitario,
+            quantity: i.cantidad,
+          })),
+        });
+        clearCart();
+        window.location.href = mpData.init_point;
+        return;
+      }
+
       trackPurchase({
         id: result.id,
         total,
