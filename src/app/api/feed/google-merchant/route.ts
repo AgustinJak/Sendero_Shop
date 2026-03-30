@@ -13,7 +13,7 @@ export async function GET() {
     .select(
       `
       id, nombre, slug, descripcion, precio, precio_oferta, sku,
-      peso_gr, activo, stock_tipo,
+      peso_gr, activo, stock_tipo, tiempo_produccion,
       categoria:categorias(nombre),
       imagenes:producto_imagenes(url, orden)
     `
@@ -55,6 +55,7 @@ export async function GET() {
       <g:image_link>${escapeXml(images[0].url)}</g:image_link>
 ${additionalImages}
       <g:availability>${p.stock_tipo === "print-on-demand" ? "preorder" : "in_stock"}</g:availability>
+${p.stock_tipo === "print-on-demand" ? `      <g:availability_date>${getAvailabilityDate(p.tiempo_produccion)}</g:availability_date>` : ""}
       <g:price>${p.precio} ARS</g:price>
 ${salePrice ? `      <g:sale_price>${salePrice} ARS</g:sale_price>` : ""}
       <g:brand>Sendero 3D</g:brand>
@@ -84,6 +85,12 @@ ${items}
       "Cache-Control": "public, max-age=3600, s-maxage=3600",
     },
   });
+}
+
+function getAvailabilityDate(dias: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + (dias || 7));
+  return date.toISOString().split("T")[0] + "T00:00-03:00";
 }
 
 function escapeXml(str: string): string {
