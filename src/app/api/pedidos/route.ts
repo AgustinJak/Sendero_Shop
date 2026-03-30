@@ -2,9 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
+import { rateLimitByIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
   try {
+    const { ok } = rateLimitByIp(req, "pedidos", { limit: 5, windowMs: 60_000 });
+    if (!ok) {
+      return NextResponse.json({ error: "Demasiadas solicitudes. Intentá en un minuto." }, { status: 429 });
+    }
+
     const body = await req.json();
     const {
       datos_personales,

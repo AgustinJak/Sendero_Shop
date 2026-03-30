@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function CancelOrderButton({ pedidoId }: { pedidoId: string }) {
+export default function CancelOrderButton({ pedidoId, email }: { pedidoId: string; email: string }) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -16,6 +16,8 @@ export default function CancelOrderButton({ pedidoId }: { pedidoId: string }) {
     try {
       const res = await fetch(`/api/pedidos/${pedidoId}/cancel`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
 
       if (!res.ok) {

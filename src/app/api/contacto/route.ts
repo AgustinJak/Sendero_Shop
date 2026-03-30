@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send";
 import { FROM_AYUDA } from "@/lib/email/transporter";
+import { rateLimitByIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
+  const { ok } = rateLimitByIp(req, "contacto", { limit: 3, windowMs: 60_000 });
+  if (!ok) {
+    return NextResponse.json({ error: "Demasiados mensajes. Intentá en un minuto." }, { status: 429 });
+  }
+
   const { nombre, email, mensaje } = await req.json();
 
   if (!nombre || !email || !mensaje) {

@@ -252,7 +252,7 @@ export default async function PedidoPage({ params }: Props) {
 
         {puedeCancelar && (
           <div className="pt-2">
-            <CancelOrderButton pedidoId={p.id} />
+            <CancelOrderButton pedidoId={p.id} email={p.email} />
           </div>
         )}
 
