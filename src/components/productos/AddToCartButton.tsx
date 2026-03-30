@@ -25,7 +25,7 @@ export default function AddToCartButton({
   const faltanVariantes = gruposRequeridos > 0 && gruposSeleccionados < gruposRequeridos;
 
   function handleAdd() {
-    const imagen = producto.imagenes?.sort((a, b) => a.orden - b.orden)[0];
+    const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
     addItem({
       producto_id: producto.id,

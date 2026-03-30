@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     producto.meta_description ||
     `${producto.nombre}${producto.linea ? ` de ${producto.linea}` : ""}, impreso en 3D. ${formatPrice(producto.precio)}. Envío a todo Argentina.`;
-  const imagen = producto.imagenes?.sort((a, b) => a.orden - b.orden)[0];
+  const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
   return {
     title,
@@ -59,7 +59,7 @@ export default async function ProductoPage({ params }: Props) {
     notFound();
   }
 
-  const imagen = producto.imagenes?.sort((a, b) => a.orden - b.orden)[0];
+  const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
   // Fetch approved reviews for JSON-LD aggregateRating
   const supabase = await createServiceRoleClient();
@@ -80,7 +80,7 @@ export default async function ProductoPage({ params }: Props) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: producto.nombre,
-    image: producto.imagenes?.map((i) => i.url) || [],
+    image: producto.imagenes?.filter((i) => i.tipo !== "video").map((i) => i.url) || [],
     description: producto.descripcion?.replace(/<[^>]*>/g, "") || "",
     sku: producto.sku || undefined,
     brand: { "@type": "Brand", name: "Sendero 3D" },

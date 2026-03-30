@@ -12,7 +12,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
-  const imagen = producto.imagenes?.sort((a, b) => a.orden - b.orden)[0];
+  const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
   const tieneOferta = producto.precio_oferta && producto.precio_oferta < producto.precio;
 
   return (

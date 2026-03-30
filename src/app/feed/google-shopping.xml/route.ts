@@ -25,7 +25,7 @@ export async function GET() {
       id, nombre, slug, descripcion, precio, precio_oferta,
       sku, linea, tamano, peso_gr, stock_tipo,
       categoria:categorias(nombre),
-      imagenes:producto_imagenes(url, orden)
+      imagenes:producto_imagenes(url, orden, tipo)
     `
     )
     .eq("activo", true)
@@ -33,9 +33,9 @@ export async function GET() {
 
   const items = (productos || [])
     .map((p) => {
-      const imagenes = (p.imagenes as { url: string; orden: number }[] || []).sort(
-        (a, b) => a.orden - b.orden
-      );
+      const imagenes = (p.imagenes as { url: string; orden: number; tipo?: string }[] || [])
+        .filter((i) => i.tipo !== "video")
+        .sort((a, b) => a.orden - b.orden);
       if (imagenes.length === 0) return null;
 
       const precio = p.precio_oferta || p.precio;

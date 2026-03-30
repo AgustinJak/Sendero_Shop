@@ -51,6 +51,7 @@ export interface ProductoImagen {
   url: string;
   orden: number;
   alt_text: string | null;
+  tipo: "imagen" | "video";
 }
 
 // --- Variantes (combinables) ---

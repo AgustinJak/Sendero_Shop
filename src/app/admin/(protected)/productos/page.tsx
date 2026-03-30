@@ -8,7 +8,7 @@ export default async function ProductosAdminPage() {
 
   const { data: productos } = await supabase
     .from("productos")
-    .select("id, nombre, slug, precio, precio_oferta, activo, destacado, linea, categoria:categorias(nombre), imagenes:producto_imagenes(url, orden)")
+    .select("id, nombre, slug, precio, precio_oferta, activo, destacado, linea, categoria:categorias(nombre), imagenes:producto_imagenes(url, orden, tipo)")
     .order("created_at", { ascending: false });
 
   return (
@@ -41,7 +41,8 @@ export default async function ProductosAdminPage() {
               </thead>
               <tbody className="divide-y divide-lavanda/5">
                 {productos.map((prod) => {
-                  const img = (prod.imagenes as { url: string; orden: number }[])
+                  const img = (prod.imagenes as { url: string; orden: number; tipo?: string }[])
+                    ?.filter((i) => i.tipo !== "video")
                     ?.sort((a, b) => a.orden - b.orden)[0];
                   const cat = prod.categoria as unknown as { nombre: string } | null;
                   return (

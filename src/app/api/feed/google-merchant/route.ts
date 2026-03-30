@@ -15,7 +15,7 @@ export async function GET() {
       id, nombre, slug, descripcion, precio, precio_oferta, sku,
       peso_gr, activo, stock_tipo, tiempo_produccion,
       categoria:categorias(nombre),
-      imagenes:producto_imagenes(url, orden)
+      imagenes:producto_imagenes(url, orden, tipo)
     `
     )
     .eq("activo", true)
@@ -27,7 +27,8 @@ export async function GET() {
 
   const items = productos
     .map((p) => {
-      const images = (p.imagenes as { url: string; orden: number }[] || [])
+      const images = (p.imagenes as { url: string; orden: number; tipo?: string }[] || [])
+        .filter((i) => i.tipo !== "video")
         .sort((a, b) => a.orden - b.orden);
       if (images.length === 0) return null;
 
