@@ -317,13 +317,13 @@ export default function VariantesManager({ productoId, grupos: initialGrupos, pr
                   <span className="text-xs text-lavanda/40">+$</span>
                   <input
                     type="number"
-                    value={op.precio_adicional}
+                    value={op.precio_adicional || ""}
                     onChange={(e) =>
                       updateOpcion(
                         gi,
                         oi,
                         "precio_adicional",
-                        Number(e.target.value)
+                        Number(e.target.value) || 0
                       )
                     }
                     min={0}
@@ -447,8 +447,8 @@ export default function VariantesManager({ productoId, grupos: initialGrupos, pr
                       <span className="text-lavanda/50">cuesta +$</span>
                       <input
                         type="number"
-                        value={regla.precio_adicional}
-                        onChange={(e) => updateRegla(ri, "precio_adicional", Number(e.target.value))}
+                        value={regla.precio_adicional || ""}
+                        onChange={(e) => updateRegla(ri, "precio_adicional", Number(e.target.value) || 0)}
                         min={0}
                         step={1}
                         className="w-24 px-2 py-1.5 bg-navy border border-lavanda/15 rounded-lg text-xs text-lavanda-light focus:outline-none focus:border-purpura"

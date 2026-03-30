@@ -249,8 +249,8 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
           <label className="block text-sm text-lavanda/60 mb-1">Precio *</label>
           <input
             type="number"
-            value={form.precio}
-            onChange={(e) => updateField("precio", Number(e.target.value))}
+            value={form.precio || ""}
+            onChange={(e) => updateField("precio", Number(e.target.value) || 0)}
             min={0}
             step={1}
             required
@@ -336,8 +336,8 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
           <label className="block text-sm text-lavanda/60 mb-1">Tiempo producción (días)</label>
           <input
             type="number"
-            value={form.tiempo_produccion}
-            onChange={(e) => updateField("tiempo_produccion", Number(e.target.value))}
+            value={form.tiempo_produccion || ""}
+            onChange={(e) => updateField("tiempo_produccion", Number(e.target.value) || 0)}
             min={1}
             className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
           />
