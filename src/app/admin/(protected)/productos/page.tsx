@@ -1,6 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
+import DeleteProductButton from "@/components/admin/DeleteProductButton";
 
 export default async function ProductosAdminPage() {
   const supabase = await createServiceRoleClient();
@@ -86,12 +87,15 @@ export default async function ProductosAdminPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <Link
-                          href={`/admin/productos/${prod.id}`}
-                          className="text-ambar hover:text-ambar-light text-xs transition-colors"
-                        >
-                          Editar
-                        </Link>
+                        <div className="flex items-center justify-center gap-3">
+                          <Link
+                            href={`/admin/productos/${prod.id}`}
+                            className="text-ambar hover:text-ambar-light text-xs transition-colors"
+                          >
+                            Editar
+                          </Link>
+                          <DeleteProductButton id={prod.id} nombre={prod.nombre} />
+                        </div>
                       </td>
                     </tr>
                   );

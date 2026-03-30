@@ -75,6 +75,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
             grupos={producto.variante_grupos}
             selecciones={selecciones}
             onChange={setSelecciones}
+            precioReglas={producto.precio_reglas}
           />
         )}
 

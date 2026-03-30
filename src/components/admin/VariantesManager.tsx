@@ -2,9 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { VarianteGrupo } from "@/types";
+import type { VarianteGrupo, VariantePrecioRegla } from "@/types";
+import { formatPrice } from "@/lib/utils";
 
 interface OpcionLocal {
+  temp_key: string; // clave única para mapear reglas
   id?: string;
   valor: string;
   precio_adicional: number;
@@ -20,13 +22,31 @@ interface GrupoLocal {
   opciones: OpcionLocal[];
 }
 
+interface ReglaLocal {
+  opcion_key: string;
+  cuando_opcion_key: string;
+  precio_adicional: number;
+}
+
 interface Props {
   productoId: string;
   grupos: VarianteGrupo[];
+  precioReglas?: VariantePrecioRegla[];
 }
 
-function toLocal(grupos: VarianteGrupo[]): GrupoLocal[] {
-  return grupos
+let keyCounter = 0;
+function genKey() {
+  return `k_${Date.now()}_${keyCounter++}`;
+}
+
+// Map real IDs to temp keys for existing data
+function toLocal(
+  grupos: VarianteGrupo[],
+  reglas: VariantePrecioRegla[]
+): { grupos: GrupoLocal[]; reglas: ReglaLocal[]; idToKey: Record<string, string> } {
+  const idToKey: Record<string, string> = {};
+
+  const gruposLocal = grupos
     .sort((a, b) => a.orden - b.orden)
     .map((g) => ({
       id: g.id,
@@ -34,23 +54,51 @@ function toLocal(grupos: VarianteGrupo[]): GrupoLocal[] {
       orden: g.orden,
       opciones: (g.opciones || [])
         .sort((a, b) => a.orden - b.orden)
-        .map((o) => ({
-          id: o.id,
-          valor: o.valor,
-          precio_adicional: o.precio_adicional,
-          imagen_url: o.imagen_url,
-          activo: o.activo,
-          orden: o.orden,
-        })),
+        .map((o) => {
+          const key = genKey();
+          idToKey[o.id] = key;
+          return {
+            temp_key: key,
+            id: o.id,
+            valor: o.valor,
+            precio_adicional: o.precio_adicional,
+            imagen_url: o.imagen_url,
+            activo: o.activo,
+            orden: o.orden,
+          };
+        }),
     }));
+
+  const reglasLocal = reglas
+    .filter((r) => idToKey[r.opcion_id] && idToKey[r.cuando_opcion_id])
+    .map((r) => ({
+      opcion_key: idToKey[r.opcion_id],
+      cuando_opcion_key: idToKey[r.cuando_opcion_id],
+      precio_adicional: Number(r.precio_adicional),
+    }));
+
+  return { grupos: gruposLocal, reglas: reglasLocal, idToKey };
 }
 
-export default function VariantesManager({ productoId, grupos: initialGrupos }: Props) {
+export default function VariantesManager({ productoId, grupos: initialGrupos, precioReglas: initialReglas = [] }: Props) {
   const router = useRouter();
-  const [grupos, setGrupos] = useState<GrupoLocal[]>(toLocal(initialGrupos));
+  const initial = toLocal(initialGrupos, initialReglas);
+  const [grupos, setGrupos] = useState<GrupoLocal[]>(initial.grupos);
+  const [reglas, setReglas] = useState<ReglaLocal[]>(initial.reglas);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [showReglas, setShowReglas] = useState(initial.reglas.length > 0);
+
+  // Flat list of all options for rule dropdowns
+  const allOpciones = grupos.flatMap((g) =>
+    g.opciones.map((o) => ({
+      key: o.temp_key,
+      label: `${g.nombre}: ${o.valor}`,
+      grupoNombre: g.nombre,
+      valor: o.valor,
+    }))
+  );
 
   function addGrupo() {
     setGrupos((prev) => [
@@ -60,6 +108,14 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
   }
 
   function removeGrupo(idx: number) {
+    const grupo = grupos[idx];
+    const opcionKeys = grupo.opciones.map((o) => o.temp_key);
+    // Remove reglas referencing these options
+    setReglas((prev) =>
+      prev.filter(
+        (r) => !opcionKeys.includes(r.opcion_key) && !opcionKeys.includes(r.cuando_opcion_key)
+      )
+    );
     setGrupos((prev) => prev.filter((_, i) => i !== idx));
   }
 
@@ -78,6 +134,7 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
               opciones: [
                 ...g.opciones,
                 {
+                  temp_key: genKey(),
                   valor: "",
                   precio_adicional: 0,
                   imagen_url: null,
@@ -92,6 +149,10 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
   }
 
   function removeOpcion(grupoIdx: number, opIdx: number) {
+    const opKey = grupos[grupoIdx].opciones[opIdx].temp_key;
+    setReglas((prev) =>
+      prev.filter((r) => r.opcion_key !== opKey && r.cuando_opcion_key !== opKey)
+    );
     setGrupos((prev) =>
       prev.map((g, i) =>
         i === grupoIdx
@@ -121,6 +182,24 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
     );
   }
 
+  function addRegla() {
+    if (allOpciones.length < 2) return;
+    setReglas((prev) => [
+      ...prev,
+      { opcion_key: "", cuando_opcion_key: "", precio_adicional: 0 },
+    ]);
+  }
+
+  function updateRegla(idx: number, field: string, value: string | number) {
+    setReglas((prev) =>
+      prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r))
+    );
+  }
+
+  function removeRegla(idx: number) {
+    setReglas((prev) => prev.filter((_, i) => i !== idx));
+  }
+
   async function handleSave() {
     setError("");
     setSuccess(false);
@@ -132,6 +211,7 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
           nombre: g.nombre,
           orden: gi,
           opciones: g.opciones.map((o, oi) => ({
+            temp_key: o.temp_key,
             valor: o.valor,
             precio_adicional: Number(o.precio_adicional) || 0,
             imagen_url: o.imagen_url,
@@ -139,6 +219,13 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
             orden: oi,
           })),
         })),
+        reglas: reglas
+          .filter((r) => r.opcion_key && r.cuando_opcion_key)
+          .map((r) => ({
+            opcion_key: r.opcion_key,
+            cuando_opcion_key: r.cuando_opcion_key,
+            precio_adicional: Number(r.precio_adicional) || 0,
+          })),
       };
 
       const res = await fetch(`/api/admin/productos/${productoId}/variantes`, {
@@ -216,7 +303,7 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
           {/* Options */}
           <div className="space-y-2 ml-2">
             {grupo.opciones.map((op, oi) => (
-              <div key={oi} className="flex items-center gap-2">
+              <div key={op.temp_key} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={op.valor}
@@ -275,6 +362,112 @@ export default function VariantesManager({ productoId, grupos: initialGrupos }: 
           </div>
         </div>
       ))}
+
+      {/* Precio reglas section */}
+      {grupos.length >= 2 && (
+        <div className="border-t border-lavanda/10 pt-4">
+          <div className="flex items-center justify-between mb-3">
+            <button
+              type="button"
+              onClick={() => setShowReglas(!showReglas)}
+              className="text-xs text-lavanda-light hover:text-niebla transition-colors flex items-center gap-1"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={2}
+                stroke="currentColor"
+                className={`w-3 h-3 transition-transform ${showReglas ? "rotate-90" : ""}`}
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+              </svg>
+              Precios condicionales
+              {reglas.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-ambar/10 text-ambar ml-1">
+                  {reglas.length}
+                </span>
+              )}
+            </button>
+          </div>
+
+          {showReglas && (
+            <div className="space-y-3">
+              <p className="text-xs text-lavanda/40">
+                Definí precios distintos para una opción según qué otra opción esté seleccionada. El precio base de la opción se usa cuando no hay regla.
+              </p>
+
+              {reglas.map((regla, ri) => {
+                // Get grupo of opcion_key to filter cuando options to other groups
+                const opcionInfo = allOpciones.find((o) => o.key === regla.opcion_key);
+                const filteredCuando = allOpciones.filter(
+                  (o) => o.key !== regla.opcion_key && (!opcionInfo || o.grupoNombre !== opcionInfo.grupoNombre)
+                );
+
+                return (
+                  <div key={ri} className="bg-navy-deep border border-lavanda/10 rounded-lg p-3 space-y-2">
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-lavanda/50 whitespace-nowrap">Cuando</span>
+                      <select
+                        value={regla.cuando_opcion_key}
+                        onChange={(e) => updateRegla(ri, "cuando_opcion_key", e.target.value)}
+                        className="flex-1 px-2 py-1.5 bg-navy border border-lavanda/15 rounded-lg text-xs text-lavanda-light focus:outline-none focus:border-purpura"
+                      >
+                        <option value="">Seleccionar condición...</option>
+                        {allOpciones.map((o) => (
+                          <option key={o.key} value={o.key}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="text-lavanda/50 whitespace-nowrap">entonces</span>
+                      <select
+                        value={regla.opcion_key}
+                        onChange={(e) => updateRegla(ri, "opcion_key", e.target.value)}
+                        className="flex-1 px-2 py-1.5 bg-navy border border-lavanda/15 rounded-lg text-xs text-lavanda-light focus:outline-none focus:border-purpura"
+                      >
+                        <option value="">Seleccionar opción...</option>
+                        {filteredCuando.map((o) => (
+                          <option key={o.key} value={o.key}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-lavanda/50">cuesta +$</span>
+                      <input
+                        type="number"
+                        value={regla.precio_adicional}
+                        onChange={(e) => updateRegla(ri, "precio_adicional", Number(e.target.value))}
+                        min={0}
+                        step={1}
+                        className="w-24 px-2 py-1.5 bg-navy border border-lavanda/15 rounded-lg text-xs text-lavanda-light focus:outline-none focus:border-purpura"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => removeRegla(ri)}
+                        className="text-red-400/60 hover:text-red-400 transition-colors px-1"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+
+              <button
+                type="button"
+                onClick={addRegla}
+                disabled={allOpciones.length < 2}
+                className="text-xs text-purpura/70 hover:text-purpura transition-colors disabled:opacity-30"
+              >
+                + Agregar regla de precio
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Save button */}
       {grupos.length > 0 && (

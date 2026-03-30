@@ -41,6 +41,7 @@ export interface Producto {
   // Relaciones
   imagenes?: ProductoImagen[];
   variante_grupos?: VarianteGrupo[];
+  precio_reglas?: VariantePrecioRegla[];
   categoria?: Categoria;
 }
 
@@ -70,6 +71,15 @@ export interface VarianteOpcion {
   imagen_url: string | null;
   activo: boolean;
   orden: number;
+}
+
+// --- Reglas de precio condicional ---
+export interface VariantePrecioRegla {
+  id: string;
+  producto_id: string;
+  opcion_id: string;
+  cuando_opcion_id: string;
+  precio_adicional: number;
 }
 
 // Selección del usuario en el carrito

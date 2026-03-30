@@ -127,7 +127,8 @@ export async function getProductoBySlug(
       categoria:categorias(id, nombre, slug),
       variante_grupos(id, producto_id, nombre, orden,
         opciones:variante_opciones(id, grupo_id, valor, precio_adicional, imagen_url, activo, orden)
-      )`
+      ),
+      precio_reglas:variante_precio_reglas(id, producto_id, opcion_id, cuando_opcion_id, precio_adicional)`
     )
     .eq("slug", slug)
     .eq("activo", true)

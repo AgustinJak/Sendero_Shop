@@ -42,6 +42,7 @@ export default function EditarProductoClient({
         <VariantesManager
           productoId={producto.id}
           grupos={producto.variante_grupos || []}
+          precioReglas={producto.precio_reglas || []}
         />
         {formData && (
           <ProductoPreview
