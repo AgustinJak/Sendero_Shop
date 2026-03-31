@@ -70,3 +70,55 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(request))
   );
 });
+
+// ============================================
+// Push Notifications
+// ============================================
+
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+
+  let data;
+  try {
+    data = event.data.json();
+  } catch {
+    data = { title: "Sendero Shop", body: event.data.text() };
+  }
+
+  const options = {
+    body: data.body || "",
+    icon: data.icon || "/icons/icon-192.png",
+    badge: "/icons/icon-192.png",
+    image: data.image || undefined,
+    data: { url: data.url || "/" },
+    vibrate: [200, 100, 200],
+    tag: data.tag || "sendero-notification",
+    renotify: true,
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title || "Sendero Shop", options)
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  const url = event.notification.data?.url || "/";
+
+  event.waitUntil(
+    clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((windowClients) => {
+        // Focus existing tab if open
+        for (const client of windowClients) {
+          if (client.url.includes(self.location.origin) && "focus" in client) {
+            client.navigate(url);
+            return client.focus();
+          }
+        }
+        // Otherwise open new tab
+        return clients.openWindow(url);
+      })
+  );
+});
