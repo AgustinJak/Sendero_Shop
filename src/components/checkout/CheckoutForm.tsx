@@ -122,36 +122,8 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     return null;
   }
 
-  // Mapeo de código postal argentino (CPA letra → provincia)
-  const CP_PROVINCIA: Record<string, string[]> = {
-    C: ["CABA"],
-    B: ["Buenos Aires"],
-    A: ["Salta"],
-    D: ["San Luis"],
-    E: ["Entre Ríos"],
-    F: ["La Rioja"],
-    G: ["Santiago del Estero"],
-    H: ["Chaco"],
-    J: ["San Juan"],
-    K: ["Catamarca"],
-    L: ["La Pampa"],
-    M: ["Mendoza"],
-    N: ["Misiones"],
-    P: ["Formosa"],
-    Q: ["Neuquén"],
-    R: ["Río Negro"],
-    S: ["Santa Fe"],
-    T: ["Tucumán"],
-    U: ["Chubut"],
-    V: ["Tierra del Fuego"],
-    W: ["Corrientes"],
-    X: ["Córdoba"],
-    Y: ["Jujuy"],
-    Z: ["Santa Cruz"],
-  };
-
   // Rangos de CP numérico (4 dígitos) → provincias
-  function provinciaFromCPNumerico(cp: number): string[] {
+  function provinciaFromCP(cp: number): string[] {
     if (cp >= 1000 && cp <= 1499) return ["CABA"];
     if (cp >= 1500 && cp <= 1999) return ["Buenos Aires"];
     if (cp >= 2000 && cp <= 2199) return ["Santa Fe"];
@@ -167,10 +139,8 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     if (cp >= 3700 && cp <= 3799) return ["Chaco", "Corrientes"];
     if (cp >= 4000 && cp <= 4199) return ["Tucumán"];
     if (cp >= 4200 && cp <= 4299) return ["Santiago del Estero"];
-    if (cp >= 4300 && cp <= 4399) return ["Salta"];
-    if (cp >= 4400 && cp <= 4499) return ["Salta"];
-    if (cp >= 4500 && cp <= 4599) return ["Jujuy"];
-    if (cp >= 4600 && cp <= 4699) return ["Jujuy"];
+    if (cp >= 4300 && cp <= 4499) return ["Salta"];
+    if (cp >= 4500 && cp <= 4699) return ["Jujuy"];
     if (cp >= 4700 && cp <= 4799) return ["Catamarca"];
     if (cp >= 5000 && cp <= 5299) return ["Córdoba"];
     if (cp >= 5300 && cp <= 5399) return ["La Rioja"];
@@ -193,33 +163,24 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     if (cp >= 8700 && cp <= 8799) return ["Buenos Aires"];
     if (cp >= 9000 && cp <= 9099) return ["Chubut"];
     if (cp >= 9100 && cp <= 9199) return ["Chubut", "Santa Cruz"];
-    if (cp >= 9200 && cp <= 9299) return ["Santa Cruz"];
-    if (cp >= 9300 && cp <= 9399) return ["Santa Cruz"];
-    if (cp >= 9400 && cp <= 9499) return ["Tierra del Fuego"];
-    if (cp >= 9500 && cp <= 9599) return ["Tierra del Fuego"];
+    if (cp >= 9200 && cp <= 9399) return ["Santa Cruz"];
+    if (cp >= 9400 && cp <= 9599) return ["Tierra del Fuego"];
     return [];
   }
 
   function validarCPvsProvincia(): string | null {
-    const cp = direccion.codigo_postal.trim().toUpperCase();
+    const cp = direccion.codigo_postal.trim();
     const prov = direccion.provincia;
     if (!cp || !prov) return null;
 
-    // CPA format: letra + 4 dígitos + 3 letras (ej: C1425CLA)
-    if (/^[A-Z]\d{4}/.test(cp)) {
-      const letra = cp[0];
-      const provincias = CP_PROVINCIA[letra];
-      if (provincias && !provincias.includes(prov)) {
-        return `El código postal ${cp} no corresponde a ${prov}`;
-      }
-    }
-    // Formato numérico: 4 dígitos
-    else if (/^\d{4}$/.test(cp)) {
-      const num = parseInt(cp, 10);
-      const provincias = provinciaFromCPNumerico(num);
-      if (provincias.length > 0 && !provincias.includes(prov)) {
-        return `El código postal ${cp} no corresponde a ${prov}`;
-      }
+    // Extraer los 4 dígitos del CP (acepta "1425" o "C1425CLA")
+    const match = cp.match(/\d{4}/);
+    if (!match) return null;
+
+    const num = parseInt(match[0], 10);
+    const provincias = provinciaFromCP(num);
+    if (provincias.length > 0 && !provincias.includes(prov)) {
+      return `El código postal ${cp} no corresponde a ${prov}`;
     }
 
     return null;
@@ -489,7 +450,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                     <Input label="Depto (opc.)" value={direccion.departamento} onChange={(v) => setDireccion({ ...direccion, departamento: v })} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <Input label="Código Postal" value={direccion.codigo_postal} onChange={(v) => setDireccion({ ...direccion, codigo_postal: v })} />
+                    <Input label="Código Postal" value={direccion.codigo_postal} onChange={(v) => setDireccion({ ...direccion, codigo_postal: v })} type="tel" placeholder="Ej: 1425" />
                     <AutocompleteInput
                       label="Localidad"
                       value={direccion.localidad}
