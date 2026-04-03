@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCartContext } from "@/components/carrito/CartProvider";
 import { formatPrice, calcularRecargoMP, validarDNI } from "@/lib/utils";
 import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
+import { Turnstile } from "@marsidev/react-turnstile";
 import type {
   CheckoutData,
   DatosPersonales,
@@ -65,6 +66,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
   });
 
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   // Calcular costo de envío
   const zonaSeleccionada = zonas.find((z) =>
@@ -90,11 +92,136 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
   const total = cart.subtotal + costoEnvio + recargoMP;
 
   // Validaciones
+  const ALLOWED_EMAIL_DOMAINS = [
+    "gmail.com", "hotmail.com", "hotmail.com.ar", "outlook.com", "outlook.com.ar",
+    "yahoo.com", "yahoo.com.ar", "live.com", "live.com.ar",
+    "icloud.com", "protonmail.com", "proton.me",
+    "msn.com", "aol.com", "zoho.com",
+  ];
+
+  function validarEmail(email: string): string | null {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed) return "Ingresá tu email";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmed)) return "Email inválido";
+    const domain = trimmed.split("@")[1];
+    if (!ALLOWED_EMAIL_DOMAINS.includes(domain)) {
+      return "Usá un email de Gmail, Hotmail, Outlook o Yahoo";
+    }
+    return null;
+  }
+
   function validarDatos(): string | null {
     if (!datos.nombre_completo.trim()) return "Ingresá tu nombre completo";
+    if (datos.nombre_completo.trim().split(/\s+/).length < 2) return "Ingresá nombre y apellido";
     if (!datos.dni.trim() || !validarDNI(datos.dni)) return "DNI inválido (7-8 dígitos)";
-    if (!datos.email.trim() || !datos.email.includes("@")) return "Email inválido";
+    const emailErr = validarEmail(datos.email);
+    if (emailErr) return emailErr;
     if (!datos.telefono.trim()) return "Ingresá tu teléfono";
+    if (datos.telefono.replace(/\D/g, "").length < 8) return "Teléfono inválido (mínimo 8 dígitos)";
+    return null;
+  }
+
+  // Mapeo de código postal argentino (CPA letra → provincia)
+  const CP_PROVINCIA: Record<string, string[]> = {
+    C: ["CABA"],
+    B: ["Buenos Aires"],
+    A: ["Salta"],
+    D: ["San Luis"],
+    E: ["Entre Ríos"],
+    F: ["La Rioja"],
+    G: ["Santiago del Estero"],
+    H: ["Chaco"],
+    J: ["San Juan"],
+    K: ["Catamarca"],
+    L: ["La Pampa"],
+    M: ["Mendoza"],
+    N: ["Misiones"],
+    P: ["Formosa"],
+    Q: ["Neuquén"],
+    R: ["Río Negro"],
+    S: ["Santa Fe"],
+    T: ["Tucumán"],
+    U: ["Chubut"],
+    V: ["Tierra del Fuego"],
+    W: ["Corrientes"],
+    X: ["Córdoba"],
+    Y: ["Jujuy"],
+    Z: ["Santa Cruz"],
+  };
+
+  // Rangos de CP numérico (4 dígitos) → provincias
+  function provinciaFromCPNumerico(cp: number): string[] {
+    if (cp >= 1000 && cp <= 1499) return ["CABA"];
+    if (cp >= 1500 && cp <= 1999) return ["Buenos Aires"];
+    if (cp >= 2000 && cp <= 2199) return ["Santa Fe"];
+    if (cp >= 2200 && cp <= 2499) return ["Santa Fe", "Córdoba"];
+    if (cp >= 2500 && cp <= 2699) return ["Santa Fe"];
+    if (cp >= 2700 && cp <= 2999) return ["Buenos Aires"];
+    if (cp >= 3000 && cp <= 3199) return ["Entre Ríos", "Santa Fe"];
+    if (cp >= 3200 && cp <= 3299) return ["Entre Ríos"];
+    if (cp >= 3300 && cp <= 3399) return ["Misiones", "Corrientes"];
+    if (cp >= 3400 && cp <= 3499) return ["Corrientes"];
+    if (cp >= 3500 && cp <= 3599) return ["Chaco"];
+    if (cp >= 3600 && cp <= 3699) return ["Formosa"];
+    if (cp >= 3700 && cp <= 3799) return ["Chaco", "Corrientes"];
+    if (cp >= 4000 && cp <= 4199) return ["Tucumán"];
+    if (cp >= 4200 && cp <= 4299) return ["Santiago del Estero"];
+    if (cp >= 4300 && cp <= 4399) return ["Salta"];
+    if (cp >= 4400 && cp <= 4499) return ["Salta"];
+    if (cp >= 4500 && cp <= 4599) return ["Jujuy"];
+    if (cp >= 4600 && cp <= 4699) return ["Jujuy"];
+    if (cp >= 4700 && cp <= 4799) return ["Catamarca"];
+    if (cp >= 5000 && cp <= 5299) return ["Córdoba"];
+    if (cp >= 5300 && cp <= 5399) return ["La Rioja"];
+    if (cp >= 5400 && cp <= 5499) return ["San Juan"];
+    if (cp >= 5500 && cp <= 5699) return ["Mendoza"];
+    if (cp >= 5700 && cp <= 5799) return ["San Luis"];
+    if (cp >= 5800 && cp <= 5899) return ["Córdoba", "San Luis"];
+    if (cp >= 5900 && cp <= 5999) return ["Córdoba"];
+    if (cp >= 6000 && cp <= 6499) return ["Buenos Aires"];
+    if (cp >= 6500 && cp <= 6599) return ["Buenos Aires", "La Pampa"];
+    if (cp >= 6600 && cp <= 6699) return ["La Pampa"];
+    if (cp >= 6700 && cp <= 6799) return ["Buenos Aires"];
+    if (cp >= 7000 && cp <= 7699) return ["Buenos Aires"];
+    if (cp >= 7700 && cp <= 7799) return ["Buenos Aires"];
+    if (cp >= 8000 && cp <= 8199) return ["Buenos Aires"];
+    if (cp >= 8200 && cp <= 8299) return ["Neuquén", "Río Negro"];
+    if (cp >= 8300 && cp <= 8399) return ["Neuquén"];
+    if (cp >= 8400 && cp <= 8499) return ["Río Negro"];
+    if (cp >= 8500 && cp <= 8599) return ["Chubut"];
+    if (cp >= 8700 && cp <= 8799) return ["Buenos Aires"];
+    if (cp >= 9000 && cp <= 9099) return ["Chubut"];
+    if (cp >= 9100 && cp <= 9199) return ["Chubut", "Santa Cruz"];
+    if (cp >= 9200 && cp <= 9299) return ["Santa Cruz"];
+    if (cp >= 9300 && cp <= 9399) return ["Santa Cruz"];
+    if (cp >= 9400 && cp <= 9499) return ["Tierra del Fuego"];
+    if (cp >= 9500 && cp <= 9599) return ["Tierra del Fuego"];
+    return [];
+  }
+
+  function validarCPvsProvincia(): string | null {
+    const cp = direccion.codigo_postal.trim().toUpperCase();
+    const prov = direccion.provincia;
+    if (!cp || !prov) return null;
+
+    // CPA format: letra + 4 dígitos + 3 letras (ej: C1425CLA)
+    if (/^[A-Z]\d{4}/.test(cp)) {
+      const letra = cp[0];
+      const provincias = CP_PROVINCIA[letra];
+      if (provincias && !provincias.includes(prov)) {
+        return `El código postal ${cp} no corresponde a ${prov}`;
+      }
+    }
+    // Formato numérico: 4 dígitos
+    else if (/^\d{4}$/.test(cp)) {
+      const num = parseInt(cp, 10);
+      const provincias = provinciaFromCPNumerico(num);
+      if (provincias.length > 0 && !provincias.includes(prov)) {
+        return `El código postal ${cp} no corresponde a ${prov}`;
+      }
+    }
+
     return null;
   }
 
@@ -106,6 +233,8 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     if (!direccion.localidad.trim()) return "Ingresá la localidad";
     if (!direccion.provincia.trim()) return "Seleccioná la provincia";
     if (!zonaSeleccionada) return "No tenemos envío a esa provincia";
+    const cpErr = validarCPvsProvincia();
+    if (cpErr) return cpErr;
     return null;
   }
 
@@ -129,7 +258,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     setError("");
 
     try {
-      const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number } = {
+      const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number; captchaToken?: string } = {
         datos_personales: datos,
         metodo_envio: metodoEnvio,
         direccion_envio: metodoEnvio === "retiro" ? null : direccion,
@@ -139,6 +268,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
         recargoMP,
         subtotal: cart.subtotal,
         total,
+        ...(captchaToken && { captchaToken }),
       };
 
       const res = await fetch("/api/pedidos", {
@@ -456,9 +586,21 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
               } />
             </div>
 
+            {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+              <div className="flex justify-center">
+                <Turnstile
+                  siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                  onSuccess={(token) => setCaptchaToken(token)}
+                  onError={() => setCaptchaToken(null)}
+                  onExpire={() => setCaptchaToken(null)}
+                  options={{ theme: "dark", size: "normal" }}
+                />
+              </div>
+            )}
+
             <button
               onClick={handleSubmit}
-              disabled={loading}
+              disabled={loading || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
               className="w-full py-3 bg-ambar hover:bg-ambar-light text-navy-deep font-bold rounded-lg transition-colors disabled:opacity-50"
             >
               {loading ? "Procesando..." : `Confirmar pedido — ${formatPrice(total)}`}

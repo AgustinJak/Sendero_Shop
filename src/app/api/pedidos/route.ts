@@ -22,7 +22,29 @@ export async function POST(req: NextRequest) {
       recargoMP,
       subtotal,
       total,
+      captchaToken,
     } = body;
+
+    // Verificar Turnstile CAPTCHA si está configurado
+    if (process.env.TURNSTILE_SECRET_KEY) {
+      if (!captchaToken) {
+        return NextResponse.json({ error: "Completá la verificación de seguridad" }, { status: 400 });
+      }
+
+      const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          secret: process.env.TURNSTILE_SECRET_KEY,
+          response: captchaToken,
+        }),
+      });
+
+      const verifyData = await verifyRes.json();
+      if (!verifyData.success) {
+        return NextResponse.json({ error: "Verificación de seguridad fallida. Recargá e intentá de nuevo." }, { status: 403 });
+      }
+    }
 
     // Validaciones básicas
     if (!datos_personales?.nombre_completo || !datos_personales?.email) {
