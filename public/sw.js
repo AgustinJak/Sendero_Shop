@@ -1,4 +1,4 @@
-const CACHE_NAME = "sendero-v1";
+const CACHE_NAME = "sendero-v2";
 const STATIC_ASSETS = [
   "/",
   "/catalogo",
@@ -35,8 +35,8 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET and external requests
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // API routes: network only
-  if (url.pathname.startsWith("/api/")) return;
+  // API routes and service worker itself: network only
+  if (url.pathname.startsWith("/api/") || url.pathname === "/sw.js") return;
 
   // Static assets (images, fonts, CSS, JS): cache-first
   if (
