@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-export default function manifest(): MetadataRoute.Manifest {
+export default function manifest(): MetadataRoute.Manifest & Record<string, unknown> {
   return {
     name: "Sendero Shop — Figuras y Accesorios 3D",
     short_name: "Sendero Shop",
@@ -12,6 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#6b21a8",
     orientation: "portrait-primary",
     categories: ["shopping", "entertainment"],
+    gcm_sender_id: "103953800507",
     icons: [
       {
         src: "/icons/icon-192.png",

@@ -60,13 +60,20 @@ export default function PushNotificationPrompt() {
 
       let subscription: PushSubscription;
       try {
-        subscription = await reg.pushManager.subscribe({
+        const subscribePromise = reg.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
         });
+        const timeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), 10000)
+        );
+        subscription = await Promise.race([subscribePromise, timeoutPromise]);
       } catch (pushErr) {
         console.error("pushManager.subscribe failed:", pushErr);
-        setError("Error al suscribir. Recargá la página e intentá de nuevo.");
+        const msg = pushErr instanceof Error && pushErr.message === "timeout"
+          ? "Tardó demasiado. Recargá la página e intentá de nuevo."
+          : "Error al suscribir. Recargá la página e intentá de nuevo.";
+        setError(msg);
         setSubscribing(false);
         return;
       }
