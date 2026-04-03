@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useCartContext } from "@/components/carrito/CartProvider";
 import { formatPrice, calcularRecargoMP, validarDNI } from "@/lib/utils";
@@ -473,7 +473,14 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
 
                   <div className="grid grid-cols-3 gap-3">
                     <div className="col-span-2">
-                      <Input label="Calle" value={direccion.calle} onChange={(v) => setDireccion({ ...direccion, calle: v })} />
+                      <AutocompleteInput
+                        label="Calle"
+                        value={direccion.calle}
+                        onChange={(v) => setDireccion({ ...direccion, calle: v })}
+                        provincia={direccion.provincia}
+                        tipo="calles"
+                        placeholder={direccion.provincia ? "Escribí para buscar..." : "Seleccioná provincia primero"}
+                      />
                     </div>
                     <Input label="Número" value={direccion.numero} onChange={(v) => setDireccion({ ...direccion, numero: v })} />
                   </div>
@@ -483,7 +490,14 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <Input label="Código Postal" value={direccion.codigo_postal} onChange={(v) => setDireccion({ ...direccion, codigo_postal: v })} />
-                    <Input label="Localidad" value={direccion.localidad} onChange={(v) => setDireccion({ ...direccion, localidad: v })} />
+                    <AutocompleteInput
+                      label="Localidad"
+                      value={direccion.localidad}
+                      onChange={(v) => setDireccion({ ...direccion, localidad: v })}
+                      provincia={direccion.provincia}
+                      tipo="localidades"
+                      placeholder={direccion.provincia ? "Escribí para buscar..." : "Seleccioná provincia primero"}
+                    />
                   </div>
                 </div>
 
@@ -684,6 +698,139 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     <div className="flex justify-between">
       <span className="text-lavanda/60">{label}</span>
       <span className="text-lavanda-light text-right max-w-[60%]">{value}</span>
+    </div>
+  );
+}
+
+// Mapeo de provincia del form → nombre en API georef
+const PROVINCIA_GEOREF: Record<string, string> = {
+  "CABA": "Ciudad Autónoma de Buenos Aires",
+  "Buenos Aires": "Buenos Aires",
+  "Catamarca": "Catamarca",
+  "Chaco": "Chaco",
+  "Chubut": "Chubut",
+  "Córdoba": "Córdoba",
+  "Corrientes": "Corrientes",
+  "Entre Ríos": "Entre Ríos",
+  "Formosa": "Formosa",
+  "Jujuy": "Jujuy",
+  "La Pampa": "La Pampa",
+  "La Rioja": "La Rioja",
+  "Mendoza": "Mendoza",
+  "Misiones": "Misiones",
+  "Neuquén": "Neuquén",
+  "Río Negro": "Río Negro",
+  "Salta": "Salta",
+  "San Juan": "San Juan",
+  "San Luis": "San Luis",
+  "Santa Cruz": "Santa Cruz",
+  "Santa Fe": "Santa Fe",
+  "Santiago del Estero": "Santiago del Estero",
+  "Tierra del Fuego": "Tierra del Fuego, Antártida e Islas del Atlántico Sur",
+  "Tucumán": "Tucumán",
+};
+
+function useDebounce(value: string, delay: number) {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+}
+
+function AutocompleteInput({
+  label,
+  value,
+  onChange,
+  provincia,
+  tipo,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  provincia: string;
+  tipo: "calles" | "localidades";
+  placeholder?: string;
+}) {
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [open, setOpen] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const debouncedValue = useDebounce(value, 300);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const fetchSuggestions = useCallback(async (query: string, prov: string) => {
+    if (query.length < 2 || !prov) {
+      setSuggestions([]);
+      return;
+    }
+    const provGeoref = PROVINCIA_GEOREF[prov];
+    if (!provGeoref) return;
+
+    try {
+      const params = new URLSearchParams({
+        nombre: query,
+        provincia: provGeoref,
+        max: "6",
+      });
+      const res = await fetch(`https://apis.datos.gob.ar/georef/api/${tipo}?${params}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const items = data[tipo] as { nombre: string }[];
+      const names = [...new Set(items.map((i) => i.nombre))];
+      setSuggestions(names);
+      setOpen(names.length > 0);
+    } catch {
+      setSuggestions([]);
+    }
+  }, [tipo]);
+
+  useEffect(() => {
+    fetchSuggestions(debouncedValue, provincia);
+  }, [debouncedValue, provincia, fetchSuggestions]);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
+  return (
+    <div ref={wrapperRef} className="relative">
+      <label className="block text-xs text-lavanda/60 mb-1">{label}</label>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onFocus={() => { setFocused(true); if (suggestions.length > 0) setOpen(true); }}
+        onBlur={() => setFocused(false)}
+        placeholder={placeholder}
+        autoComplete="off"
+        className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/30 focus:outline-none focus:border-purpura transition-colors"
+      />
+      {open && focused && suggestions.length > 0 && (
+        <ul className="absolute z-50 w-full mt-1 bg-navy-deep border border-lavanda/20 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+          {suggestions.map((s) => (
+            <li
+              key={s}
+              onMouseDown={() => {
+                onChange(s);
+                setOpen(false);
+                setSuggestions([]);
+              }}
+              className="px-4 py-2 text-sm text-lavanda-light hover:bg-purpura/20 hover:text-niebla cursor-pointer transition-colors"
+            >
+              {s}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
