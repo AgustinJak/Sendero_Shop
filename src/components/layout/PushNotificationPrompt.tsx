@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 
-const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!;
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || "";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -18,24 +18,21 @@ function urlBase64ToUint8Array(base64String: string) {
 export default function PushNotificationPrompt() {
   const [show, setShow] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Only show if: browser supports push, SW registered, not already subscribed, not dismissed recently
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) return;
-    if (process.env.NODE_ENV !== "production") return;
+    if (!VAPID_PUBLIC_KEY) return;
 
     const dismissed = localStorage.getItem("push-dismissed");
     if (dismissed) {
       const dismissedAt = parseInt(dismissed, 10);
-      // Don't show again for 7 days
       if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
     }
 
-    // Check if already subscribed
     navigator.serviceWorker.ready.then(async (reg) => {
       const sub = await reg.pushManager.getSubscription();
       if (!sub) {
-        // Small delay so it doesn't appear immediately
         setTimeout(() => setShow(true), 5000);
       }
     });
@@ -43,30 +40,50 @@ export default function PushNotificationPrompt() {
 
   const handleSubscribe = useCallback(async () => {
     setSubscribing(true);
+    setError(null);
+
     try {
       const permission = await Notification.requestPermission();
       if (permission !== "granted") {
         setShow(false);
         localStorage.setItem("push-dismissed", String(Date.now()));
+        setSubscribing(false);
         return;
       }
 
       const reg = await navigator.serviceWorker.ready;
-      const subscription = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
 
-      await fetch("/api/push/subscribe", {
+      let subscription: PushSubscription;
+      try {
+        subscription = await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        });
+      } catch (pushErr) {
+        console.error("pushManager.subscribe failed:", pushErr);
+        setError("Error al suscribir. Recargá la página e intentá de nuevo.");
+        setSubscribing(false);
+        return;
+      }
+
+      const res = await fetch("/api/push/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(subscription.toJSON()),
       });
 
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        console.error("Subscribe API error:", data);
+        setError("Error al guardar la suscripción.");
+        setSubscribing(false);
+        return;
+      }
+
       setShow(false);
     } catch (err) {
       console.error("Push subscription error:", err);
-    } finally {
+      setError("Error inesperado. Recargá la página e intentá de nuevo.");
       setSubscribing(false);
     }
   }, []);
@@ -92,13 +109,16 @@ export default function PushNotificationPrompt() {
             <p className="text-xs text-lavanda/60 mt-0.5">
               Enterate de ofertas, nuevos productos y el estado de tu pedido.
             </p>
+            {error && (
+              <p className="text-xs text-red-400 mt-1">{error}</p>
+            )}
             <div className="flex gap-2 mt-3">
               <button
                 onClick={handleSubscribe}
                 disabled={subscribing}
                 className="px-3 py-1.5 bg-purpura hover:bg-purpura/80 text-niebla text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
               >
-                {subscribing ? "Activando..." : "Activar"}
+                {subscribing ? "Activando..." : error ? "Reintentar" : "Activar"}
               </button>
               <button
                 onClick={handleDismiss}
