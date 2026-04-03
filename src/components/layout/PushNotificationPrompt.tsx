@@ -44,6 +44,11 @@ export default function PushNotificationPrompt() {
 
     try {
       const permission = await Notification.requestPermission();
+      if (permission === "denied") {
+        setError("Las notificaciones están bloqueadas. Hacé clic en el candado de la barra de direcciones y permitilas.");
+        setSubscribing(false);
+        return;
+      }
       if (permission !== "granted") {
         setShow(false);
         localStorage.setItem("push-dismissed", String(Date.now()));
