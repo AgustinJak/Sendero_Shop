@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Inter, Cinzel } from "next/font/google";
 import ServiceWorkerRegister from "@/components/layout/ServiceWorkerRegister";
-import PushNotificationPrompt from "@/components/layout/PushNotificationPrompt";
+// import PushNotificationPrompt from "@/components/layout/PushNotificationPrompt";
 import "./globals.css";
 
 const GTM_ID = process.env.NEXT_PUBLIC_GTM_ID;
@@ -110,7 +110,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         )}
         {children}
         <ServiceWorkerRegister />
-        <PushNotificationPrompt />
+        {/* <PushNotificationPrompt /> */}
       </body>
     </html>
   );

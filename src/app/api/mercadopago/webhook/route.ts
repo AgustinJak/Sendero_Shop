@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
-import { pagoRecibidoEmail } from "@/lib/email/templates";
+import { pagoRecibidoEmail, pagoConfirmadoAdminEmail } from "@/lib/email/templates";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -64,9 +64,17 @@ export async function POST(req: NextRequest) {
             .select("*")
             .eq("pedido_id", pedidoId);
 
-          const fullPedido = { ...pedido, estado: "pago_confirmado" as const, items: items || [] };
+          const fullPedido = { ...pedido, estado: "pago_confirmado" as const, mp_payment_id: String(paymentId), items: items || [] };
+
+          // Email al cliente
           const emailData = pagoRecibidoEmail(fullPedido);
           await sendEmail({ to: pedido.email, ...emailData });
+
+          // Email al admin
+          if (process.env.SMTP_USER) {
+            const adminEmailData = pagoConfirmadoAdminEmail(fullPedido);
+            await sendEmail({ to: process.env.SMTP_USER, ...adminEmailData });
+          }
         } catch (emailErr) {
           console.error("Webhook email error:", emailErr);
         }

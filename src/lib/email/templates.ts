@@ -558,3 +558,62 @@ export function nuevoPedidoAdminEmail(pedido: Pedido & { items: PedidoItem[] }):
     html: baseLayout(content),
   };
 }
+
+// ==========================================
+// Email: Pago confirmado (notificación admin)
+// ==========================================
+export function pagoConfirmadoAdminEmail(pedido: Pedido & { items: PedidoItem[] }): {
+  subject: string;
+  html: string;
+} {
+  const content = `
+    <h2 style="margin:0 0 8px;color:#4ade80;font-size:18px;">Pago confirmado por MercadoPago</h2>
+
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
+      <tr>
+        <td style="padding:16px;">
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;">Pedido</td>
+              <td style="color:${COLORS.ambar};font-size:16px;font-weight:bold;text-align:right;font-family:monospace;">${pedido.numero_pedido}</td>
+            </tr>
+            <tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;padding-top:8px;">Cliente</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:8px;">${pedido.nombre_cliente}</td>
+            </tr>
+            <tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Email</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.email}</td>
+            </tr>
+            <tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Teléfono</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.telefono}</td>
+            </tr>
+            <tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">MP Payment ID</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.mp_payment_id || "—"}</td>
+            </tr>
+            <tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Total</td>
+              <td style="color:#4ade80;font-size:18px;font-weight:bold;text-align:right;padding-top:4px;">${formatPrice(pedido.total)}</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    ${itemsTable(pedido.items)}
+
+    <p style="margin:20px 0 0;text-align:center;">
+      <a href="${SITE_URL}/admin/pedidos"
+         style="display:inline-block;padding:10px 24px;background-color:#4ade80;color:${COLORS.navyDeep};text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
+        Ver pedidos en admin
+      </a>
+    </p>
+  `;
+
+  return {
+    subject: `Pago confirmado — Pedido ${pedido.numero_pedido} — ${formatPrice(pedido.total)}`,
+    html: baseLayout(content),
+  };
+}
