@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { getProductos, getAvailableFilters, getCategoriasTree, getBanners } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
-import FilterSidebar, { MobileFilterToggle } from "@/components/catalogo/FilterSidebar";
+import FilterSidebar, { MobileFilterToggle } from "@/components/catalogo/CatalogFilters";
 import SortSelect from "@/components/catalogo/SortSelect";
 import CatalogBanner from "@/components/home/CatalogBanner";
 
