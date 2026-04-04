@@ -21,7 +21,7 @@ export default function ProductGallery({
   if (sorted.length === 0) {
     return (
       <div className="aspect-square bg-navy-deep rounded-xl border border-lavanda/10 flex items-center justify-center">
-        <span className="text-lavanda/30">Sin imagen</span>
+        <span className="text-lavanda/50">Sin imagen</span>
       </div>
     );
   }

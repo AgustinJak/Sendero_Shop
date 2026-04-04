@@ -131,7 +131,7 @@ export default async function ProductoPage({ params }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumbs */}
-      <nav className="mb-6 text-sm text-lavanda/60">
+      <nav className="mb-6 text-sm text-lavanda/75">
         <a href="/" className="hover:text-niebla transition-colors">
           Inicio
         </a>

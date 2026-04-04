@@ -48,7 +48,7 @@ export default function AddToCartButton({
       disabled={faltanVariantes}
       className={`w-full py-3 px-6 rounded-lg font-semibold text-sm transition-colors relative overflow-hidden ${
         faltanVariantes
-          ? "bg-lavanda/20 text-lavanda/40 cursor-not-allowed"
+          ? "bg-lavanda/20 text-lavanda/60 cursor-not-allowed"
           : added
             ? "bg-green-600 text-white"
             : "bg-purpura hover:bg-purpura/80 text-niebla"

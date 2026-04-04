@@ -161,7 +161,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                           <Link
                             key={sub.slug}
                             href={`/catalogo?categoria=${sub.slug}`}
-                            className="text-sm text-lavanda/60 hover:text-niebla transition-colors"
+                            className="text-sm text-lavanda/75 hover:text-niebla transition-colors"
                             onClick={() => setMenuOpen(false)}
                           >
                             {sub.nombre}
@@ -232,7 +232,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Buscar productos..."
-                  className="w-full pl-12 pr-12 py-4 bg-navy border border-lavanda/20 rounded-xl text-lg text-niebla placeholder:text-lavanda/40 focus:outline-none focus:border-purpura"
+                  className="w-full pl-12 pr-12 py-4 bg-navy border border-lavanda/20 rounded-xl text-lg text-niebla placeholder:text-lavanda/60 focus:outline-none focus:border-purpura"
                 />
                 <button
                   type="button"
@@ -244,7 +244,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                   </svg>
                 </button>
               </div>
-              <p className="text-center text-xs text-lavanda/40 mt-3">
+              <p className="text-center text-xs text-lavanda/60 mt-3">
                 Presioná Enter para buscar
               </p>
             </motion.form>

@@ -36,7 +36,7 @@ export default function ContactoPage() {
               <p className="text-niebla font-semibold group-hover:text-green-400 transition-colors">
                 WhatsApp
               </p>
-              <p className="text-sm text-lavanda/60">
+              <p className="text-sm text-lavanda/75">
                 +54 9 11 2550-2785
               </p>
             </div>
@@ -59,7 +59,7 @@ export default function ContactoPage() {
             <p className="text-sm text-lavanda-light">
               Villa Crespo, CABA, Argentina
             </p>
-            <p className="text-xs text-lavanda/50">
+            <p className="text-xs text-lavanda/70">
               Solo retiro con cita previa coordinada por WhatsApp.
             </p>
           </div>

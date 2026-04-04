@@ -57,7 +57,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
           <h1 className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla">
             Catálogo
           </h1>
-          <p className="text-lavanda/60 text-sm mt-1">
+          <p className="text-lavanda/75 text-sm mt-1">
             {total} {total === 1 ? "producto" : "productos"}
           </p>
         </div>

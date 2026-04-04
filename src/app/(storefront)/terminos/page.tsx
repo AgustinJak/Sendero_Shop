@@ -13,7 +13,7 @@ export default function TerminosPage() {
       </h1>
 
       <div className="prose-sendero space-y-6 text-lavanda-light text-sm leading-relaxed">
-        <p className="text-xs text-lavanda/50">Última actualización: Marzo 2026</p>
+        <p className="text-xs text-lavanda/70">Última actualización: Marzo 2026</p>
 
         <Section title="1. Información general">
           <p>

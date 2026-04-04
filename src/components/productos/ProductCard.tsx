@@ -37,7 +37,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-lavanda/30 text-sm">Sin imagen</span>
+              <span className="text-lavanda/50 text-sm">Sin imagen</span>
             </div>
           )}
 
@@ -56,7 +56,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
 
         <div className="p-4">
           {producto.linea && (
-            <p className="text-xs text-lavanda/60 mb-1 uppercase tracking-wider">
+            <p className="text-xs text-lavanda/75 mb-1 uppercase tracking-wider">
               {producto.linea}
             </p>
           )}
@@ -71,7 +71,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
                 <span className="text-ambar font-bold">
                   {formatPrice(producto.precio_oferta!)}
                 </span>
-                <span className="text-lavanda/50 text-sm line-through">
+                <span className="text-lavanda/70 text-sm line-through">
                   {formatPrice(producto.precio)}
                 </span>
               </>

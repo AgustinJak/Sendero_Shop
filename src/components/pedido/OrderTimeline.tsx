@@ -50,7 +50,7 @@ export default function OrderTimeline({
         </div>
         <div>
           <p className="text-red-400 font-semibold text-sm">Pedido cancelado</p>
-          <p className="text-lavanda/40 text-xs">Este pedido fue cancelado.</p>
+          <p className="text-lavanda/60 text-xs">Este pedido fue cancelado.</p>
         </div>
       </div>
     );
@@ -109,7 +109,7 @@ export default function OrderTimeline({
                     : isCurrent
                     ? "text-ambar"
                     : isPending
-                    ? "text-lavanda/30"
+                    ? "text-lavanda/50"
                     : ""
                 }`}
               >

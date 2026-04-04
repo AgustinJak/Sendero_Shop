@@ -57,13 +57,13 @@ export default function CartDrawer() {
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {!isLoaded ? (
-                <p className="text-lavanda/40 text-center py-8">Cargando...</p>
+                <p className="text-lavanda/60 text-center py-8">Cargando...</p>
               ) : cart.items.length === 0 ? (
                 <div className="text-center py-16">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="w-16 h-16 mx-auto text-lavanda/20 mb-4">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
                   </svg>
-                  <p className="text-lavanda/40">Tu carrito está vacío</p>
+                  <p className="text-lavanda/60">Tu carrito está vacío</p>
                   <button
                     onClick={closeDrawer}
                     className="mt-4 text-sm text-ambar hover:text-ambar-light transition-colors"
@@ -90,7 +90,7 @@ export default function CartDrawer() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-lavanda/20 text-xs">Sin img</span>
+                            <span className="text-lavanda/50 text-xs">Sin img</span>
                           </div>
                         )}
                       </div>
@@ -107,7 +107,7 @@ export default function CartDrawer() {
 
                         {/* Opciones seleccionadas */}
                         {item.opciones.length > 0 && (
-                          <p className="text-xs text-lavanda/50 mt-0.5">
+                          <p className="text-xs text-lavanda/70 mt-0.5">
                             {item.opciones.map(o => `${o.grupo_nombre}: ${o.opcion_valor}`).join(" · ")}
                           </p>
                         )}
@@ -136,7 +136,7 @@ export default function CartDrawer() {
 
                           <button
                             onClick={() => removeItem(item.producto_id, item.opciones)}
-                            className="ml-auto text-lavanda/40 hover:text-red-400 transition-colors"
+                            className="ml-auto text-lavanda/60 hover:text-red-400 transition-colors"
                             aria-label="Eliminar"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -160,7 +160,7 @@ export default function CartDrawer() {
                     {formatPrice(cart.subtotal)}
                   </span>
                 </div>
-                <p className="text-xs text-lavanda/40">
+                <p className="text-xs text-lavanda/60">
                   Envío calculado en el checkout
                 </p>
                 <Link

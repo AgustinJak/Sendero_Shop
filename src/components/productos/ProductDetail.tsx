@@ -48,7 +48,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
       <div className="space-y-6">
         {/* Breadcrumb inline */}
         {producto.linea && (
-          <p className="text-sm text-lavanda/60 uppercase tracking-wider">
+          <p className="text-sm text-lavanda/75 uppercase tracking-wider">
             {producto.linea}
           </p>
         )}
@@ -63,7 +63,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
             {formatPrice(precioFinal)}
           </span>
           {tieneOferta && (
-            <span className="text-lg text-lavanda/50 line-through">
+            <span className="text-lg text-lavanda/70 line-through">
               {formatPrice(producto.precio)}
             </span>
           )}
@@ -137,7 +137,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-lavanda/60">{label}</span>
+      <span className="text-lavanda/75">{label}</span>
       <span className="text-lavanda-light">{value}</span>
     </div>
   );

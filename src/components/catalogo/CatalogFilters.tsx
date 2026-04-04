@@ -212,7 +212,7 @@ function CategoryGroup({
         {hasChildren && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 text-lavanda/40 hover:text-lavanda-light transition-colors cursor-pointer"
+            className="p-1 text-lavanda/60 hover:text-lavanda-light transition-colors cursor-pointer"
             aria-label={expanded ? "Contraer" : "Expandir"}
           >
             <svg
@@ -345,7 +345,7 @@ function SilkDivider() {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[10px] font-semibold text-lavanda/40 uppercase tracking-[0.15em] mb-2 font-[family-name:var(--font-cinzel)]">
+    <h3 className="text-[10px] font-semibold text-lavanda/60 uppercase tracking-[0.15em] mb-2 font-[family-name:var(--font-cinzel)]">
       {children}
     </h3>
   );
@@ -435,7 +435,7 @@ export function MobileFilterToggle({
               </h2>
               <button
                 onClick={handleClose}
-                className="text-lavanda/60 hover:text-niebla transition-colors p-1"
+                className="text-lavanda/75 hover:text-niebla transition-colors p-1"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

@@ -42,7 +42,7 @@ export default function ReviewList({ productoId }: { productoId: string }) {
           {reviews.length > 0 && (
             <div className="flex items-center gap-2 mt-1">
               <StarRating rating={Math.round(avgRating)} size="sm" />
-              <span className="text-sm text-lavanda/60">
+              <span className="text-sm text-lavanda/75">
                 {avgRating.toFixed(1)} ({reviews.length}{" "}
                 {reviews.length === 1 ? "reseña" : "reseñas"})
               </span>
@@ -76,7 +76,7 @@ export default function ReviewList({ productoId }: { productoId: string }) {
         </div>
       ) : reviews.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-lavanda/40 text-sm">
+          <p className="text-lavanda/60 text-sm">
             Todavía no hay reseñas para este producto.
           </p>
           {!showForm && (
@@ -105,7 +105,7 @@ export default function ReviewList({ productoId }: { productoId: string }) {
                     <p className="text-sm font-medium text-niebla">
                       {review.nombre_cliente}
                     </p>
-                    <p className="text-xs text-lavanda/40">
+                    <p className="text-xs text-lavanda/60">
                       {new Date(review.created_at).toLocaleDateString("es-AR", {
                         day: "numeric",
                         month: "long",

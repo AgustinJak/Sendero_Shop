@@ -69,7 +69,7 @@ export default async function ColeccionPage({ params }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumbs */}
-      <nav className="mb-6 text-sm text-lavanda/60">
+      <nav className="mb-6 text-sm text-lavanda/75">
         <a href="/" className="hover:text-niebla transition-colors">
           Inicio
         </a>
@@ -87,7 +87,7 @@ export default async function ColeccionPage({ params }: Props) {
             {coleccion.descripcion}
           </p>
         )}
-        <p className="text-lavanda/60 text-sm mt-2">
+        <p className="text-lavanda/75 text-sm mt-2">
           {coleccion.productos.length}{" "}
           {coleccion.productos.length === 1 ? "producto" : "productos"}
         </p>

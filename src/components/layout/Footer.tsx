@@ -134,7 +134,7 @@ export default function Footer() {
 
         {/* Bottom */}
         <div className="mt-8 pt-8 border-t border-lavanda/10 text-center">
-          <p className="text-xs text-lavanda/60">
+          <p className="text-xs text-lavanda/75">
             © {new Date().getFullYear()} Sendero Shop. Hecho con amor en
             Argentina.
           </p>

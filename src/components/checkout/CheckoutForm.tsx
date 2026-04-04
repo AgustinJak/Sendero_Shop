@@ -301,7 +301,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
   if (itemCount === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-lavanda/60 text-lg">Tu carrito está vacío</p>
+        <p className="text-lavanda/75 text-lg">Tu carrito está vacío</p>
         <a href="/catalogo" className="text-ambar hover:text-ambar-light mt-4 inline-block">
           Ir al catálogo
         </a>
@@ -321,7 +321,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
       {/* Formulario */}
       <div className="lg:col-span-2 space-y-6">
         {/* Steps indicator */}
-        <div className="flex gap-2 text-xs text-lavanda/40">
+        <div className="flex gap-2 text-xs text-lavanda/75">
           {(["datos", "envio", "pago", "resumen"] as Step[]).map((s, i) => (
             <button
               key={s}
@@ -391,7 +391,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                   />
                   <div>
                     <p className="text-sm font-medium text-niebla">{opt.label}</p>
-                    <p className="text-xs text-lavanda/50">{opt.desc}</p>
+                    <p className="text-xs text-lavanda/70">{opt.desc}</p>
                   </div>
                 </label>
               ))}
@@ -492,7 +492,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                 <input type="radio" name="pago" checked={metodoPago === "transferencia"} onChange={() => setMetodoPago("transferencia")} className="accent-purpura" />
                 <div>
                   <p className="text-sm font-medium text-niebla">Transferencia bancaria</p>
-                  <p className="text-xs text-lavanda/50">Sin recargo. 48hs para enviar comprobante.</p>
+                  <p className="text-xs text-lavanda/70">Sin recargo. 48hs para enviar comprobante.</p>
                 </div>
               </label>
 
@@ -504,7 +504,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                 <input type="radio" name="pago" checked={metodoPago === "mercadopago"} onChange={() => setMetodoPago("mercadopago")} className="accent-purpura" />
                 <div>
                   <p className="text-sm font-medium text-niebla">MercadoPago</p>
-                  <p className="text-xs text-lavanda/50">Tarjeta, dinero en cuenta, Rapipago. +13% recargo.</p>
+                  <p className="text-xs text-lavanda/70">Tarjeta, dinero en cuenta, Rapipago. +13% recargo.</p>
                 </div>
               </label>
 
@@ -517,7 +517,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                   <input type="radio" name="pago" checked={metodoPago === "efectivo"} onChange={() => setMetodoPago("efectivo")} className="accent-purpura" />
                   <div>
                     <p className="text-sm font-medium text-niebla">Efectivo</p>
-                    <p className="text-xs text-lavanda/50">Pagás al retirar. Sin recargo.</p>
+                    <p className="text-xs text-lavanda/70">Pagás al retirar. Sin recargo.</p>
                   </div>
                 </label>
               )}
@@ -597,7 +597,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                 <div className="min-w-0 flex-1">
                   <p className="text-lavanda-light truncate">{item.nombre} x{item.cantidad}</p>
                   {item.opciones.length > 0 && (
-                    <p className="text-xs text-lavanda/40">
+                    <p className="text-xs text-lavanda/75">
                       {item.opciones.map(o => o.opcion_valor).join(", ")}
                     </p>
                   )}
@@ -609,18 +609,18 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
 
           <div className="border-t border-lavanda/10 pt-3 space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/60">Subtotal</span>
+              <span className="text-lavanda/75">Subtotal</span>
               <span className="text-lavanda-light">{formatPrice(cart.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/60">Envío</span>
+              <span className="text-lavanda/75">Envío</span>
               <span className="text-lavanda-light">
                 {metodoEnvio === "retiro" ? "Gratis" : costoEnvio > 0 ? formatPrice(costoEnvio) : "—"}
               </span>
             </div>
             {recargoMP > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-lavanda/60">Recargo MP (13%)</span>
+                <span className="text-lavanda/75">Recargo MP (13%)</span>
                 <span className="text-ambar">{formatPrice(recargoMP)}</span>
               </div>
             )}
@@ -642,13 +642,13 @@ function Input({
 }) {
   return (
     <div>
-      <label className="block text-xs text-lavanda/60 mb-1">{label}</label>
+      <label className="block text-xs text-lavanda/75 mb-1">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/30 focus:outline-none focus:border-purpura transition-colors"
+        className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/50 focus:outline-none focus:border-purpura transition-colors"
       />
     </div>
   );
@@ -657,7 +657,7 @@ function Input({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
-      <span className="text-lavanda/60">{label}</span>
+      <span className="text-lavanda/75">{label}</span>
       <span className="text-lavanda-light text-right max-w-[60%]">{value}</span>
     </div>
   );
@@ -764,7 +764,7 @@ function AutocompleteInput({
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label className="block text-xs text-lavanda/60 mb-1">{label}</label>
+      <label className="block text-xs text-lavanda/75 mb-1">{label}</label>
       <input
         type="text"
         value={value}
@@ -773,7 +773,7 @@ function AutocompleteInput({
         onBlur={() => setFocused(false)}
         placeholder={placeholder}
         autoComplete="off"
-        className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/30 focus:outline-none focus:border-purpura transition-colors"
+        className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/50 focus:outline-none focus:border-purpura transition-colors"
       />
       {open && focused && suggestions.length > 0 && (
         <ul className="absolute z-50 w-full mt-1 bg-navy-deep border border-lavanda/20 rounded-lg shadow-lg max-h-48 overflow-y-auto">

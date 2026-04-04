@@ -36,7 +36,7 @@ export default function StarRating({
             stroke="currentColor"
             strokeWidth={1.5}
             className={`${SIZES[size]} ${
-              star <= rating ? "text-ambar" : "text-lavanda/30"
+              star <= rating ? "text-ambar" : "text-lavanda/50"
             }`}
           >
             <path

@@ -118,7 +118,7 @@ export default function PushNotificationPrompt() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-niebla">Activar notificaciones</p>
-            <p className="text-xs text-lavanda/60 mt-0.5">
+            <p className="text-xs text-lavanda/75 mt-0.5">
               Enterate de ofertas, nuevos productos y el estado de tu pedido.
             </p>
             {error && (
@@ -134,7 +134,7 @@ export default function PushNotificationPrompt() {
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-3 py-1.5 text-xs text-lavanda/60 hover:text-lavanda-light transition-colors"
+                className="px-3 py-1.5 text-xs text-lavanda/75 hover:text-lavanda-light transition-colors"
               >
                 Ahora no
               </button>

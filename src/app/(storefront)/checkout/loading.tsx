@@ -11,7 +11,7 @@ export default function CheckoutLoading() {
         className="opacity-80"
         unoptimized
       />
-      <p className="text-lavanda/50 text-sm animate-pulse">Preparando checkout...</p>
+      <p className="text-lavanda/70 text-sm animate-pulse">Preparando checkout...</p>
     </div>
   );
 }

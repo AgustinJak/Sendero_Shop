@@ -73,7 +73,7 @@ export default async function PedidoPage({ params }: Props) {
         <h1 className="font-[family-name:var(--font-cinzel)] text-2xl font-bold text-niebla">
           Pedido {p.numero_pedido}
         </h1>
-        <p className="text-lavanda/60 mt-1 text-sm">
+        <p className="text-lavanda/75 mt-1 text-sm">
           Creado el {new Date(p.created_at).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
@@ -96,7 +96,7 @@ export default async function PedidoPage({ params }: Props) {
             Tu pedido está reservado. Hacé clic en el botón para pagar con MercadoPago.
           </p>
           <div className="flex justify-between text-sm">
-            <span className="text-lavanda/60">Monto a pagar</span>
+            <span className="text-lavanda/75">Monto a pagar</span>
             <span className="text-[#009ee3] font-bold text-lg">{formatPrice(p.total)}</span>
           </div>
           <MercadoPagoButton pedidoId={p.id} />
@@ -114,21 +114,21 @@ export default async function PedidoPage({ params }: Props) {
           </p>
           {cfg.cbu && (
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/60">CBU</span>
+              <span className="text-lavanda/75">CBU</span>
               <span className="text-niebla font-mono">{cfg.cbu}</span>
             </div>
           )}
           {cfg.alias && (
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/60">Alias</span>
+              <span className="text-lavanda/75">Alias</span>
               <span className="text-niebla font-mono">{cfg.alias}</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
-            <span className="text-lavanda/60">Monto</span>
+            <span className="text-lavanda/75">Monto</span>
             <span className="text-ambar font-bold text-lg">{formatPrice(p.total)}</span>
           </div>
-          <p className="text-xs text-lavanda/40">
+          <p className="text-xs text-lavanda/75">
             Tenés 48 horas para enviar el comprobante. Después el pedido se cancela automáticamente.
           </p>
           <a
@@ -173,9 +173,9 @@ export default async function PedidoPage({ params }: Props) {
             <div key={item.id} className="flex justify-between text-sm">
               <div>
                 <span className="text-lavanda-light">{item.nombre_producto}</span>
-                <span className="text-lavanda/40 ml-1">x{item.cantidad}</span>
+                <span className="text-lavanda/75 ml-1">x{item.cantidad}</span>
                 {item.opciones_seleccionadas?.length > 0 && (
-                  <p className="text-xs text-lavanda/40">
+                  <p className="text-xs text-lavanda/75">
                     {item.opciones_seleccionadas.map((o) => `${o.grupo_nombre}: ${o.opcion_valor}`).join(" · ")}
                   </p>
                 )}
@@ -187,16 +187,16 @@ export default async function PedidoPage({ params }: Props) {
 
         <div className="border-t border-lavanda/10 pt-3 space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-lavanda/60">Subtotal</span>
+            <span className="text-lavanda/75">Subtotal</span>
             <span className="text-lavanda-light">{formatPrice(p.subtotal)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-lavanda/60">Envío ({metodoEnvioLabel})</span>
+            <span className="text-lavanda/75">Envío ({metodoEnvioLabel})</span>
             <span className="text-lavanda-light">{p.costo_envio === 0 ? "Gratis" : formatPrice(p.costo_envio)}</span>
           </div>
           {p.recargo_mp > 0 && (
             <div className="flex justify-between">
-              <span className="text-lavanda/60">Recargo MP</span>
+              <span className="text-lavanda/75">Recargo MP</span>
               <span className="text-ambar">{formatPrice(p.recargo_mp)}</span>
             </div>
           )}
@@ -208,8 +208,8 @@ export default async function PedidoPage({ params }: Props) {
 
         {/* Customer info */}
         <div className="border-t border-lavanda/10 pt-3 space-y-1 text-sm">
-          <p className="text-lavanda/60">{p.nombre_cliente} · {p.email}</p>
-          <p className="text-lavanda/60">Pago: {metodoPagoLabel}</p>
+          <p className="text-lavanda/75">{p.nombre_cliente} · {p.email}</p>
+          <p className="text-lavanda/75">Pago: {metodoPagoLabel}</p>
         </div>
       </div>
 
@@ -256,11 +256,11 @@ export default async function PedidoPage({ params }: Props) {
           </div>
         )}
 
-        <p className="text-xs text-lavanda/40">
-          Te enviamos un resumen a <span className="text-lavanda/60">{p.email}</span>.
+        <p className="text-xs text-lavanda/75">
+          Te enviamos un resumen a <span className="text-lavanda/75">{p.email}</span>.
           Si no lo ves, revisá tu carpeta de spam.
         </p>
-        <p className="text-xs text-lavanda/40">
+        <p className="text-xs text-lavanda/75">
           ¿Dudas? Escribinos por{" "}
           <a href={whatsappLink(`Hola, tengo una consulta sobre el pedido ${p.numero_pedido}`)} className="text-ambar hover:underline" target="_blank" rel="noopener noreferrer">
             WhatsApp

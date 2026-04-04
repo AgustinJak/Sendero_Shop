@@ -126,7 +126,7 @@ export default function VariantSelector({
                   >
                     {opcion.valor}
                     {precioMostrado > 0 && (
-                      <span className="ml-1 text-xs text-lavanda/60">
+                      <span className="ml-1 text-xs text-lavanda/75">
                         +{formatPrice(precioMostrado)}
                       </span>
                     )}
