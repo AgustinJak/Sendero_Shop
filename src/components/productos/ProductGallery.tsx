@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ProductoImagen } from "@/types";
@@ -16,7 +16,10 @@ export default function ProductGallery({
 }: ProductGalleryProps) {
   const sorted = [...imagenes].sort((a, b) => a.orden - b.orden);
   const [selected, setSelected] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [zoomed, setZoomed] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const touchStartX = useRef<number | null>(null);
 
   if (sorted.length === 0) {
     return (
@@ -28,11 +31,26 @@ export default function ProductGallery({
 
   const current = sorted[selected];
   const isVideo = current.tipo === "video";
+  const imageCount = sorted.filter(s => s.tipo !== "video").length;
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") { setLightboxOpen(false); setZoomed(false); }
+      if (e.key === "ArrowRight" && selected < sorted.length - 1) setSelected(s => s + 1);
+      if (e.key === "ArrowLeft" && selected > 0) setSelected(s => s - 1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxOpen, selected, sorted.length]);
 
   return (
     <div className="space-y-4">
       {/* Main display */}
-      <div className="aspect-square relative bg-navy-deep rounded-xl overflow-hidden border border-lavanda/10">
+      <div
+        className={`aspect-square relative bg-navy-deep rounded-xl overflow-hidden border border-lavanda/10 ${!isVideo ? "cursor-pointer" : ""}`}
+        onClick={() => !isVideo && setLightboxOpen(true)}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={selected}
@@ -107,6 +125,83 @@ export default function ProductGallery({
           ))}
         </div>
       )}
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxOpen && !isVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-black/95 flex items-center justify-center"
+            onClick={() => { setLightboxOpen(false); setZoomed(false); }}
+            onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
+            onTouchEnd={(e) => {
+              if (touchStartX.current === null) return;
+              const diff = e.changedTouches[0].clientX - touchStartX.current;
+              if (Math.abs(diff) > 50) {
+                if (diff < 0 && selected < sorted.length - 1) { setSelected(s => s + 1); setZoomed(false); }
+                if (diff > 0 && selected > 0) { setSelected(s => s - 1); setZoomed(false); }
+              }
+              touchStartX.current = null;
+            }}
+          >
+            {/* Close button */}
+            <button
+              className="absolute top-4 right-4 text-white/70 hover:text-white z-10 p-2"
+              onClick={() => { setLightboxOpen(false); setZoomed(false); }}
+            >
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            {/* Navigation arrows */}
+            {selected > 0 && (
+              <button
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
+                onClick={(e) => { e.stopPropagation(); setSelected(s => s - 1); setZoomed(false); }}
+              >
+                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
+            {selected < sorted.length - 1 && (
+              <button
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
+                onClick={(e) => { e.stopPropagation(); setSelected(s => s + 1); setZoomed(false); }}
+              >
+                <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            )}
+
+            {/* Image */}
+            <motion.div
+              key={selected}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`relative ${zoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
+              onClick={(e) => { e.stopPropagation(); setZoomed(!zoomed); }}
+            >
+              <Image
+                src={current.url}
+                alt={current.alt_text || nombre}
+                width={zoomed ? 1600 : 800}
+                height={zoomed ? 1600 : 800}
+                className={`max-h-[85vh] w-auto object-contain transition-transform duration-300 ${zoomed ? "scale-150" : "scale-100"}`}
+                quality={90}
+              />
+            </motion.div>
+
+            {/* Counter */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/50 text-sm">
+              {selected + 1} / {imageCount}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

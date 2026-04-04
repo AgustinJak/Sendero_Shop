@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/layout/WhatsAppButton";
+import ScrollToTop from "@/components/layout/ScrollToTop";
 import { CartProvider } from "@/components/carrito/CartProvider";
 import CartDrawer from "@/components/carrito/CartDrawer";
 import PopupBanner from "@/components/home/PopupBanner";
@@ -40,6 +41,7 @@ export default async function StorefrontLayout({
       <main className="flex-1">{children}</main>
       <Footer />
       <WhatsAppButton />
+      <ScrollToTop />
       <CartDrawer />
       {popupBanners.length > 0 && <PopupBanner banner={popupBanners[0]} />}
       <script

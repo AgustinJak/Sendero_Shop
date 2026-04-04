@@ -5,6 +5,7 @@ import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
 import FilterSidebar, { MobileFilterToggle } from "@/components/catalogo/CatalogFilters";
 import SortSelect from "@/components/catalogo/SortSelect";
+import ActiveFilters from "@/components/catalogo/ActiveFilters";
 import CatalogBanner from "@/components/home/CatalogBanner";
 
 export const metadata: Metadata = {
@@ -71,6 +72,10 @@ export default async function CatalogoPage({ searchParams }: Props) {
           </Suspense>
         </div>
       </div>
+
+      <Suspense>
+        <ActiveFilters />
+      </Suspense>
 
       <div className="flex gap-8">
         {/* Sidebar — Desktop */}
