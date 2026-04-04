@@ -188,7 +188,7 @@ function CategoryGroup({
       <div className="flex items-center">
         <button
           onClick={() => onSelect(parent.slug)}
-          className={`flex-1 text-left text-sm py-1.5 px-2 rounded-md transition-all duration-200 ${
+          className={`flex-1 text-left text-sm py-1.5 px-2 rounded-md transition-all duration-200 cursor-pointer ${
             isParentActive
               ? "text-niebla font-semibold"
               : "text-lavanda-light hover:text-niebla"
@@ -212,7 +212,7 @@ function CategoryGroup({
         {hasChildren && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 text-lavanda/40 hover:text-lavanda-light transition-colors"
+            className="p-1 text-lavanda/40 hover:text-lavanda-light transition-colors cursor-pointer"
             aria-label={expanded ? "Contraer" : "Expandir"}
           >
             <svg
@@ -294,7 +294,7 @@ function FilterItem({
     <button
       ref={itemRef}
       onClick={onClick}
-      className={`w-full text-left py-1.5 px-2 rounded-md transition-all duration-200 flex items-center gap-2 group/item ${
+      className={`w-full text-left py-1.5 px-2 rounded-md transition-all duration-200 flex items-center gap-2 group/item cursor-pointer ${
         isChild ? "text-xs" : "text-sm"
       } ${
         active
