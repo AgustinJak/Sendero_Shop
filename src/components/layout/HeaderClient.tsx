@@ -10,9 +10,10 @@ import type { Categoria } from "@/types";
 
 interface HeaderClientProps {
   categorias: Categoria[];
+  children?: React.ReactNode;
 }
 
-export default function HeaderClient({ categorias }: HeaderClientProps) {
+export default function HeaderClient({ categorias, children }: HeaderClientProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -37,11 +38,7 @@ export default function HeaderClient({ categorias }: HeaderClientProps) {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2">
-            <span className="font-[family-name:var(--font-cinzel)] text-xl font-bold text-niebla tracking-wider">
-              SENDERO SHOP
-            </span>
-          </Link>
+          {children}
 
           {/* Nav Desktop */}
           <div className="hidden md:flex items-center gap-8">

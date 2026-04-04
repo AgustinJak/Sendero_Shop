@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -7,9 +8,18 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo y descripción */}
           <div className="md:col-span-1">
-            <span className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla tracking-wider">
-              SENDERO SHOP
-            </span>
+            <div className="flex items-center gap-2">
+              <Image
+                src="/icons/logo-original.png"
+                alt="Sendero Shop"
+                width={32}
+                height={32}
+                className="rounded-full"
+              />
+              <span className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla tracking-wider">
+                SENDERO SHOP
+              </span>
+            </div>
             <p className="mt-3 text-sm text-lavanda-light">
               Figuras y accesorios impresos en 3D. Producción a pedido en
               Argentina.
