@@ -222,6 +222,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
       const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number; captchaToken?: string } = {
         datos_personales: datos,
         metodo_envio: metodoEnvio,
+        tipo_envio: metodoEnvio === "retiro" ? null : tipoEnvio,
         direccion_envio: metodoEnvio === "retiro" ? null : direccion,
         metodo_pago: metodoPago,
         items: cart.items,

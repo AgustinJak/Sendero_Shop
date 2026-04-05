@@ -123,6 +123,7 @@ export type EstadoPedido =
   | "cancelado";
 
 export type MetodoEnvio = "retiro" | "correo_argentino" | "andreani";
+export type TipoEnvio = "domicilio" | "sucursal";
 export type MetodoPago = "mercadopago" | "transferencia" | "efectivo";
 
 export interface DireccionEnvio {
@@ -145,6 +146,7 @@ export interface Pedido {
   telefono: string;
   direccion_envio: DireccionEnvio | null;
   metodo_envio: MetodoEnvio;
+  tipo_envio: TipoEnvio | null;
   costo_envio: number;
   metodo_pago: MetodoPago;
   recargo_mp: number;
@@ -251,6 +253,7 @@ export interface DatosPersonales {
 export interface CheckoutData {
   datos_personales: DatosPersonales;
   metodo_envio: MetodoEnvio;
+  tipo_envio: TipoEnvio | null;
   direccion_envio: DireccionEnvio | null;
   metodo_pago: MetodoPago;
 }

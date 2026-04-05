@@ -52,12 +52,11 @@ export default async function PedidoPage({ params }: Props) {
   const esTransferencia = p.metodo_pago === "transferencia";
   const puedeCancelar = p.estado === "pendiente_pago" || p.estado === "pago_confirmado";
 
+  const tipoEnvioLabel = p.tipo_envio === "domicilio" ? "A domicilio" : p.tipo_envio === "sucursal" ? "A sucursal" : null;
   const metodoEnvioLabel =
     p.metodo_envio === "retiro"
       ? "Retiro en persona"
-      : p.metodo_envio === "correo_argentino"
-      ? "Correo Argentino"
-      : "Andreani";
+      : `${p.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}${tipoEnvioLabel ? ` — ${tipoEnvioLabel}` : ""}`;
 
   const metodoPagoLabel =
     p.metodo_pago === "mercadopago"

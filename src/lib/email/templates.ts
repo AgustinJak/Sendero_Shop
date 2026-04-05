@@ -147,12 +147,11 @@ export function pedidoConfirmadoEmail(
   subject: string;
   html: string;
 } {
+  const tipoEnvioSuffix = pedido.tipo_envio ? ` (${pedido.tipo_envio === "domicilio" ? "a domicilio" : "a sucursal"})` : "";
   const metodoEnvioLabel =
     pedido.metodo_envio === "retiro"
       ? "Retiro en persona"
-      : pedido.metodo_envio === "correo_argentino"
-      ? "Correo Argentino"
-      : "Andreani";
+      : `${pedido.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}${tipoEnvioSuffix}`;
 
   const metodoPagoLabel =
     pedido.metodo_pago === "mercadopago"
@@ -529,6 +528,10 @@ export function nuevoPedidoAdminEmail(pedido: Pedido & { items: PedidoItem[] }):
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Teléfono</td>
               <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.telefono}</td>
+            </tr>
+            <tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Envío</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.metodo_envio === "retiro" ? "Retiro en persona" : `${pedido.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}${pedido.tipo_envio ? ` (${pedido.tipo_envio === "domicilio" ? "a domicilio" : "a sucursal"})` : ""}`}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Pago</td>

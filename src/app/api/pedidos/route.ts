@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
     const {
       datos_personales,
       metodo_envio,
+      tipo_envio,
       direccion_envio,
       metodo_pago,
       items,
@@ -85,6 +86,7 @@ export async function POST(req: NextRequest) {
         telefono: datos_personales.telefono,
         direccion_envio: direccion_envio,
         metodo_envio: metodo_envio,
+        tipo_envio: tipo_envio || null,
         costo_envio: costoEnvio,
         metodo_pago: metodo_pago,
         recargo_mp: recargoMP,
@@ -140,6 +142,7 @@ export async function POST(req: NextRequest) {
       telefono: datos_personales.telefono,
       direccion_envio,
       metodo_envio,
+      tipo_envio: tipo_envio || null,
       costo_envio: costoEnvio,
       metodo_pago,
       recargo_mp: recargoMP,

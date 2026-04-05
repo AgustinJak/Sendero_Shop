@@ -80,7 +80,8 @@ export default async function PedidoDetailPage({ params }: Props) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-lavanda/60">
-                  Envío ({p.metodo_envio === "retiro" ? "Retiro" : p.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"})
+                  Envío ({p.metodo_envio === "retiro" ? "Retiro en persona" : p.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}
+                  {p.tipo_envio && ` — ${p.tipo_envio === "domicilio" ? "A domicilio" : "A sucursal"}`})
                 </span>
                 <span className="text-lavanda-light">{p.costo_envio === 0 ? "Gratis" : formatPrice(p.costo_envio)}</span>
               </div>
