@@ -1,9 +1,10 @@
 "use client";
 
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useCallback, useState, useRef, useEffect } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { useFilterTransition } from "./FilterTransitionContext";
 import type { AvailableFilters } from "@/lib/queries";
 import type { Categoria } from "@/types";
 import { slugify } from "@/lib/utils";
@@ -17,35 +18,33 @@ interface FilterSidebarProps {
 }
 
 export default function FilterSidebar({ filters, categorias = [], hideHeader = false }: FilterSidebarProps) {
-  const router = useRouter();
-  const pathname = usePathname();
+  const { updateFilter, clearAll, isPending } = useFilterTransition();
   const searchParams = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const updateFilter = useCallback(
-    (key: string, value: string | null) => {
-      const params = new URLSearchParams(searchParams.toString());
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-      params.delete("page");
-      router.push(`${pathname}?${params.toString()}`, { scroll: false });
-    },
-    [router, pathname, searchParams]
-  );
+  // Optimistic local state — updates immediately on click
+  const serverCategoria = searchParams.get("categoria");
+  const serverLinea = searchParams.get("linea");
+  const [localCategoria, setLocalCategoria] = useState<string | null>(serverCategoria);
+  const [localLinea, setLocalLinea] = useState<string | null>(serverLinea);
 
-  const clearAll = useCallback(() => {
-    router.push(pathname, { scroll: false });
-  }, [router, pathname]);
+  // Sync local state when server confirms (searchParams change)
+  useEffect(() => { setLocalCategoria(serverCategoria); }, [serverCategoria]);
+  useEffect(() => { setLocalLinea(serverLinea); }, [serverLinea]);
+
+  // Optimistic filter update
+  function handleFilterUpdate(key: string, value: string | null) {
+    if (key === "categoria") setLocalCategoria(value);
+    if (key === "linea") setLocalLinea(value);
+    updateFilter(key, value);
+  }
 
   const activeCount = Array.from(searchParams.keys()).filter(
     (k) => k !== "orden" && k !== "page"
-  ).length;
+  ).length + (isPending ? 0 : 0); // keep reactive
 
-  const currentCategoria = searchParams.get("categoria");
-  const currentLinea = searchParams.get("linea");
+  const currentCategoria = localCategoria;
+  const currentLinea = localLinea;
 
   // Stagger entrance animation
   useGSAP(() => {
@@ -93,7 +92,7 @@ export default function FilterSidebar({ filters, categorias = [], hideHeader = f
                 parent={parent}
                 currentCategoria={currentCategoria}
                 onSelect={(slug) =>
-                  updateFilter("categoria", currentCategoria === slug ? null : slug)
+                  handleFilterUpdate("categoria", currentCategoria === slug ? null : slug)
                 }
               />
             ))}
@@ -116,7 +115,7 @@ export default function FilterSidebar({ filters, categorias = [], hideHeader = f
                   label={linea}
                   active={currentLinea === slug}
                   onClick={() =>
-                    updateFilter("linea", currentLinea === slug ? null : slug)
+                    handleFilterUpdate("linea", currentLinea === slug ? null : slug)
                   }
                 />
               );

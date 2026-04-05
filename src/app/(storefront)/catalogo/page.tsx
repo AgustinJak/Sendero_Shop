@@ -6,6 +6,8 @@ import TrackItemList from "@/components/productos/TrackItemList";
 import FilterSidebar, { MobileFilterToggle } from "@/components/catalogo/CatalogFilters";
 import SortSelect from "@/components/catalogo/SortSelect";
 import ActiveFilters from "@/components/catalogo/ActiveFilters";
+import { FilterTransitionProvider } from "@/components/catalogo/FilterTransitionContext";
+import GridLoadingOverlay from "@/components/catalogo/GridLoadingOverlay";
 import CatalogBanner from "@/components/home/CatalogBanner";
 
 export const metadata: Metadata = {
@@ -52,58 +54,60 @@ export default async function CatalogoPage({ searchParams }: Props) {
         <CatalogBanner banner={catalogoBanners[0]} />
       )}
 
-      {/* Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla">
-            Catálogo
-          </h1>
-          <p className="text-lavanda/75 text-sm mt-1">
-            {total} {total === 1 ? "producto" : "productos"}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <Suspense>
-            <MobileFilterToggle filters={availableFilters} categorias={categorias} />
-          </Suspense>
-          <Suspense>
-            <SortSelect />
-          </Suspense>
-        </div>
-      </div>
-
       <Suspense>
-        <ActiveFilters />
-      </Suspense>
+        <FilterTransitionProvider>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla">
+                Catálogo
+              </h1>
+              <p className="text-lavanda/75 text-sm mt-1">
+                {total} {total === 1 ? "producto" : "productos"}
+              </p>
+            </div>
 
-      <div className="flex gap-8">
-        {/* Sidebar — Desktop */}
-        <div className="hidden lg:block w-56 shrink-0">
+            <div className="flex items-center gap-3">
+              <MobileFilterToggle filters={availableFilters} categorias={categorias} />
+              <Suspense>
+                <SortSelect />
+              </Suspense>
+            </div>
+          </div>
+
           <Suspense>
-            <FilterSidebar filters={availableFilters} categorias={categorias} />
+            <ActiveFilters />
           </Suspense>
-        </div>
 
-        {/* Grid */}
-        <div className="flex-1">
-          <ProductGrid productos={productos} />
-          <TrackItemList
-            listName="Catálogo"
-            products={productos.map((p) => ({
-              id: p.id,
-              name: p.nombre,
-              price: p.precio_oferta || p.precio,
-              category: (p.categoria as unknown as { nombre: string })?.nombre,
-            }))}
-          />
+          <div className="flex gap-8">
+            {/* Sidebar — Desktop */}
+            <div className="hidden lg:block w-56 shrink-0">
+              <FilterSidebar filters={availableFilters} categorias={categorias} />
+            </div>
 
-          {/* Paginación */}
-          {totalPages > 1 && (
-            <Pagination current={page} total={totalPages} params={params} />
-          )}
-        </div>
-      </div>
+            {/* Grid */}
+            <div className="flex-1">
+              <GridLoadingOverlay>
+                <ProductGrid productos={productos} />
+              </GridLoadingOverlay>
+              <TrackItemList
+                listName="Catálogo"
+                products={productos.map((p) => ({
+                  id: p.id,
+                  name: p.nombre,
+                  price: p.precio_oferta || p.precio,
+                  category: (p.categoria as unknown as { nombre: string })?.nombre,
+                }))}
+              />
+
+              {/* Paginación */}
+              {totalPages > 1 && (
+                <Pagination current={page} total={totalPages} params={params} />
+              )}
+            </div>
+          </div>
+        </FilterTransitionProvider>
+      </Suspense>
     </div>
   );
 }
