@@ -50,8 +50,8 @@ export default function AddToCartButton({
         faltanVariantes
           ? "bg-lavanda/20 text-lavanda/60 cursor-not-allowed"
           : added
-            ? "bg-green-600 text-white"
-            : "bg-purpura hover:bg-purpura/80 text-niebla"
+            ? "bg-green-600 text-white cursor-default"
+            : "bg-purpura hover:bg-purpura/80 text-niebla cursor-pointer"
       }`}
     >
       <AnimatePresence mode="wait">

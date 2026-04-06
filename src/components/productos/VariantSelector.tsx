@@ -118,7 +118,7 @@ export default function VariantSelector({
                   <button
                     key={opcion.id}
                     onClick={() => handleSelect(grupo, opcion.id)}
-                    className={`px-4 py-2 rounded-lg text-sm border transition-colors ${
+                    className={`px-4 py-2 rounded-lg text-sm border transition-colors cursor-pointer ${
                       selectedId === opcion.id
                         ? "border-purpura bg-purpura/20 text-niebla"
                         : "border-lavanda/20 text-lavanda-light hover:border-lavanda/40"
