@@ -13,6 +13,7 @@ export default function ProductoImagenes({
 }) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [dragIdx, setDragIdx] = useState<number | null>(null);
@@ -32,31 +33,74 @@ export default function ProductoImagenes({
   const isMediaFile = (file: File) =>
     file.type.startsWith("image/") || file.type.startsWith("video/");
 
-  // Upload files
+  // Upload files via signed URL (direct to Supabase Storage)
   const uploadFiles = useCallback(async (files: FileList | File[]) => {
     setUploading(true);
     setUploadError(null);
-    try {
-      for (const file of Array.from(files)) {
-        if (!isMediaFile(file)) continue;
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("producto_id", productoId);
-        formData.append("orden", String(sorted.length));
+    const fileArray = Array.from(files).filter(isMediaFile);
 
-        const res = await fetch("/api/admin/imagenes", {
+    try {
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i];
+        setUploadProgress(`Subiendo ${i + 1}/${fileArray.length}...`);
+
+        // 1. Get signed upload URL from our API
+        const signedRes = await fetch("/api/admin/imagenes/signed-url", {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            productoId,
+          }),
         });
 
-        if (!res.ok) {
-          const data = await res.json();
-          setUploadError(data.error || "Error al subir archivo");
+        if (!signedRes.ok) {
+          const err = await signedRes.json();
+          setUploadError(err.error || "Error al obtener URL de subida");
+          continue;
+        }
+
+        const { signedUrl, path, tipo } = await signedRes.json();
+
+        // 2. Upload file directly to Supabase Storage
+        const uploadRes = await fetch(signedUrl, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!uploadRes.ok) {
+          setUploadError(`Error al subir ${file.name}`);
+          continue;
+        }
+
+        // 3. Build public URL and register in DB
+        const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/productos/${path}`;
+
+        const registerRes = await fetch("/api/admin/imagenes/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            productoId,
+            url: publicUrl,
+            orden: sorted.length + i,
+            tipo,
+          }),
+        });
+
+        if (!registerRes.ok) {
+          const err = await registerRes.json();
+          setUploadError(err.error || "Error al registrar archivo");
         }
       }
       router.refresh();
+    } catch (e) {
+      setUploadError(`Error: ${e instanceof Error ? e.message : "desconocido"}`);
     } finally {
       setUploading(false);
+      setUploadProgress("");
     }
   }, [productoId, sorted.length, router]);
 
@@ -210,7 +254,7 @@ export default function ProductoImagenes({
         }`}
       >
         {uploading ? (
-          <span className="text-sm">Subiendo...</span>
+          <span className="text-sm animate-pulse">{uploadProgress || "Subiendo..."}</span>
         ) : (
           <>
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mb-1 opacity-50">
