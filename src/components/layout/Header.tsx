@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { getCategoriasTree } from "@/lib/queries";
 import HeaderClient from "./HeaderClient";
@@ -8,7 +7,8 @@ export default async function Header() {
   return (
     <HeaderClient categorias={categorias}>
       <Link href="/" className="flex items-center gap-2 shrink-0">
-        <Image
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
           src="/icons/logo-original.png"
           alt="Sendero Shop"
           width={36}

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -9,7 +8,8 @@ export default function Footer() {
           {/* Logo y descripción */}
           <div className="md:col-span-1">
             <div className="flex items-center gap-2">
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src="/icons/logo-original.png"
                 alt="Sendero Shop"
                 width={32}
