@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 import type { ProductoImagen } from "@/types";
 
 export default function ProductoImagenes({
@@ -62,22 +63,26 @@ export default function ProductoImagenes({
           continue;
         }
 
-        const { signedUrl, path, tipo } = await signedRes.json();
+        const { token, path, tipo } = await signedRes.json();
 
-        // 2. Upload file directly to Supabase Storage
-        const uploadRes = await fetch(signedUrl, {
-          method: "PUT",
-          headers: { "Content-Type": file.type },
-          body: file,
-        });
+        // 2. Upload file directly to Supabase Storage via SDK
+        const supabase = createClient();
+        const { error: uploadErr } = await supabase.storage
+          .from("productos")
+          .uploadToSignedUrl(path, token, file, {
+            contentType: file.type,
+          });
 
-        if (!uploadRes.ok) {
-          setUploadError(`Error al subir ${file.name}`);
+        if (uploadErr) {
+          setUploadError(`Error al subir ${file.name}: ${uploadErr.message}`);
           continue;
         }
 
         // 3. Build public URL and register in DB
-        const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/productos/${path}`;
+        const { data: urlData } = supabase.storage
+          .from("productos")
+          .getPublicUrl(path);
+        const publicUrl = urlData.publicUrl;
 
         const registerRes = await fetch("/api/admin/imagenes/register", {
           method: "POST",
