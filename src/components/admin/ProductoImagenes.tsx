@@ -32,7 +32,7 @@ export default function ProductoImagenes({
   }
 
   const isMediaFile = (file: File) =>
-    file.type.startsWith("image/") || file.type.startsWith("video/");
+    file.type.startsWith("image/");
 
   // Upload files via signed URL (direct to Supabase Storage)
   const uploadFiles = useCallback(async (files: FileList | File[]) => {
@@ -167,7 +167,7 @@ export default function ProductoImagenes({
 
   return (
     <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-4">
-      <h2 className="text-sm font-semibold text-niebla">Imágenes y Videos</h2>
+      <h2 className="text-sm font-semibold text-niebla">Imágenes</h2>
 
       {/* Media grid with drag reorder */}
       {sorted.length > 0 && (
@@ -266,13 +266,13 @@ export default function ProductoImagenes({
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
             </svg>
             <span className="text-sm">Arrastrá archivos o hacé clic</span>
-            <span className="text-[10px] text-lavanda/30 mt-0.5">JPG, PNG, WebP — MP4, WebM (hasta 100 MB)</span>
+            <span className="text-[10px] text-lavanda/30 mt-0.5">JPG, PNG, WebP (hasta 10 MB)</span>
           </>
         )}
         <input
           ref={fileInputRef}
           type="file"
-          accept="image/*,video/mp4,video/webm"
+          accept="image/*"
           multiple
           onChange={handleFileChange}
           disabled={uploading}
