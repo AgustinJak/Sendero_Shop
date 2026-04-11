@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { ProductoImagen, VarianteSeleccion } from "@/types";
@@ -16,7 +16,10 @@ export default function ProductGallery({
   nombre,
   selecciones = [],
 }: ProductGalleryProps) {
-  const sorted = [...imagenes].sort((a, b) => a.orden - b.orden);
+  const sorted = useMemo(
+    () => [...imagenes].sort((a, b) => a.orden - b.orden),
+    [imagenes]
+  );
   const [selected, setSelected] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
@@ -47,6 +50,7 @@ export default function ProductGallery({
   }, [lightboxOpen, selected, sorted.length]);
 
   // Jump to image linked to selected variant option
+  const seleccionKey = selecciones.map((s) => s.opcion_id).join(",");
   useEffect(() => {
     if (selecciones.length === 0) return;
     const selectedOpcionIds = selecciones.map((s) => s.opcion_id);
@@ -56,7 +60,8 @@ export default function ProductGallery({
     if (matchIdx !== -1) {
       setSelected(matchIdx);
     }
-  }, [selecciones, sorted]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seleccionKey]);
 
   return (
     <div className="space-y-4">
