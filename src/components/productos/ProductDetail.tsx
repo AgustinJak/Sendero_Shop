@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import type { Producto, VarianteSeleccion } from "@/types";
-import { formatPrice, whatsappLink } from "@/lib/utils";
+import { formatPrice, whatsappLink, PROSE_CLASSES } from "@/lib/utils";
 import { trackViewItem } from "@/lib/analytics";
 import ProductGallery from "./ProductGallery";
 import VariantSelector from "./VariantSelector";
@@ -125,7 +125,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
               Descripción
             </h2>
             <div
-              className="text-sm text-lavanda-light leading-relaxed prose-sendero"
+              className={`text-sm text-lavanda-light leading-relaxed ${PROSE_CLASSES}`}
               dangerouslySetInnerHTML={{ __html: producto.descripcion }}
             />
           </div>

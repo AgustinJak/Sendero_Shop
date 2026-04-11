@@ -12,7 +12,7 @@ export default function PrivacidadPage() {
         Política de Privacidad
       </h1>
 
-      <div className="prose-sendero space-y-6 text-lavanda-light text-sm leading-relaxed">
+      <div className="space-y-6 text-lavanda-light text-sm leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-niebla [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-ambar [&_a]:underline [&_strong]:font-bold [&_strong]:text-niebla">
         <p className="text-xs text-lavanda/70">Última actualización: Marzo 2026</p>
 
         <Section title="1. Datos que recopilamos">

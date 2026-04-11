@@ -5,6 +5,7 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
+import { PROSE_CLASSES } from "@/lib/utils";
 
 interface Props {
   content: string;
@@ -35,8 +36,7 @@ export default function RichTextEditor({ content, onChange }: Props) {
     },
     editorProps: {
       attributes: {
-        class:
-          "min-h-[120px] px-3 py-2 text-sm text-lavanda-light leading-relaxed focus:outline-none prose-sendero",
+        class: `min-h-[120px] px-3 py-2 text-sm text-lavanda-light leading-relaxed focus:outline-none ${PROSE_CLASSES}`,
       },
     },
   });
