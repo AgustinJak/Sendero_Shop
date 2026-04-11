@@ -38,6 +38,7 @@ export default function EditarProductoClient({
         <ProductoImagenes
           productoId={producto.id}
           imagenes={producto.imagenes || []}
+          varianteGrupos={producto.variante_grupos || []}
         />
         <VariantesManager
           productoId={producto.id}

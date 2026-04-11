@@ -42,6 +42,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
       <ProductGallery
         imagenes={producto.imagenes || []}
         nombre={producto.nombre}
+        selecciones={selecciones}
       />
 
       {/* Info */}

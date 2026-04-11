@@ -3,14 +3,16 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
-import type { ProductoImagen } from "@/types";
+import type { ProductoImagen, VarianteGrupo } from "@/types";
 
 export default function ProductoImagenes({
   productoId,
   imagenes,
+  varianteGrupos = [],
 }: {
   productoId: string;
   imagenes: ProductoImagen[];
+  varianteGrupos?: VarianteGrupo[];
 }) {
   const router = useRouter();
   const [uploading, setUploading] = useState(false);
@@ -31,6 +33,16 @@ export default function ProductoImagenes({
     setSorted([...imagenes].sort((a, b) => a.orden - b.orden));
   }
 
+  // Build flat list of all variant options for the selector
+  const allOptions = varianteGrupos
+    .sort((a, b) => a.orden - b.orden)
+    .flatMap((g) =>
+      (g.opciones || [])
+        .filter((o) => o.activo)
+        .sort((a, b) => a.orden - b.orden)
+        .map((o) => ({ id: o.id, label: `${g.nombre}: ${o.valor}` }))
+    );
+
   const isMediaFile = (file: File) =>
     file.type.startsWith("image/");
 
@@ -45,7 +57,6 @@ export default function ProductoImagenes({
         const file = fileArray[i];
         setUploadProgress(`Subiendo ${i + 1}/${fileArray.length}...`);
 
-        // 1. Get signed upload URL from our API
         const signedRes = await fetch("/api/admin/imagenes/signed-url", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -65,7 +76,6 @@ export default function ProductoImagenes({
 
         const { token, path, tipo } = await signedRes.json();
 
-        // 2. Upload file directly to Supabase Storage via SDK
         const supabase = createClient();
         const { error: uploadErr } = await supabase.storage
           .from("productos")
@@ -78,7 +88,6 @@ export default function ProductoImagenes({
           continue;
         }
 
-        // 3. Build public URL and register in DB
         const { data: urlData } = supabase.storage
           .from("productos")
           .getPublicUrl(path);
@@ -109,7 +118,6 @@ export default function ProductoImagenes({
     }
   }, [productoId, sorted.length, router]);
 
-  // File input change
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     if (e.target.files && e.target.files.length > 0) {
       uploadFiles(e.target.files);
@@ -117,7 +125,6 @@ export default function ProductoImagenes({
     }
   }
 
-  // Drop zone handlers for upload
   function handleDropUpload(e: React.DragEvent) {
     e.preventDefault();
     setDragOver(false);
@@ -126,13 +133,25 @@ export default function ProductoImagenes({
     }
   }
 
-  // Delete media
   async function handleDelete(imagenId: string) {
     await fetch(`/api/admin/imagenes/${imagenId}`, { method: "DELETE" });
     router.refresh();
   }
 
-  // Drag reorder handlers
+  async function handleVariantChange(imagenId: string, opcionId: string) {
+    await fetch(`/api/admin/imagenes/${imagenId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ opcion_id: opcionId || null }),
+    });
+    // Update local state immediately
+    setSorted((prev) =>
+      prev.map((img) =>
+        img.id === imagenId ? { ...img, opcion_id: opcionId || null } : img
+      )
+    );
+  }
+
   function handleDragStart(idx: number) {
     setDragIdx(idx);
   }
@@ -140,8 +159,6 @@ export default function ProductoImagenes({
   function handleDragEnter(idx: number) {
     if (dragIdx === null || dragIdx === idx) return;
     setDragOverIdx(idx);
-
-    // Reorder in state
     setSorted((prev) => {
       const items = [...prev];
       const [moved] = items.splice(dragIdx, 1);
@@ -154,8 +171,6 @@ export default function ProductoImagenes({
   async function handleDragEnd() {
     setDragIdx(null);
     setDragOverIdx(null);
-
-    // Save new order to DB
     const orden = sorted.map((img, i) => ({ id: img.id, orden: i }));
     await fetch("/api/admin/imagenes/reorder", {
       method: "PATCH",
@@ -165,6 +180,12 @@ export default function ProductoImagenes({
     router.refresh();
   }
 
+  // Find option label by id
+  function getOptionLabel(opcionId: string | null): string | null {
+    if (!opcionId) return null;
+    return allOptions.find((o) => o.id === opcionId)?.label || null;
+  }
+
   return (
     <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-4">
       <h2 className="text-sm font-semibold text-niebla">Imágenes</h2>
@@ -172,63 +193,63 @@ export default function ProductoImagenes({
       {/* Media grid with drag reorder */}
       {sorted.length > 0 && (
         <div className="grid grid-cols-2 gap-2">
-          {sorted.map((media, idx) => (
-            <div
-              key={media.id}
-              draggable
-              onDragStart={() => handleDragStart(idx)}
-              onDragEnter={() => handleDragEnter(idx)}
-              onDragEnd={handleDragEnd}
-              onDragOver={(e) => e.preventDefault()}
-              className={`relative group cursor-grab active:cursor-grabbing transition-all ${
-                dragIdx === idx ? "opacity-50 scale-95" : ""
-              } ${dragOverIdx === idx ? "ring-2 ring-purpura rounded-lg" : ""}`}
-            >
-              {media.tipo === "video" ? (
-                <div className="relative w-full aspect-square bg-navy-deep rounded-lg overflow-hidden">
-                  <video
+          {sorted.map((media, idx) => {
+            const variantLabel = getOptionLabel(media.opcion_id);
+            return (
+              <div key={media.id} className="space-y-1">
+                <div
+                  draggable
+                  onDragStart={() => handleDragStart(idx)}
+                  onDragEnter={() => handleDragEnter(idx)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => e.preventDefault()}
+                  className={`relative group cursor-grab active:cursor-grabbing transition-all ${
+                    dragIdx === idx ? "opacity-50 scale-95" : ""
+                  } ${dragOverIdx === idx ? "ring-2 ring-purpura rounded-lg" : ""}`}
+                >
+                  <img
                     src={media.url}
-                    className="w-full h-full object-cover"
-                    muted
-                    preload="metadata"
+                    alt={media.alt_text || ""}
+                    className="w-full aspect-square object-cover rounded-lg bg-navy-deep"
                   />
-                  {/* Video play icon overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <div className="w-10 h-10 bg-black/60 rounded-full flex items-center justify-center">
-                      <svg className="w-5 h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => handleDelete(media.id)}
+                    className="absolute top-1 right-1 w-6 h-6 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    x
+                  </button>
+                  <span className="absolute bottom-1 left-1 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded">
+                    {idx + 1}
+                  </span>
+                  {variantLabel && (
+                    <span className="absolute bottom-1 right-1 text-[10px] bg-purpura/80 text-white px-1.5 py-0.5 rounded max-w-[60%] truncate">
+                      {variantLabel}
+                    </span>
+                  )}
+                  {idx === 0 && (
+                    <span className="absolute top-1 left-1 text-[10px] bg-ambar/80 text-navy-deep px-1.5 py-0.5 rounded font-bold">
+                      Principal
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <img
-                  src={media.url}
-                  alt={media.alt_text || ""}
-                  className="w-full aspect-square object-cover rounded-lg bg-navy-deep"
-                />
-              )}
-              <button
-                onClick={() => handleDelete(media.id)}
-                className="absolute top-1 right-1 w-6 h-6 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                x
-              </button>
-              <span className="absolute bottom-1 left-1 text-[10px] bg-black/50 text-white px-1.5 py-0.5 rounded">
-                {idx + 1}
-              </span>
-              {media.tipo === "video" && (
-                <span className="absolute bottom-1 right-1 text-[10px] bg-purpura/80 text-white px-1.5 py-0.5 rounded font-bold">
-                  VIDEO
-                </span>
-              )}
-              {idx === 0 && (
-                <span className="absolute top-1 left-1 text-[10px] bg-ambar/80 text-navy-deep px-1.5 py-0.5 rounded font-bold">
-                  Principal
-                </span>
-              )}
-            </div>
-          ))}
+                {/* Variant selector */}
+                {allOptions.length > 0 && (
+                  <select
+                    value={media.opcion_id || ""}
+                    onChange={(e) => handleVariantChange(media.id, e.target.value)}
+                    className="w-full text-[11px] bg-navy-deep border border-lavanda/10 rounded px-1.5 py-1 text-lavanda-light cursor-pointer"
+                  >
+                    <option value="">Sin variante</option>
+                    {allOptions.map((opt) => (
+                      <option key={opt.id} value={opt.id}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -238,7 +259,6 @@ export default function ProductoImagenes({
         </p>
       )}
 
-      {/* Upload error */}
       {uploadError && (
         <p className="text-xs text-red-400 text-center">{uploadError}</p>
       )}

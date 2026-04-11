@@ -3,16 +3,18 @@
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import type { ProductoImagen } from "@/types";
+import type { ProductoImagen, VarianteSeleccion } from "@/types";
 
 interface ProductGalleryProps {
   imagenes: ProductoImagen[];
   nombre: string;
+  selecciones?: VarianteSeleccion[];
 }
 
 export default function ProductGallery({
   imagenes,
   nombre,
+  selecciones = [],
 }: ProductGalleryProps) {
   const sorted = [...imagenes].sort((a, b) => a.orden - b.orden);
   const [selected, setSelected] = useState(0);
@@ -43,6 +45,18 @@ export default function ProductGallery({
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [lightboxOpen, selected, sorted.length]);
+
+  // Jump to image linked to selected variant option
+  useEffect(() => {
+    if (selecciones.length === 0) return;
+    const selectedOpcionIds = selecciones.map((s) => s.opcion_id);
+    const matchIdx = sorted.findIndex(
+      (img) => img.opcion_id && selectedOpcionIds.includes(img.opcion_id)
+    );
+    if (matchIdx !== -1) {
+      setSelected(matchIdx);
+    }
+  }, [selecciones, sorted]);
 
   return (
     <div className="space-y-4">
