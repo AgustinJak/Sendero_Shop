@@ -54,7 +54,7 @@ export async function getProductos(
   let query = supabase
     .from("productos")
     .select(
-      `*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo), categoria:categorias(id, nombre, slug)`,
+      `*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id), categoria:categorias(id, nombre, slug)`,
       { count: "exact" }
     )
     .eq("activo", true)
@@ -123,7 +123,7 @@ export async function getProductoBySlug(
     .from("productos")
     .select(
       `*,
-      imagenes:producto_imagenes(id, url, orden, alt_text, tipo),
+      imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id),
       categoria:categorias(id, nombre, slug),
       variante_grupos(id, producto_id, nombre, orden,
         opciones:variante_opciones(id, grupo_id, valor, precio_adicional, imagen_url, activo, orden)
@@ -145,7 +145,7 @@ export async function getProductosDestacados(
 
   const { data } = await supabase
     .from("productos")
-    .select(`*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo)`)
+    .select(`*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)`)
     .eq("activo", true)
     .eq("destacado", true)
     .order("created_at", { ascending: false })
@@ -251,7 +251,7 @@ export async function getColeccionBySlug(
       const ids = data.map((cp) => cp.producto_id);
       const { data: prods } = await supabase
         .from("productos")
-        .select("*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo)")
+        .select("*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)")
         .in("id", ids)
         .eq("activo", true);
 
@@ -265,7 +265,7 @@ export async function getColeccionBySlug(
     // Build query from rules
     let query = supabase
       .from("productos")
-      .select("*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo)")
+      .select("*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)")
       .eq("activo", true);
 
     if (col.regla.linea) query = query.ilike("linea", col.regla.linea);
