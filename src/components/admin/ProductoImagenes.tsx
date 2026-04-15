@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { extractYouTubeId, getYouTubeThumbnail, isYouTubeUrl } from "@/lib/youtube";
 import type { ProductoImagen, VarianteGrupo } from "@/types";
 
 export default function ProductoImagenes({
@@ -25,6 +26,8 @@ export default function ProductoImagenes({
     [...imagenes].sort((a, b) => a.orden - b.orden)
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [youtubeLoading, setYoutubeLoading] = useState(false);
 
   // Sync with props when they change (after router.refresh)
   const [prevImagenes, setPrevImagenes] = useState(imagenes);
@@ -180,6 +183,39 @@ export default function ProductoImagenes({
     router.refresh();
   }
 
+  async function addYouTubeVideo() {
+    const videoId = extractYouTubeId(youtubeUrl);
+    if (!videoId) {
+      setUploadError("URL de YouTube inválida");
+      return;
+    }
+    setYoutubeLoading(true);
+    setUploadError(null);
+    try {
+      const res = await fetch("/api/admin/imagenes/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          productoId,
+          url: youtubeUrl.trim(),
+          orden: sorted.length,
+          tipo: "video",
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        setUploadError(err.error || "Error al agregar video");
+      } else {
+        setYoutubeUrl("");
+        router.refresh();
+      }
+    } catch {
+      setUploadError("Error al agregar video");
+    } finally {
+      setYoutubeLoading(false);
+    }
+  }
+
   // Find option label by id
   function getOptionLabel(opcionId: string | null): string | null {
     if (!opcionId) return null;
@@ -207,11 +243,28 @@ export default function ProductoImagenes({
                     dragIdx === idx ? "opacity-50 scale-95" : ""
                   } ${dragOverIdx === idx ? "ring-2 ring-purpura rounded-lg" : ""}`}
                 >
-                  <img
-                    src={media.url}
-                    alt={media.alt_text || ""}
-                    className="w-full aspect-square object-cover rounded-lg bg-navy-deep"
-                  />
+                  {media.tipo === "video" && isYouTubeUrl(media.url) ? (
+                    <div className="relative w-full aspect-square bg-navy-deep rounded-lg overflow-hidden">
+                      <img
+                        src={getYouTubeThumbnail(extractYouTubeId(media.url)!)}
+                        alt={media.alt_text || "Video"}
+                        className="w-full h-full object-cover"
+                      />
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="w-8 h-8 bg-red-600 rounded-full flex items-center justify-center">
+                          <svg className="w-4 h-4 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={media.url}
+                      alt={media.alt_text || ""}
+                      className="w-full aspect-square object-cover rounded-lg bg-navy-deep"
+                    />
+                  )}
                   <button
                     onClick={() => handleDelete(media.id)}
                     className="absolute top-1 right-1 w-6 h-6 bg-red-500/80 hover:bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
@@ -298,6 +351,38 @@ export default function ProductoImagenes({
           disabled={uploading}
           className="hidden"
         />
+      </div>
+
+      {/* YouTube URL input */}
+      <div className="space-y-2">
+        <p className="text-[11px] text-lavanda/50 text-center">— o agregar video de YouTube —</p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={youtubeUrl}
+            onChange={(e) => setYoutubeUrl(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && youtubeUrl && addYouTubeVideo()}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="flex-1 text-xs bg-navy-deep border border-lavanda/20 rounded-lg px-3 py-2 text-lavanda-light placeholder:text-lavanda/30 focus:outline-none focus:border-purpura"
+          />
+          <button
+            onClick={addYouTubeVideo}
+            disabled={!youtubeUrl || youtubeLoading}
+            className="px-3 py-2 text-xs bg-red-600 hover:bg-red-700 disabled:bg-lavanda/20 disabled:text-lavanda/40 text-white rounded-lg transition-colors font-medium"
+          >
+            {youtubeLoading ? "..." : "▶ Agregar"}
+          </button>
+        </div>
+        {youtubeUrl && extractYouTubeId(youtubeUrl) && (
+          <div className="flex items-center gap-2 p-2 bg-navy-deep/50 rounded-lg border border-lavanda/10">
+            <img
+              src={getYouTubeThumbnail(extractYouTubeId(youtubeUrl)!)}
+              alt="Preview"
+              className="w-20 h-14 object-cover rounded"
+            />
+            <span className="text-[10px] text-lavanda/50">Vista previa del video</span>
+          </div>
+        )}
       </div>
     </div>
   );

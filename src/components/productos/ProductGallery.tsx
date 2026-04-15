@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
+import { extractYouTubeId, getYouTubeThumbnail, isYouTubeUrl } from "@/lib/youtube";
 import type { ProductoImagen, VarianteSeleccion } from "@/types";
 
 interface ProductGalleryProps {
@@ -23,8 +24,12 @@ export default function ProductGallery({
   const [selected, setSelected] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [zoomed, setZoomed] = useState(false);
+  const [youtubeActive, setYoutubeActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const touchStartX = useRef<number | null>(null);
+
+  // Reset YouTube player when switching slides
+  useEffect(() => { setYoutubeActive(false); }, [selected]);
 
   if (sorted.length === 0) {
     return (
@@ -36,7 +41,8 @@ export default function ProductGallery({
 
   const current = sorted[selected];
   const isVideo = current.tipo === "video";
-  const imageCount = sorted.filter(s => s.tipo !== "video").length;
+  const isYT = isVideo && isYouTubeUrl(current.url);
+  const ytId = isYT ? extractYouTubeId(current.url) : null;
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -68,7 +74,10 @@ export default function ProductGallery({
       {/* Main display */}
       <div
         className={`aspect-square relative bg-navy-deep rounded-xl overflow-hidden border border-lavanda/10 ${!isVideo ? "cursor-pointer" : ""}`}
-        onClick={() => !isVideo && setLightboxOpen(true)}
+        onClick={() => {
+          if (!isVideo) setLightboxOpen(true);
+          else if (isYT && !youtubeActive) setLightboxOpen(true);
+        }}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -79,7 +88,35 @@ export default function ProductGallery({
             transition={{ duration: 0.2 }}
             className="absolute inset-0"
           >
-            {isVideo ? (
+            {isYT ? (
+              youtubeActive ? (
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={nombre}
+                  className="w-full h-full"
+                />
+              ) : (
+                <button
+                  onClick={(e) => { e.stopPropagation(); setYoutubeActive(true); }}
+                  className="relative w-full h-full group"
+                >
+                  <img
+                    src={getYouTubeThumbnail(ytId!)}
+                    alt={current.alt_text || nombre}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 bg-red-600 rounded-xl flex items-center justify-center opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all">
+                      <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </button>
+              )
+            ) : isVideo ? (
               <video
                 ref={videoRef}
                 src={current.url}
@@ -115,14 +152,24 @@ export default function ProductGallery({
                   : "border-lavanda/10 hover:border-lavanda/30"
               }`}
             >
-              {media.tipo === "video" ? (
+              {media.tipo === "video" && isYouTubeUrl(media.url) ? (
                 <div className="relative w-full h-full bg-navy-deep">
-                  <video
-                    src={media.url}
-                    muted
-                    preload="metadata"
+                  <img
+                    src={getYouTubeThumbnail(extractYouTubeId(media.url)!)}
+                    alt={media.alt_text || "Video"}
                     className="w-full h-full object-cover"
                   />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-6 h-6 bg-red-600/90 rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              ) : media.tipo === "video" ? (
+                <div className="relative w-full h-full bg-navy-deep">
+                  <video src={media.url} muted preload="metadata" className="w-full h-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="w-6 h-6 bg-black/60 rounded-full flex items-center justify-center">
                       <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
@@ -146,7 +193,7 @@ export default function ProductGallery({
       )}
       {/* Lightbox */}
       <AnimatePresence>
-        {lightboxOpen && !isVideo && (
+        {lightboxOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -196,27 +243,45 @@ export default function ProductGallery({
               </button>
             )}
 
-            {/* Image */}
-            <motion.div
-              key={selected}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className={`relative ${zoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
-              onClick={(e) => { e.stopPropagation(); setZoomed(!zoomed); }}
-            >
-              <Image
-                src={current.url}
-                alt={current.alt_text || nombre}
-                width={zoomed ? 1600 : 800}
-                height={zoomed ? 1600 : 800}
-                className={`max-h-[85vh] w-auto object-contain transition-transform duration-300 ${zoomed ? "scale-150" : "scale-100"}`}
-                quality={90}
-              />
-            </motion.div>
+            {/* Content */}
+            {isYT ? (
+              <motion.div
+                key={selected}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-[90vw] max-w-[1000px] aspect-video"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={nombre}
+                  className="w-full h-full rounded-lg"
+                />
+              </motion.div>
+            ) : !isVideo ? (
+              <motion.div
+                key={selected}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className={`relative ${zoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
+                onClick={(e) => { e.stopPropagation(); setZoomed(!zoomed); }}
+              >
+                <Image
+                  src={current.url}
+                  alt={current.alt_text || nombre}
+                  width={zoomed ? 1600 : 800}
+                  height={zoomed ? 1600 : 800}
+                  className={`max-h-[85vh] w-auto object-contain transition-transform duration-300 ${zoomed ? "scale-150" : "scale-100"}`}
+                  quality={90}
+                />
+              </motion.div>
+            ) : null}
 
             {/* Counter */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/50 text-sm">
-              {selected + 1} / {imageCount}
+              {selected + 1} / {sorted.length}
             </div>
           </motion.div>
         )}
