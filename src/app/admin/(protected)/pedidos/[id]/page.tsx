@@ -135,6 +135,15 @@ export default async function PedidoDetailPage({ params }: Props) {
               </p>
             </div>
           )}
+
+          {/* Sucursal Correo Argentino */}
+          {p.sucursal_correo_nombre && (
+            <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-2">
+              <h2 className="text-sm font-semibold text-niebla">Sucursal de retiro</h2>
+              <p className="text-sm text-lavanda-light">{p.sucursal_correo_nombre}</p>
+              <p className="text-xs text-lavanda/40">Código: {p.sucursal_correo_id}</p>
+            </div>
+          )}
         </div>
 
         {/* Sidebar - Actions */}

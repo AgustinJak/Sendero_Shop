@@ -15,6 +15,24 @@ import type {
   EnvioZona,
 } from "@/types";
 
+// --- Correo Argentino API types ---
+interface CotizacionResult {
+  domicilio: { precio: number; producto: string; tiempoMin?: number; tiempoMax?: number } | null;
+  sucursal: { precio: number; producto: string; tiempoMin?: number; tiempoMax?: number } | null;
+}
+
+interface SucursalCA {
+  id: string;
+  nombre: string;
+  direccion: string;
+  ciudad: string;
+  codigoPostal: string;
+  telefono: string;
+  horario: string;
+  lat: number | null;
+  lng: number | null;
+}
+
 interface CheckoutFormProps {
   zonas: EnvioZona[];
   configuracion: Record<string, string>;
@@ -68,23 +86,125 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
-  // Calcular costo de envío
-  const zonaSeleccionada = zonas.find((z) =>
-    z.provincias.some((p) => p.toLowerCase() === direccion.provincia.toLowerCase())
-  );
+  // --- Correo Argentino live cotización ---
+  const [cotizacion, setCotizacion] = useState<CotizacionResult | null>(null);
+  const [cotizandoEnvio, setCotizandoEnvio] = useState(false);
+  const [cotizacionError, setCotizacionError] = useState("");
+  const [sucursalesCA, setSucursalesCA] = useState<SucursalCA[]>([]);
+  const [sucursalSeleccionada, setSucursalSeleccionada] = useState<string>("");
+  const [cargandoSucursales, setCargandoSucursales] = useState(false);
 
+  // Debounced CP for live cotización
+  const debouncedCP = useDebounce(direccion.codigo_postal, 600);
+
+  // Calcular peso y dimensiones totales del carrito
+  const paquete = (() => {
+    let pesoTotal = 0;
+    let altoMax = 0;
+    let anchoMax = 0;
+    let largoTotal = 0;
+
+    for (const item of cart.items) {
+      const cant = item.cantidad;
+      pesoTotal += (item.peso_gr ?? 500) * cant; // default 500g si no tiene
+      altoMax = Math.max(altoMax, item.alto_cm ?? 15);
+      anchoMax = Math.max(anchoMax, item.ancho_cm ?? 15);
+      largoTotal += (item.largo_cm ?? 10) * cant; // se suman apilados
+    }
+
+    return {
+      weight: pesoTotal || 500,
+      height: altoMax || 15,
+      width: anchoMax || 15,
+      length: Math.min(largoTotal || 10, 150), // máximo razonable
+    };
+  })();
+
+  // Fetch cotización when CP changes
+  useEffect(() => {
+    if (metodoEnvio === "retiro") return;
+    if (!debouncedCP || debouncedCP.trim().length < 4) {
+      setCotizacion(null);
+      setCotizacionError("");
+      return;
+    }
+    const match = debouncedCP.match(/\d{4}/);
+    if (!match) return;
+
+    let cancelled = false;
+    setCotizandoEnvio(true);
+    setCotizacionError("");
+
+    fetch("/api/envios/cotizar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ codigoPostal: match[0], paquete }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.error) {
+          setCotizacionError(data.error);
+          setCotizacion(null);
+        } else {
+          setCotizacion(data);
+          setCotizacionError("");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCotizacionError("Error al cotizar el envío. Verificá el código postal e intentá de nuevo.");
+          setCotizacion(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setCotizandoEnvio(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [debouncedCP, metodoEnvio]);
+
+  // Fetch sucursales when province/CP changes and tipo is sucursal
+  useEffect(() => {
+    if (metodoEnvio === "retiro" || tipoEnvio !== "sucursal" || !direccion.provincia) {
+      setSucursalesCA([]);
+      setSucursalSeleccionada("");
+      return;
+    }
+
+    let cancelled = false;
+    setCargandoSucursales(true);
+    setSucursalSeleccionada("");
+
+    const cpParam = debouncedCP ? `&cp=${encodeURIComponent(debouncedCP)}` : "";
+    fetch(`/api/envios/sucursales?provincia=${encodeURIComponent(direccion.provincia)}${cpParam}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled) return;
+        if (data.sucursales) {
+          setSucursalesCA(data.sucursales);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setCargandoSucursales(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [direccion.provincia, debouncedCP, tipoEnvio, metodoEnvio]);
+
+  // Calcular costo de envío — solo cotización real de la API
   function getCostoEnvio(): number {
     if (metodoEnvio === "retiro") return 0;
-    if (!zonaSeleccionada) return 0;
+    if (!cotizacion) return 0;
 
-    if (metodoEnvio === "correo_argentino") {
-      return tipoEnvio === "domicilio"
-        ? zonaSeleccionada.correo_argentino_domicilio
-        : zonaSeleccionada.correo_argentino_sucursal;
+    if (tipoEnvio === "domicilio" && cotizacion.domicilio) {
+      return cotizacion.domicilio.precio;
     }
-    return tipoEnvio === "domicilio"
-      ? zonaSeleccionada.andreani_domicilio
-      : zonaSeleccionada.andreani_sucursal;
+    if (tipoEnvio === "sucursal" && cotizacion.sucursal) {
+      return cotizacion.sucursal.precio;
+    }
+    return 0;
   }
 
   const costoEnvio = getCostoEnvio();
@@ -188,14 +308,20 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
 
   function validarEnvio(): string | null {
     if (metodoEnvio === "retiro") return null;
+    if (!direccion.provincia.trim()) return "Seleccioná la provincia";
+    if (!direccion.codigo_postal.trim()) return "Ingresá el código postal";
     if (!direccion.calle.trim()) return "Ingresá la calle";
     if (!direccion.numero.trim()) return "Ingresá el número";
-    if (!direccion.codigo_postal.trim()) return "Ingresá el código postal";
     if (!direccion.localidad.trim()) return "Ingresá la localidad";
-    if (!direccion.provincia.trim()) return "Seleccioná la provincia";
-    if (!zonaSeleccionada) return "No tenemos envío a esa provincia";
     const cpErr = validarCPvsProvincia();
     if (cpErr) return cpErr;
+    if (cotizandoEnvio) return "Esperá, estamos cotizando el envío...";
+    if (!cotizacion) return "Ingresá un código postal válido para cotizar el envío";
+    if (cotizacionError) return cotizacionError;
+    if (tipoEnvio === "sucursal") {
+      if (cargandoSucursales) return "Cargando sucursales...";
+      if (sucursalesCA.length > 0 && !sucursalSeleccionada) return "Seleccioná una sucursal de Correo Argentino";
+    }
     return null;
   }
 
@@ -219,7 +345,8 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     setError("");
 
     try {
-      const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number; captchaToken?: string } = {
+      const sucursalData = sucursalSeleccionada ? sucursalesCA.find(s => s.id === sucursalSeleccionada) : null;
+      const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number; captchaToken?: string; sucursal_correo_id?: string; sucursal_correo_nombre?: string; cotizacion_real?: boolean } = {
         datos_personales: datos,
         metodo_envio: metodoEnvio,
         tipo_envio: metodoEnvio === "retiro" ? null : tipoEnvio,
@@ -231,6 +358,9 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
         subtotal: cart.subtotal,
         total,
         ...(captchaToken && { captchaToken }),
+        ...(sucursalSeleccionada && { sucursal_correo_id: sucursalSeleccionada }),
+        ...(sucursalData && { sucursal_correo_nombre: `${sucursalData.nombre} — ${sucursalData.direccion}, ${sucursalData.ciudad}` }),
+        cotizacion_real: true,
       };
 
       const res = await fetch("/api/pedidos", {
@@ -463,9 +593,92 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                   </div>
                 </div>
 
-                {zonaSeleccionada && (
-                  <p className="text-sm text-lavanda-light">
-                    Costo de envío: <span className="font-semibold text-ambar">{formatPrice(costoEnvio)}</span>
+                {/* Cotización en vivo */}
+                {cotizandoEnvio && (
+                  <div className="flex items-center gap-2 text-sm text-lavanda/75">
+                    <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Cotizando envío...
+                  </div>
+                )}
+
+                {cotizacionError && (
+                  <p className="text-sm text-ambar-light">{cotizacionError}</p>
+                )}
+
+                {cotizacion && !cotizandoEnvio && (
+                  <div className="bg-navy/50 border border-lavanda/10 rounded-lg p-3 space-y-1">
+                    {cotizacion.domicilio && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-lavanda-light">A domicilio ({cotizacion.domicilio.producto})</span>
+                        <span className={`font-semibold ${tipoEnvio === "domicilio" ? "text-ambar" : "text-lavanda/75"}`}>
+                          {formatPrice(cotizacion.domicilio.precio)}
+                        </span>
+                      </div>
+                    )}
+                    {cotizacion.sucursal && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-lavanda-light">A sucursal ({cotizacion.sucursal.producto})</span>
+                        <span className={`font-semibold ${tipoEnvio === "sucursal" ? "text-ambar" : "text-lavanda/75"}`}>
+                          {formatPrice(cotizacion.sucursal.precio)}
+                        </span>
+                      </div>
+                    )}
+                    {(cotizacion.domicilio?.tiempoMin || cotizacion.domicilio?.tiempoMax) && (
+                      <p className="text-xs text-lavanda/60 mt-1">
+                        Tiempo estimado: {cotizacion.domicilio?.tiempoMin}–{cotizacion.domicilio?.tiempoMax} días hábiles
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* Sucursal selector */}
+                {tipoEnvio === "sucursal" && metodoEnvio === "correo_argentino" && direccion.provincia && (
+                  <div className="space-y-2">
+                    {cargandoSucursales ? (
+                      <div className="flex items-center gap-2 text-sm text-lavanda/75">
+                        <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                        </svg>
+                        Cargando sucursales...
+                      </div>
+                    ) : sucursalesCA.length > 0 ? (
+                      <>
+                        <label className="block text-xs text-lavanda/75">Sucursal de retiro</label>
+                        <select
+                          value={sucursalSeleccionada}
+                          onChange={(e) => setSucursalSeleccionada(e.target.value)}
+                          className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla focus:outline-none focus:border-purpura"
+                        >
+                          <option value="">Seleccioná una sucursal</option>
+                          {sucursalesCA.map((s) => (
+                            <option key={s.id} value={s.id}>
+                              {s.nombre} — {s.direccion}, {s.ciudad}
+                            </option>
+                          ))}
+                        </select>
+                        {sucursalSeleccionada && (() => {
+                          const sel = sucursalesCA.find(s => s.id === sucursalSeleccionada);
+                          return sel ? (
+                            <div className="text-xs text-lavanda/60 space-y-0.5">
+                              <p>{sel.direccion}, {sel.ciudad} ({sel.codigoPostal})</p>
+                              {sel.horario && <p>Horario: {sel.horario}</p>}
+                              {sel.telefono && <p>Tel: {sel.telefono}</p>}
+                            </div>
+                          ) : null;
+                        })()}
+                      </>
+                    ) : null}
+                  </div>
+                )}
+
+                {/* Mensaje cuando falta cotización */}
+                {!cotizacion && !cotizandoEnvio && !cotizacionError && direccion.codigo_postal.trim().length < 4 && (
+                  <p className="text-sm text-lavanda/60">
+                    Ingresá el código postal para ver el costo de envío
                   </p>
                 )}
               </>
@@ -551,11 +764,15 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
               <div className="border-t border-lavanda/10 my-2" />
               <SummaryRow label="Envío" value={
                 metodoEnvio === "retiro" ? "Retiro en persona" :
-                `${metodoEnvio === "correo_argentino" ? "Correo Argentino" : "Andreani"} (${tipoEnvio})`
+                `Correo Argentino (${tipoEnvio === "domicilio" ? "a domicilio" : "a sucursal"})`
               } />
               {metodoEnvio !== "retiro" && (
                 <SummaryRow label="Dirección" value={`${direccion.calle} ${direccion.numero}${direccion.piso ? `, ${direccion.piso}` : ""}${direccion.departamento ? ` ${direccion.departamento}` : ""}, ${direccion.localidad}, ${direccion.provincia} (${direccion.codigo_postal})`} />
               )}
+              {sucursalSeleccionada && (() => {
+                const sel = sucursalesCA.find(s => s.id === sucursalSeleccionada);
+                return sel ? <SummaryRow label="Sucursal" value={`${sel.nombre} — ${sel.direccion}, ${sel.ciudad}`} /> : null;
+              })()}
               <SummaryRow label="Pago" value={
                 metodoPago === "transferencia" ? "Transferencia" :
                 metodoPago === "mercadopago" ? "MercadoPago (+13%)" : "Efectivo"
@@ -614,9 +831,12 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
               <span className="text-lavanda-light">{formatPrice(cart.subtotal)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/75">Envío</span>
+              <span className="text-lavanda/75">
+                Envío
+                {cotizandoEnvio && <span className="text-xs ml-1 text-lavanda/50">(cotizando...)</span>}
+              </span>
               <span className="text-lavanda-light">
-                {metodoEnvio === "retiro" ? "Gratis" : costoEnvio > 0 ? formatPrice(costoEnvio) : "—"}
+                {metodoEnvio === "retiro" ? "Gratis" : cotizandoEnvio ? "..." : costoEnvio > 0 ? formatPrice(costoEnvio) : "Ingresá CP"}
               </span>
             </div>
             {recargoMP > 0 && (

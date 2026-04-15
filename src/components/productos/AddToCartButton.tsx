@@ -36,6 +36,10 @@ export default function AddToCartButton({
       opciones: selecciones,
       cantidad: 1,
       precio_unitario: precioFinal,
+      peso_gr: producto.peso_gr,
+      alto_cm: producto.alto_cm,
+      ancho_cm: producto.ancho_cm,
+      largo_cm: producto.largo_cm,
     });
 
     setAdded(true);

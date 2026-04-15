@@ -22,6 +22,9 @@ export interface ProductoFormData {
   linea: string;
   tamano: string;
   peso_gr: number | null;
+  alto_cm: number | null;
+  ancho_cm: number | null;
+  largo_cm: number | null;
   sku: string;
   meta_title: string;
   meta_description: string;
@@ -62,6 +65,9 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     linea: producto?.linea || "",
     tamano: producto?.tamano || "",
     peso_gr: producto?.peso_gr ?? null,
+    alto_cm: producto?.alto_cm ?? null,
+    ancho_cm: producto?.ancho_cm ?? null,
+    largo_cm: producto?.largo_cm ?? null,
     sku: producto?.sku || "",
     meta_title: producto?.meta_title || "",
     meta_description: producto?.meta_description || "",
@@ -308,8 +314,8 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
         </div>
       </div>
 
-      {/* SKU, Peso, Tiempo producción */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* SKU, Tiempo producción */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-lavanda/60 mb-1">
             SKU {!manualEdits.has("sku") && <span className="text-lavanda/30 text-xs">(auto)</span>}
@@ -323,16 +329,6 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
           />
         </div>
         <div>
-          <label className="block text-sm text-lavanda/60 mb-1">Peso (gr)</label>
-          <input
-            type="number"
-            value={form.peso_gr ?? ""}
-            onChange={(e) => updateField("peso_gr", e.target.value ? Number(e.target.value) : null)}
-            min={0}
-            className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
-          />
-        </div>
-        <div>
           <label className="block text-sm text-lavanda/60 mb-1">Tiempo producción (días)</label>
           <input
             type="number"
@@ -341,6 +337,57 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
             min={1}
             className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
           />
+        </div>
+      </div>
+
+      {/* Peso y dimensiones (para cotización de envío) */}
+      <div>
+        <label className="block text-sm text-lavanda/60 mb-2">Peso y dimensiones <span className="text-lavanda/30 text-xs">(para cotización de envío)</span></label>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div>
+            <label className="block text-xs text-lavanda/40 mb-1">Peso (gr)</label>
+            <input
+              type="number"
+              value={form.peso_gr ?? ""}
+              onChange={(e) => updateField("peso_gr", e.target.value ? Number(e.target.value) : null)}
+              min={0}
+              placeholder="500"
+              className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-lavanda/40 mb-1">Alto (cm)</label>
+            <input
+              type="number"
+              value={form.alto_cm ?? ""}
+              onChange={(e) => updateField("alto_cm", e.target.value ? Number(e.target.value) : null)}
+              min={0}
+              placeholder="15"
+              className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-lavanda/40 mb-1">Ancho (cm)</label>
+            <input
+              type="number"
+              value={form.ancho_cm ?? ""}
+              onChange={(e) => updateField("ancho_cm", e.target.value ? Number(e.target.value) : null)}
+              min={0}
+              placeholder="15"
+              className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-lavanda/40 mb-1">Largo (cm)</label>
+            <input
+              type="number"
+              value={form.largo_cm ?? ""}
+              onChange={(e) => updateField("largo_cm", e.target.value ? Number(e.target.value) : null)}
+              min={0}
+              placeholder="10"
+              className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+            />
+          </div>
         </div>
       </div>
 

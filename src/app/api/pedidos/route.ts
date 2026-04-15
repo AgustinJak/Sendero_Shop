@@ -24,6 +24,8 @@ export async function POST(req: NextRequest) {
       subtotal,
       total,
       captchaToken,
+      sucursal_correo_id,
+      sucursal_correo_nombre,
     } = body;
 
     // Verificar Turnstile CAPTCHA si está configurado
@@ -92,6 +94,8 @@ export async function POST(req: NextRequest) {
         recargo_mp: recargoMP,
         subtotal: subtotal,
         total: total,
+        sucursal_correo_id: sucursal_correo_id || null,
+        sucursal_correo_nombre: sucursal_correo_nombre || null,
       })
       .select("id, numero_pedido")
       .single();

@@ -33,6 +33,9 @@ export interface Producto {
   linea: string | null;
   tamano: string | null;
   peso_gr: number | null;
+  alto_cm: number | null;
+  ancho_cm: number | null;
+  largo_cm: number | null;
   sku: string | null;
   meta_title: string | null;
   meta_description: string | null;
@@ -105,6 +108,11 @@ export interface CartItem {
   // Calculado
   precio_unitario: number; // base + sum(adicionales)
   subtotal: number; // unitario * cantidad
+  // Físico (para cotización de envío)
+  peso_gr: number | null;
+  alto_cm: number | null;
+  ancho_cm: number | null;
+  largo_cm: number | null;
 }
 
 export interface Cart {
@@ -157,6 +165,8 @@ export interface Pedido {
   mp_payment_id: string | null;
   tracking_code: string | null;
   tracking_url: string | null;
+  sucursal_correo_id: string | null;
+  sucursal_correo_nombre: string | null;
   notas: string | null;
   cancelado_at: string | null;
   created_at: string;
