@@ -187,6 +187,10 @@ export function pedidoConfirmadoEmail(
         <td style="padding:16px;">
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Método de envío</p>
           <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;">${metodoEnvioLabel}</p>
+          ${pedido.sucursal_correo_nombre ? `
+          <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Sucursal de retiro</p>
+          <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;">${pedido.sucursal_correo_nombre}</p>
+          ` : ""}
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Método de pago</p>
           <p style="margin:0;color:${COLORS.niebla};font-size:14px;">${metodoPagoLabel}</p>
         </td>
@@ -533,6 +537,10 @@ export function nuevoPedidoAdminEmail(pedido: Pedido & { items: PedidoItem[] }):
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Envío</td>
               <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.metodo_envio === "retiro" ? "Retiro en persona" : `${pedido.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}${pedido.tipo_envio ? ` (${pedido.tipo_envio === "domicilio" ? "a domicilio" : "a sucursal"})` : ""}`}</td>
             </tr>
+            ${pedido.sucursal_correo_nombre ? `<tr>
+              <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Sucursal</td>
+              <td style="color:${COLORS.niebla};font-size:13px;text-align:right;padding-top:4px;">${pedido.sucursal_correo_nombre}</td>
+            </tr>` : ""}
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Pago</td>
               <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.metodo_pago === "mercadopago" ? "MercadoPago" : pedido.metodo_pago}</td>

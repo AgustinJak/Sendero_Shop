@@ -205,6 +205,14 @@ export default async function PedidoPage({ params }: Props) {
           </div>
         </div>
 
+        {/* Sucursal de retiro */}
+        {p.sucursal_correo_nombre && (
+          <div className="border-t border-lavanda/10 pt-3 space-y-1 text-sm">
+            <p className="text-lavanda/60 text-xs uppercase tracking-wider">Sucursal de retiro</p>
+            <p className="text-lavanda-light">{p.sucursal_correo_nombre}</p>
+          </div>
+        )}
+
         {/* Customer info */}
         <div className="border-t border-lavanda/10 pt-3 space-y-1 text-sm">
           <p className="text-lavanda/75">{p.nombre_cliente} · {p.email}</p>
