@@ -409,12 +409,12 @@ export async function importShipping(
   const token = await getToken();
   const sender = getRemitente();
 
-  // NOTE: ShippingRequest (MiCorreo /shipping/import) does NOT accept
-  // `deliveredType` or `deliveryType` at the top level. Domicilio vs sucursal
-  // is inferred from the presence of `agencyId`.
+  // NOTE: ShippingRequest (MiCorreo /shipping/import) schema is narrower than
+  // /rates. It rejects top-level `deliveredType`, `deliveryType` and
+  // `externalReference`. We send only `customerId` + the minimum structure
+  // we believe is valid and let the API tell us which fields are missing.
   const body = {
     customerId,
-    externalReference: shipment.externalReference,
     declaredValue: shipment.declaredValue,
     dimensions: shipment.dimensions,
     sender: {
