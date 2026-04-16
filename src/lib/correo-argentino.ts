@@ -305,39 +305,39 @@ export async function listarSucursales(
 
 // ---------- Shipping import (Fase 2) ----------
 
-export interface CorreoSenderAddress {
+export interface CorreoImportAddress {
   streetName: string;
   streetNumber: string;
   floor?: string;
   apartment?: string;
-  locality: string;
-  province: string; // Province code (A, B, C, ...)
+  city: string;
+  provinceCode: string; // Province code (A, B, C, ...)
   postalCode: string;
 }
 
-export interface CorreoParty {
+export interface CorreoImportRecipient {
   name: string;
-  surname?: string;
-  documentType?: string; // "DNI" | "CUIT" | ...
-  documentNumber: string;
-  telephone: string;
+  phone?: string;
+  cellPhone?: string;
   email: string;
-  address: CorreoSenderAddress;
 }
 
 export interface CorreoImportShipment {
-  deliveredType: "D" | "S";
-  productType?: string; // default "CP"
-  externalReference: string; // Usually nro de pedido
+  deliveryType: "D" | "S";
+  agency?: string; // required when deliveryType === "S"
+  address: CorreoImportAddress;
+  weight: number; // grams, integer
   declaredValue: number;
-  dimensions: {
-    weight: number;
-    height: number;
-    width: number;
-    length: number;
-  };
-  addressee: CorreoParty;
-  agencyId?: string; // required if deliveredType === "S"
+  height: number; // cm, integer
+  length: number; // cm, integer
+  width: number; // cm, integer
+}
+
+export interface CorreoImportInput {
+  extOrderId?: string;
+  orderNumber?: string;
+  recipient: CorreoImportRecipient;
+  shipping: CorreoImportShipment;
 }
 
 export interface CorreoImportResult {
@@ -349,49 +349,35 @@ export interface CorreoImportResult {
 }
 
 /**
- * Build the sender (remitente) from environment variables.
- * These must be configured once in .env / Vercel.
+ * Build the sender block for /shipping/import.
+ * Per the MiCorreo docs, all sender fields can be null — in that case
+ * MiCorreo uses the sender stored against `customerId`.
+ * We still fill them from env vars if they are present, so the shipment
+ * shows the right remitente info in the platform.
  */
-function getRemitente(): CorreoParty {
-  const required = {
-    CORREO_REMITENTE_NOMBRE: process.env.CORREO_REMITENTE_NOMBRE,
-    CORREO_REMITENTE_DNI: process.env.CORREO_REMITENTE_DNI,
-    CORREO_REMITENTE_TELEFONO: process.env.CORREO_REMITENTE_TELEFONO,
-    CORREO_REMITENTE_EMAIL: process.env.CORREO_REMITENTE_EMAIL,
-    CORREO_REMITENTE_CALLE: process.env.CORREO_REMITENTE_CALLE,
-    CORREO_REMITENTE_NUMERO: process.env.CORREO_REMITENTE_NUMERO,
-    CORREO_REMITENTE_LOCALIDAD: process.env.CORREO_REMITENTE_LOCALIDAD,
-    CORREO_REMITENTE_PROVINCIA: process.env.CORREO_REMITENTE_PROVINCIA, // province code
-    CORREO_REMITENTE_CP: process.env.CORREO_REMITENTE_CP,
-  };
-
-  const missing = Object.entries(required)
-    .filter(([, v]) => !v)
-    .map(([k]) => k);
-
-  if (missing.length > 0) {
-    throw new Error(
-      `Faltan variables de remitente de Correo Argentino: ${missing.join(", ")}`
-    );
-  }
-
-  return {
-    name: required.CORREO_REMITENTE_NOMBRE!,
-    surname: process.env.CORREO_REMITENTE_APELLIDO || undefined,
-    documentType: process.env.CORREO_REMITENTE_DOC_TIPO || "DNI",
-    documentNumber: required.CORREO_REMITENTE_DNI!,
-    telephone: required.CORREO_REMITENTE_TELEFONO!,
-    email: required.CORREO_REMITENTE_EMAIL!,
-    address: {
-      streetName: required.CORREO_REMITENTE_CALLE!,
-      streetNumber: required.CORREO_REMITENTE_NUMERO!,
-      floor: process.env.CORREO_REMITENTE_PISO || undefined,
-      apartment: process.env.CORREO_REMITENTE_DEPTO || undefined,
-      locality: required.CORREO_REMITENTE_LOCALIDAD!,
-      province: required.CORREO_REMITENTE_PROVINCIA!,
-      postalCode: required.CORREO_REMITENTE_CP!,
+function buildSender() {
+  const sender = {
+    name: process.env.CORREO_REMITENTE_NOMBRE || null,
+    phone: process.env.CORREO_REMITENTE_TELEFONO || null,
+    cellPhone:
+      process.env.CORREO_REMITENTE_CELULAR ||
+      process.env.CORREO_REMITENTE_TELEFONO ||
+      null,
+    email: process.env.CORREO_REMITENTE_EMAIL || null,
+    originAddress: {
+      streetName: process.env.CORREO_REMITENTE_CALLE || null,
+      streetNumber: process.env.CORREO_REMITENTE_NUMERO || null,
+      floor: process.env.CORREO_REMITENTE_PISO || null,
+      apartment: process.env.CORREO_REMITENTE_DEPTO || null,
+      city:
+        process.env.CORREO_REMITENTE_CIUDAD ||
+        process.env.CORREO_REMITENTE_LOCALIDAD ||
+        null,
+      provinceCode: process.env.CORREO_REMITENTE_PROVINCIA || null,
+      postalCode: process.env.CORREO_REMITENTE_CP || null,
     },
   };
+  return sender;
 }
 
 /**
@@ -399,25 +385,52 @@ function getRemitente(): CorreoParty {
  * the Correo Argentino platform.
  *
  * Endpoint: POST /shipping/import
- * The exact payload shape is inferred from MiCorreo docs — adjust if
- * the API returns 400 with a specific field error.
+ * Schema (per MiCorreo API docs, version 2022-08):
+ *   { customerId, extOrderId, orderNumber, sender, recipient, shipping }
+ * where:
+ *   - sender: { name, phone, cellPhone, email, originAddress: {...} } — nullable
+ *   - recipient: { name, phone, cellPhone, email } — NO address, NO document
+ *   - shipping: { deliveryType, agency, address: {streetName, streetNumber,
+ *       floor, apartment, city, provinceCode, postalCode}, weight,
+ *       declaredValue, height, length, width }
  */
 export async function importShipping(
-  shipment: CorreoImportShipment
+  input: CorreoImportInput
 ): Promise<CorreoImportResult> {
   const { baseUrl, customerId } = getConfig();
   const token = await getToken();
-  const sender = getRemitente();
 
-  // NOTE: ShippingRequest (MiCorreo /shipping/import) has a schema completely
-  // different from /rates. It's been rejecting every top-level field we tried
-  // (deliveredType, deliveryType, externalReference, declaredValue). We probe
-  // with only {customerId} to trigger "missing required field X" errors and
-  // discover the actual schema. The rest of the data is kept around to plug
-  // into the final body once we know where each piece goes.
-  void sender; // unused until we know sender's nested key
-  void shipment; // unused until we know the wrapper key
-  const body = { customerId };
+  const { shipping } = input;
+  const body = {
+    customerId,
+    extOrderId: input.extOrderId ?? null,
+    orderNumber: input.orderNumber ?? null,
+    sender: buildSender(),
+    recipient: {
+      name: input.recipient.name,
+      phone: input.recipient.phone ?? "",
+      cellPhone: input.recipient.cellPhone ?? input.recipient.phone ?? "",
+      email: input.recipient.email,
+    },
+    shipping: {
+      deliveryType: shipping.deliveryType,
+      agency: shipping.deliveryType === "S" ? shipping.agency ?? null : null,
+      address: {
+        streetName: shipping.address.streetName,
+        streetNumber: shipping.address.streetNumber,
+        floor: shipping.address.floor ?? "",
+        apartment: shipping.address.apartment ?? "",
+        city: shipping.address.city,
+        provinceCode: shipping.address.provinceCode,
+        postalCode: shipping.address.postalCode,
+      },
+      weight: Math.round(shipping.weight),
+      declaredValue: shipping.declaredValue,
+      height: Math.round(shipping.height),
+      length: Math.round(shipping.length),
+      width: Math.round(shipping.width),
+    },
+  };
 
   const res = await fetch(`${baseUrl}/shipping/import`, {
     method: "POST",

@@ -96,59 +96,54 @@ export async function POST(
       largoTotal += largo * item.cantidad;
     }
 
-    // 5. Armar destinatario
-    const deliveredType: "D" | "S" = pedido.tipo_envio === "domicilio" ? "D" : "S";
+    // 5. Armar dirección de envío (va dentro de shipping.address)
+    const deliveryType: "D" | "S" = pedido.tipo_envio === "domicilio" ? "D" : "S";
 
-    const [nombre, ...resto] = pedido.nombre_cliente.trim().split(/\s+/);
-    const apellido = resto.join(" ") || nombre;
-
-    let addresseeAddress;
-    if (deliveredType === "D" && pedido.direccion_envio) {
+    let shippingAddress;
+    if (deliveryType === "D" && pedido.direccion_envio) {
       const d = pedido.direccion_envio;
       const provinceCode = PROVINCIA_A_CODIGO[d.provincia] || d.provincia;
-      addresseeAddress = {
+      shippingAddress = {
         streetName: d.calle,
         streetNumber: d.numero,
         floor: d.piso || undefined,
         apartment: d.departamento || undefined,
-        locality: d.localidad,
-        province: provinceCode,
+        city: d.localidad,
+        provinceCode,
         postalCode: d.codigo_postal,
       };
     } else {
-      // Para sucursal igual mandamos una dirección mínima (provincia + CP de la sucursal)
-      // la sucursal se identifica por agencyId
-      const provincia = process.env.CORREO_REMITENTE_PROVINCIA || "C";
-      addresseeAddress = {
+      // Para sucursal la sucursal se identifica por `agency`; la dirección
+      // igual se manda mínima para cumplir con el schema.
+      shippingAddress = {
         streetName: "Retiro en sucursal",
         streetNumber: "S/N",
-        locality: "",
-        province: provincia,
+        city: "",
+        provinceCode: process.env.CORREO_REMITENTE_PROVINCIA || "C",
         postalCode: process.env.CORREO_CP_ORIGEN || "1414",
       };
     }
 
     // 6. Importar envío
     const result = await importShipping({
-      deliveredType,
-      externalReference: pedido.numero_pedido,
-      declaredValue: Math.round(pedido.subtotal),
-      dimensions: {
+      extOrderId: pedido.id,
+      orderNumber: pedido.numero_pedido,
+      recipient: {
+        name: pedido.nombre_cliente,
+        phone: pedido.telefono,
+        cellPhone: pedido.telefono,
+        email: pedido.email,
+      },
+      shipping: {
+        deliveryType,
+        agency: deliveryType === "S" ? pedido.sucursal_correo_id! : undefined,
+        address: shippingAddress,
         weight: pesoTotal,
+        declaredValue: Math.round(pedido.subtotal),
         height: altoMax,
         width: anchoMax,
         length: largoTotal,
       },
-      addressee: {
-        name: nombre,
-        surname: apellido,
-        documentType: "DNI",
-        documentNumber: pedido.dni,
-        telephone: pedido.telefono,
-        email: pedido.email,
-        address: addresseeAddress,
-      },
-      agencyId: deliveredType === "S" ? pedido.sucursal_correo_id! : undefined,
     });
 
     // 7. Guardar resultado en pedido
