@@ -409,40 +409,15 @@ export async function importShipping(
   const token = await getToken();
   const sender = getRemitente();
 
-  // NOTE: ShippingRequest (MiCorreo /shipping/import) schema is narrower than
-  // /rates. It rejects top-level `deliveredType`, `deliveryType` and
-  // `externalReference`. We send only `customerId` + the minimum structure
-  // we believe is valid and let the API tell us which fields are missing.
-  const body = {
-    customerId,
-    declaredValue: shipment.declaredValue,
-    dimensions: shipment.dimensions,
-    sender: {
-      name: sender.name,
-      surname: sender.surname,
-      document: {
-        type: sender.documentType,
-        number: sender.documentNumber,
-      },
-      telephone: sender.telephone,
-      email: sender.email,
-      address: sender.address,
-    },
-    addressee: {
-      name: shipment.addressee.name,
-      surname: shipment.addressee.surname,
-      document: {
-        type: shipment.addressee.documentType || "DNI",
-        number: shipment.addressee.documentNumber,
-      },
-      telephone: shipment.addressee.telephone,
-      email: shipment.addressee.email,
-      address: shipment.addressee.address,
-    },
-    ...(shipment.deliveredType === "S" && shipment.agencyId
-      ? { agencyId: shipment.agencyId }
-      : {}),
-  };
+  // NOTE: ShippingRequest (MiCorreo /shipping/import) has a schema completely
+  // different from /rates. It's been rejecting every top-level field we tried
+  // (deliveredType, deliveryType, externalReference, declaredValue). We probe
+  // with only {customerId} to trigger "missing required field X" errors and
+  // discover the actual schema. The rest of the data is kept around to plug
+  // into the final body once we know where each piece goes.
+  void sender; // unused until we know sender's nested key
+  void shipment; // unused until we know the wrapper key
+  const body = { customerId };
 
   const res = await fetch(`${baseUrl}/shipping/import`, {
     method: "POST",
