@@ -411,7 +411,8 @@ export async function importShipping(
 
   const body = {
     customerId,
-    deliveredType: shipment.deliveredType,
+    // /shipping/import uses `deliveryType` (NOT `deliveredType` like /rates)
+    deliveryType: shipment.deliveredType,
     productType: shipment.productType || "CP",
     externalReference: shipment.externalReference,
     declaredValue: shipment.declaredValue,
