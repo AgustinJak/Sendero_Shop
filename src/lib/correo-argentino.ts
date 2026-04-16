@@ -303,6 +303,181 @@ export async function listarSucursales(
   );
 }
 
+// ---------- Shipping import (Fase 2) ----------
+
+export interface CorreoSenderAddress {
+  streetName: string;
+  streetNumber: string;
+  floor?: string;
+  apartment?: string;
+  locality: string;
+  province: string; // Province code (A, B, C, ...)
+  postalCode: string;
+}
+
+export interface CorreoParty {
+  name: string;
+  surname?: string;
+  documentType?: string; // "DNI" | "CUIT" | ...
+  documentNumber: string;
+  telephone: string;
+  email: string;
+  address: CorreoSenderAddress;
+}
+
+export interface CorreoImportShipment {
+  deliveredType: "D" | "S";
+  productType?: string; // default "CP"
+  externalReference: string; // Usually nro de pedido
+  declaredValue: number;
+  dimensions: {
+    weight: number;
+    height: number;
+    width: number;
+    length: number;
+  };
+  addressee: CorreoParty;
+  agencyId?: string; // required if deliveredType === "S"
+}
+
+export interface CorreoImportResult {
+  ok: boolean;
+  status: number;
+  shippingId?: string;
+  createdAt?: string;
+  raw: unknown;
+}
+
+/**
+ * Build the sender (remitente) from environment variables.
+ * These must be configured once in .env / Vercel.
+ */
+function getRemitente(): CorreoParty {
+  const required = {
+    CORREO_REMITENTE_NOMBRE: process.env.CORREO_REMITENTE_NOMBRE,
+    CORREO_REMITENTE_DNI: process.env.CORREO_REMITENTE_DNI,
+    CORREO_REMITENTE_TELEFONO: process.env.CORREO_REMITENTE_TELEFONO,
+    CORREO_REMITENTE_EMAIL: process.env.CORREO_REMITENTE_EMAIL,
+    CORREO_REMITENTE_CALLE: process.env.CORREO_REMITENTE_CALLE,
+    CORREO_REMITENTE_NUMERO: process.env.CORREO_REMITENTE_NUMERO,
+    CORREO_REMITENTE_LOCALIDAD: process.env.CORREO_REMITENTE_LOCALIDAD,
+    CORREO_REMITENTE_PROVINCIA: process.env.CORREO_REMITENTE_PROVINCIA, // province code
+    CORREO_REMITENTE_CP: process.env.CORREO_REMITENTE_CP,
+  };
+
+  const missing = Object.entries(required)
+    .filter(([, v]) => !v)
+    .map(([k]) => k);
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Faltan variables de remitente de Correo Argentino: ${missing.join(", ")}`
+    );
+  }
+
+  return {
+    name: required.CORREO_REMITENTE_NOMBRE!,
+    surname: process.env.CORREO_REMITENTE_APELLIDO || undefined,
+    documentType: process.env.CORREO_REMITENTE_DOC_TIPO || "DNI",
+    documentNumber: required.CORREO_REMITENTE_DNI!,
+    telephone: required.CORREO_REMITENTE_TELEFONO!,
+    email: required.CORREO_REMITENTE_EMAIL!,
+    address: {
+      streetName: required.CORREO_REMITENTE_CALLE!,
+      streetNumber: required.CORREO_REMITENTE_NUMERO!,
+      floor: process.env.CORREO_REMITENTE_PISO || undefined,
+      apartment: process.env.CORREO_REMITENTE_DEPTO || undefined,
+      locality: required.CORREO_REMITENTE_LOCALIDAD!,
+      province: required.CORREO_REMITENTE_PROVINCIA!,
+      postalCode: required.CORREO_REMITENTE_CP!,
+    },
+  };
+}
+
+/**
+ * Import a shipment into MiCorreo so it appears ready to manage in
+ * the Correo Argentino platform.
+ *
+ * Endpoint: POST /shipping/import
+ * The exact payload shape is inferred from MiCorreo docs — adjust if
+ * the API returns 400 with a specific field error.
+ */
+export async function importShipping(
+  shipment: CorreoImportShipment
+): Promise<CorreoImportResult> {
+  const { baseUrl, customerId } = getConfig();
+  const token = await getToken();
+  const sender = getRemitente();
+
+  const body = {
+    customerId,
+    deliveredType: shipment.deliveredType,
+    productType: shipment.productType || "CP",
+    externalReference: shipment.externalReference,
+    declaredValue: shipment.declaredValue,
+    dimensions: shipment.dimensions,
+    sender: {
+      name: sender.name,
+      surname: sender.surname,
+      document: {
+        type: sender.documentType,
+        number: sender.documentNumber,
+      },
+      telephone: sender.telephone,
+      email: sender.email,
+      address: sender.address,
+    },
+    addressee: {
+      name: shipment.addressee.name,
+      surname: shipment.addressee.surname,
+      document: {
+        type: shipment.addressee.documentType || "DNI",
+        number: shipment.addressee.documentNumber,
+      },
+      telephone: shipment.addressee.telephone,
+      email: shipment.addressee.email,
+      address: shipment.addressee.address,
+    },
+    ...(shipment.deliveredType === "S" && shipment.agencyId
+      ? { agencyId: shipment.agencyId }
+      : {}),
+  };
+
+  const res = await fetch(`${baseUrl}/shipping/import`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  const raw = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    const msg =
+      (raw as { message?: string; error?: string })?.message ||
+      (raw as { error?: string })?.error ||
+      `HTTP ${res.status}`;
+    throw new Error(`Correo Argentino import failed (${res.status}): ${msg}`);
+  }
+
+  // The API usually returns { createdAt, trackingNumber?, shippingId? } or array
+  const data = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown>;
+
+  return {
+    ok: true,
+    status: res.status,
+    shippingId:
+      (data?.shippingId as string) ||
+      (data?.trackingNumber as string) ||
+      (data?.id as string) ||
+      undefined,
+    createdAt: (data?.createdAt as string) || undefined,
+    raw,
+  };
+}
+
 // ---------- Province code mapping ----------
 
 /**

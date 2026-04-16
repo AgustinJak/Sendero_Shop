@@ -167,6 +167,9 @@ export interface Pedido {
   tracking_url: string | null;
   sucursal_correo_id: string | null;
   sucursal_correo_nombre: string | null;
+  correo_shipping_id: string | null;
+  correo_imported_at: string | null;
+  correo_import_response: Record<string, unknown> | null;
   notas: string | null;
   cancelado_at: string | null;
   created_at: string;

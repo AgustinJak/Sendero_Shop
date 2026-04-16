@@ -54,10 +54,37 @@ function getTransitions(pedido: Pedido): EstadoPedido[] {
 export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState(pedido.tracking_code || "");
   const [notas, setNotas] = useState(pedido.notas || "");
 
   const possibleTransitions = getTransitions(pedido);
+  const puedeImportar =
+    pedido.metodo_envio === "correo_argentino" &&
+    !pedido.correo_shipping_id &&
+    pedido.estado !== "cancelado" &&
+    pedido.estado !== "pendiente_pago";
+
+  async function importarEnvio() {
+    setImporting(true);
+    setImportError(null);
+    try {
+      const res = await fetch(`/api/admin/pedidos/${pedido.id}/importar-envio`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setImportError(data.error || "Error al importar envío");
+      } else {
+        router.refresh();
+      }
+    } catch (err) {
+      setImportError((err as Error).message);
+    } finally {
+      setImporting(false);
+    }
+  }
 
   async function updatePedido(updates: Record<string, unknown>) {
     setLoading(true);
@@ -117,6 +144,51 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
           </p>
         )}
       </div>
+
+      {/* Importar a MiCorreo (solo Correo Argentino) */}
+      {pedido.metodo_envio === "correo_argentino" && (
+        <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-niebla">MiCorreo</h2>
+            {pedido.correo_shipping_id && (
+              <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+                Importado
+              </span>
+            )}
+          </div>
+
+          {pedido.correo_shipping_id ? (
+            <div className="space-y-1 text-xs">
+              <p className="text-lavanda/60">Shipping ID</p>
+              <p className="text-lavanda-light font-mono">{pedido.correo_shipping_id}</p>
+              {pedido.correo_imported_at && (
+                <p className="text-lavanda/40 pt-1">
+                  Importado el {new Date(pedido.correo_imported_at).toLocaleString("es-AR")}
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-lavanda/60">
+                Importar este envío a la plataforma de Correo Argentino para gestionarlo.
+              </p>
+              <button
+                onClick={importarEnvio}
+                disabled={importing || loading || !puedeImportar}
+                className="w-full py-2 bg-purpura hover:bg-purpura/80 text-niebla text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!puedeImportar ? "El pedido debe tener el pago confirmado y método Correo Argentino" : undefined}
+              >
+                {importing ? "Importando..." : "Importar a MiCorreo"}
+              </button>
+              {importError && (
+                <p className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-2 py-1.5">
+                  {importError}
+                </p>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {/* Tracking */}
       <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
