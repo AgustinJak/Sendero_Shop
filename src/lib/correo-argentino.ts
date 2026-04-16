@@ -452,18 +452,53 @@ export async function importShipping(
     body: JSON.stringify(body),
   });
 
-  const raw = await res.json().catch(() => ({}));
+  // Capture raw text first — then try to parse as JSON
+  const rawText = await res.text();
+  let raw: unknown = null;
+  try {
+    raw = rawText ? JSON.parse(rawText) : null;
+  } catch {
+    raw = rawText;
+  }
 
   if (!res.ok) {
-    const msg =
-      (raw as { message?: string; error?: string })?.message ||
-      (raw as { error?: string })?.error ||
-      `HTTP ${res.status}`;
-    throw new Error(`Correo Argentino import failed (${res.status}): ${msg}`);
+    // Log full detail on server so we can debug
+    console.error("[Correo] /shipping/import failed", {
+      status: res.status,
+      requestBody: body,
+      responseText: rawText,
+      responseParsed: raw,
+    });
+
+    // Try to extract a human-readable message from several common shapes
+    const r = raw as Record<string, unknown> | null;
+    let msg: string | undefined;
+    if (r && typeof r === "object") {
+      msg =
+        (r.message as string) ||
+        (r.error as string) ||
+        (r.errorMessage as string) ||
+        (Array.isArray(r.errors)
+          ? (r.errors as unknown[])
+              .map((e) =>
+                typeof e === "string"
+                  ? e
+                  : (e as { message?: string; field?: string; code?: string })?.message ||
+                    JSON.stringify(e)
+              )
+              .join("; ")
+          : undefined);
+    }
+    if (!msg && typeof raw === "string" && raw.trim()) {
+      msg = raw.slice(0, 400);
+    }
+    throw new Error(
+      `Correo Argentino import failed (${res.status}): ${msg || "sin detalle en la respuesta"}`
+    );
   }
 
   // The API usually returns { createdAt, trackingNumber?, shippingId? } or array
-  const data = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown>;
+  const data = (Array.isArray(raw) ? raw[0] : raw) as Record<string, unknown> | null;
 
   return {
     ok: true,
