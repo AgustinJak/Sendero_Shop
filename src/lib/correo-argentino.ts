@@ -346,6 +346,7 @@ export interface CorreoImportResult {
   shippingId?: string;
   createdAt?: string;
   raw: unknown;
+  requestBody: unknown;
 }
 
 /**
@@ -401,6 +402,14 @@ export async function importShipping(
   const token = await getToken();
 
   const { shipping } = input;
+
+  // MiCorreo's portal does not always display `streetNumber` when sent as a
+  // string — coerce purely-numeric values to integer as a workaround.
+  const streetNumberRaw = shipping.address.streetNumber;
+  const streetNumber: string | number = /^\d+$/.test(streetNumberRaw)
+    ? parseInt(streetNumberRaw, 10)
+    : streetNumberRaw;
+
   const body = {
     customerId,
     extOrderId: input.extOrderId ?? null,
@@ -417,7 +426,7 @@ export async function importShipping(
       agency: shipping.deliveryType === "S" ? shipping.agency ?? null : null,
       address: {
         streetName: shipping.address.streetName,
-        streetNumber: shipping.address.streetNumber,
+        streetNumber,
         floor: shipping.address.floor ?? "",
         apartment: shipping.address.apartment ?? "",
         city: shipping.address.city,
@@ -499,6 +508,7 @@ export async function importShipping(
       undefined,
     createdAt: (data?.createdAt as string) || undefined,
     raw,
+    requestBody: body,
   };
 }
 

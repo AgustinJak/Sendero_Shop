@@ -60,9 +60,10 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const [notas, setNotas] = useState(pedido.notas || "");
 
   const possibleTransitions = getTransitions(pedido);
+  const yaImportado = Boolean(pedido.correo_imported_at);
   const puedeImportar =
     pedido.metodo_envio === "correo_argentino" &&
-    !pedido.correo_shipping_id &&
+    !yaImportado &&
     pedido.estado !== "cancelado" &&
     pedido.estado !== "pendiente_pago";
 
@@ -150,17 +151,21 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
         <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-niebla">MiCorreo</h2>
-            {pedido.correo_shipping_id && (
+            {yaImportado && (
               <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
                 Importado
               </span>
             )}
           </div>
 
-          {pedido.correo_shipping_id ? (
+          {yaImportado ? (
             <div className="space-y-1 text-xs">
-              <p className="text-lavanda/60">Shipping ID</p>
-              <p className="text-lavanda-light font-mono">{pedido.correo_shipping_id}</p>
+              {pedido.correo_shipping_id && (
+                <>
+                  <p className="text-lavanda/60">Shipping ID</p>
+                  <p className="text-lavanda-light font-mono">{pedido.correo_shipping_id}</p>
+                </>
+              )}
               {pedido.correo_imported_at && (
                 <p className="text-lavanda/40 pt-1">
                   Importado el {new Date(pedido.correo_imported_at).toLocaleString("es-AR")}

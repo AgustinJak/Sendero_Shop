@@ -149,7 +149,10 @@ export async function POST(
     // 7. Guardar resultado en pedido
     const updates: Record<string, unknown> = {
       correo_imported_at: new Date().toISOString(),
-      correo_import_response: result.raw,
+      correo_import_response: {
+        request: result.requestBody,
+        response: result.raw,
+      },
     };
     if (result.shippingId) {
       updates.correo_shipping_id = result.shippingId;
