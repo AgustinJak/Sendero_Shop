@@ -409,11 +409,11 @@ export async function importShipping(
   const token = await getToken();
   const sender = getRemitente();
 
+  // NOTE: ShippingRequest (MiCorreo /shipping/import) does NOT accept
+  // `deliveredType` or `deliveryType` at the top level. Domicilio vs sucursal
+  // is inferred from the presence of `agencyId`.
   const body = {
     customerId,
-    // /shipping/import uses `deliveryType` (NOT `deliveredType` like /rates)
-    deliveryType: shipment.deliveredType,
-    productType: shipment.productType || "CP",
     externalReference: shipment.externalReference,
     declaredValue: shipment.declaredValue,
     dimensions: shipment.dimensions,
