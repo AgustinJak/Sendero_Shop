@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
+import sharp from "sharp";
 import { createServiceRoleClient, createServerSupabaseClient } from "@/lib/supabase-server";
+
+const IMG_MAX_WIDTH = 1600;
+const IMG_WEBP_QUALITY = 80;
 
 export async function POST(req: NextRequest) {
   const authClient = await createServerSupabaseClient();
@@ -16,14 +20,34 @@ export async function POST(req: NextRequest) {
 
   const supabase = await createServiceRoleClient();
 
-  // Upload to storage — use "productos" bucket (same as product images)
-  const ext = file.name.split(".").pop() || "jpg";
-  const fileName = `colecciones/${coleccionId}-${Date.now()}.${ext}`;
+  // Comprimir a WebP antes de subir para reducir egress
+  let uploadBody: Buffer | File = file;
+  let uploadContentType = file.type;
+  let uploadExt = file.name.split(".").pop() || "jpg";
+
+  try {
+    const inputBuffer = Buffer.from(await file.arrayBuffer());
+    let pipeline = sharp(inputBuffer, { failOn: "none" }).rotate();
+    const meta = await pipeline.metadata();
+    if (meta.width && meta.width > IMG_MAX_WIDTH) {
+      pipeline = pipeline.resize({ width: IMG_MAX_WIDTH, withoutEnlargement: true });
+    }
+    uploadBody = await pipeline
+      .webp({ quality: IMG_WEBP_QUALITY, effort: 5 })
+      .toBuffer();
+    uploadContentType = "image/webp";
+    uploadExt = "webp";
+  } catch (err) {
+    console.error("[colecciones/cover] compresión falló, usando original:", (err as Error).message);
+  }
+
+  const fileName = `colecciones/${coleccionId}-${Date.now()}.${uploadExt}`;
 
   const { error: uploadError } = await supabase.storage
     .from("productos")
-    .upload(fileName, file, {
-      contentType: file.type,
+    .upload(fileName, uploadBody, {
+      contentType: uploadContentType,
+      cacheControl: "31536000",
       upsert: true,
     });
 

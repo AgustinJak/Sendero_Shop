@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import ConfigForm from "@/components/admin/ConfigForm";
+import OptimizarBucketButton from "@/components/admin/OptimizarBucketButton";
 
 const CONFIG_KEYS = [
   { key: "whatsapp", label: "WhatsApp (con código país)", placeholder: "5491125502785" },
@@ -24,11 +25,18 @@ export default async function ConfigAdminPage() {
   }
 
   return (
-    <div className="space-y-4 max-w-2xl">
+    <div className="space-y-6 max-w-2xl">
       <h1 className="font-[family-name:var(--font-cinzel)] text-xl font-bold text-niebla">
         Configuración
       </h1>
       <ConfigForm configMap={configMap} configKeys={CONFIG_KEYS} />
+
+      <div className="pt-4 border-t border-lavanda/10 space-y-3">
+        <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+          Mantenimiento
+        </h2>
+        <OptimizarBucketButton />
+      </div>
     </div>
   );
 }
