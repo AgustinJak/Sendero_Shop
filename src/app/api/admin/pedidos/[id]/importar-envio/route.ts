@@ -103,11 +103,12 @@ export async function POST(
     if (deliveryType === "D" && pedido.direccion_envio) {
       const d = pedido.direccion_envio;
       const provinceCode = PROVINCIA_A_CODIGO[d.provincia] || d.provincia;
-      // MiCorreo espera calle + altura en un solo campo (streetName).
-      // Igual enviamos streetNumber por si lo procesan en el futuro.
-      const streetName = [d.calle, d.numero].filter(Boolean).join(" ").trim();
+      // MiCorreo lee `streetName` y `streetNumber` por separado y los muestra
+      // ambos correctamente en el portal — NO concatenar la altura en
+      // streetName porque queda duplicada (aparece "Calle 123" en calle Y "123"
+      // en altura).
       shippingAddress = {
-        streetName,
+        streetName: d.calle,
         streetNumber: d.numero,
         floor: d.piso || undefined,
         apartment: d.departamento || undefined,
