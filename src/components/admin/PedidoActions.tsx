@@ -3,17 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Pedido, EstadoPedido } from "@/types";
-
-const ESTADO_LABELS: Record<EstadoPedido, string> = {
-  pendiente_pago: "Pendiente de pago",
-  pago_confirmado: "Pago confirmado",
-  en_produccion: "En producción",
-  impreso: "Impreso",
-  enviado: "Enviado",
-  esperando_retiro: "Esperando retiro",
-  entregado: "Entregado",
-  cancelado: "Cancelado",
-};
+import { getEstadoLabel } from "@/lib/estado-labels";
 
 const ESTADO_COLORS: Record<EstadoPedido, string> = {
   pendiente_pago: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
@@ -109,7 +99,7 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
       <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
         <h2 className="text-sm font-semibold text-niebla">Estado</h2>
         <div className={`inline-block text-sm px-3 py-1 rounded-full border ${ESTADO_COLORS[pedido.estado]}`}>
-          {ESTADO_LABELS[pedido.estado]}
+          {getEstadoLabel(pedido.estado, pedido.metodo_pago)}
         </div>
 
         {possibleTransitions.length > 0 && (
@@ -126,7 +116,7 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
                     : "border-lavanda/10 text-lavanda-light hover:bg-lavanda/5"
                 }`}
               >
-                → {ESTADO_LABELS[estado]}
+                → {getEstadoLabel(estado, pedido.metodo_pago)}
               </button>
             ))}
           </div>

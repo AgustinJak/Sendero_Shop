@@ -1,6 +1,6 @@
 "use client";
 
-import type { EstadoPedido, MetodoEnvio } from "@/types";
+import type { EstadoPedido, MetodoEnvio, MetodoPago } from "@/types";
 
 interface TimelineStep {
   key: EstadoPedido;
@@ -36,9 +36,11 @@ function getStateOrder(steps: TimelineStep[]): Record<string, number> {
 export default function OrderTimeline({
   estado,
   metodoEnvio,
+  metodoPago,
 }: {
   estado: EstadoPedido;
   metodoEnvio?: MetodoEnvio;
+  metodoPago?: MetodoPago;
 }) {
   if (estado === "cancelado") {
     return (
@@ -113,7 +115,9 @@ export default function OrderTimeline({
                     : ""
                 }`}
               >
-                {step.label}
+                {step.key === "pago_confirmado" && metodoPago === "efectivo"
+                  ? "Pedido confirmado"
+                  : step.label}
               </p>
             </div>
           </div>

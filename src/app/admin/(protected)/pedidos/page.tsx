@@ -1,19 +1,9 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
-import type { EstadoPedido } from "@/types";
+import type { EstadoPedido, MetodoPago } from "@/types";
 import PedidoFilters from "@/components/admin/PedidoFilters";
-
-const ESTADO_LABELS: Record<EstadoPedido, string> = {
-  pendiente_pago: "Pendiente de pago",
-  pago_confirmado: "Pago confirmado",
-  en_produccion: "En producción",
-  impreso: "Impreso",
-  enviado: "Enviado",
-  esperando_retiro: "Esperando retiro",
-  entregado: "Entregado",
-  cancelado: "Cancelado",
-};
+import { getEstadoLabel } from "@/lib/estado-labels";
 
 const ESTADO_COLORS: Record<EstadoPedido, string> = {
   pendiente_pago: "text-yellow-400 bg-yellow-400/10",
@@ -87,7 +77,7 @@ export default async function PedidosPage({ searchParams }: Props) {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`text-xs px-2 py-0.5 rounded-full ${ESTADO_COLORS[p.estado as EstadoPedido]}`}>
-                        {ESTADO_LABELS[p.estado as EstadoPedido]}
+                        {getEstadoLabel(p.estado as EstadoPedido, p.metodo_pago as MetodoPago)}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-lavanda-light capitalize">

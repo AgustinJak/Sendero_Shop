@@ -1,18 +1,8 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { formatPrice } from "@/lib/utils";
 import Link from "next/link";
-import type { EstadoPedido } from "@/types";
-
-const ESTADO_LABELS: Record<EstadoPedido, string> = {
-  pendiente_pago: "Pendiente de pago",
-  pago_confirmado: "Pago confirmado",
-  en_produccion: "En producción",
-  impreso: "Impreso",
-  enviado: "Enviado",
-  esperando_retiro: "Esperando retiro",
-  entregado: "Entregado",
-  cancelado: "Cancelado",
-};
+import type { EstadoPedido, MetodoPago } from "@/types";
+import { getEstadoLabel } from "@/lib/estado-labels";
 
 const ESTADO_COLORS: Record<EstadoPedido, string> = {
   pendiente_pago: "text-yellow-400 bg-yellow-400/10",
@@ -39,7 +29,7 @@ export default async function AdminDashboard() {
     supabase.from("pedidos").select("*", { count: "exact", head: true }).eq("estado", "pendiente_pago"),
     supabase
       .from("pedidos")
-      .select("id, numero_pedido, nombre_cliente, estado, total, created_at")
+      .select("id, numero_pedido, nombre_cliente, estado, total, created_at, metodo_pago")
       .order("created_at", { ascending: false })
       .limit(5),
     supabase.from("productos").select("*", { count: "exact", head: true }).eq("activo", true),
@@ -87,7 +77,7 @@ export default async function AdminDashboard() {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className={`text-xs px-2 py-0.5 rounded-full ${ESTADO_COLORS[pedido.estado as EstadoPedido]}`}>
-                    {ESTADO_LABELS[pedido.estado as EstadoPedido]}
+                    {getEstadoLabel(pedido.estado as EstadoPedido, pedido.metodo_pago as MetodoPago)}
                   </span>
                   <span className="text-sm text-niebla font-medium">{formatPrice(pedido.total)}</span>
                 </div>

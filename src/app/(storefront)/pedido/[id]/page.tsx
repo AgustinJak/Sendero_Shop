@@ -82,7 +82,7 @@ export default async function PedidoPage({ params }: Props) {
         <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-4">
           Estado del pedido
         </h2>
-        <OrderTimeline estado={p.estado} metodoEnvio={p.metodo_envio} />
+        <OrderTimeline estado={p.estado} metodoEnvio={p.metodo_envio} metodoPago={p.metodo_pago} />
       </div>
 
       {/* MercadoPago payment block */}

@@ -1,23 +1,12 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
-import type { Pedido, PedidoItem, EstadoPedido } from "@/types";
+import type { Pedido, PedidoItem } from "@/types";
 import PedidoActions from "@/components/admin/PedidoActions";
 
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-const ESTADO_LABELS: Record<EstadoPedido, string> = {
-  pendiente_pago: "Pendiente de pago",
-  pago_confirmado: "Pago confirmado",
-  en_produccion: "En producción",
-  impreso: "Impreso",
-  enviado: "Enviado",
-  esperando_retiro: "Esperando retiro",
-  entregado: "Entregado",
-  cancelado: "Cancelado",
-};
 
 export default async function PedidoDetailPage({ params }: Props) {
   const { id } = await params;
