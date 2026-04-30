@@ -76,12 +76,19 @@ export async function POST(req: NextRequest) {
 
     const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
 
+    // En efectivo no hay pago online que esperar — el dinero se cobra al
+    // retiro/entrega. El pedido nace directamente "confirmado" (estado
+    // pago_confirmado, que la UI muestra como "Pedido confirmado" para
+    // efectivo).
+    const estadoInicial: "pendiente_pago" | "pago_confirmado" =
+      metodo_pago === "efectivo" ? "pago_confirmado" : "pendiente_pago";
+
     // Crear pedido
     const { data: pedido, error: pedidoError } = await supabase
       .from("pedidos")
       .insert({
         numero_pedido: numeroPedido,
-        estado: "pendiente_pago",
+        estado: estadoInicial,
         nombre_cliente: datos_personales.nombre_completo,
         dni: datos_personales.dni,
         email: datos_personales.email,
@@ -139,7 +146,7 @@ export async function POST(req: NextRequest) {
       ...body,
       id: pedido.id,
       numero_pedido: pedido.numero_pedido,
-      estado: "pendiente_pago" as const,
+      estado: estadoInicial,
       nombre_cliente: datos_personales.nombre_completo,
       dni: datos_personales.dni,
       email: datos_personales.email,

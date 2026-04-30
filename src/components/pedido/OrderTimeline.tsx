@@ -59,9 +59,21 @@ export default function OrderTimeline({
   }
 
   const isRetiro = metodoEnvio === "retiro";
-  const STEPS = isRetiro ? STEPS_RETIRO : STEPS_ENVIO;
+  const baseSteps = isRetiro ? STEPS_RETIRO : STEPS_ENVIO;
+  // En efectivo no hay etapa "pendiente de pago" — se cobra al retirar/entregar.
+  // El pedido nace ya en "pago_confirmado" (que la UI muestra como "Pedido
+  // confirmado"). Si por alguna razón un pedido legacy quedó en pendiente_pago,
+  // lo tratamos como "pago_confirmado" para que el timeline tenga sentido.
+  const STEPS =
+    metodoPago === "efectivo"
+      ? baseSteps.filter((s) => s.key !== "pendiente_pago")
+      : baseSteps;
+  const effectiveEstado: EstadoPedido =
+    metodoPago === "efectivo" && estado === "pendiente_pago"
+      ? "pago_confirmado"
+      : estado;
   const STATE_ORDER = getStateOrder(STEPS);
-  const currentIndex = STATE_ORDER[estado] ?? 0;
+  const currentIndex = STATE_ORDER[effectiveEstado] ?? 0;
 
   return (
     <div className="space-y-0">
