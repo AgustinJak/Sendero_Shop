@@ -269,7 +269,9 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     if (cp >= 5700 && cp <= 5799) return ["San Luis"];
     if (cp >= 5800 && cp <= 5899) return ["Córdoba", "San Luis"];
     if (cp >= 5900 && cp <= 5999) return ["Córdoba"];
-    if (cp >= 6000 && cp <= 6499) return ["Buenos Aires"];
+    // 6000-6499: BA y La Pampa intercaladas (Santa Rosa 6300, Quemú 6360,
+    // Catriló 6380 son LP; Trenque Lauquen 6400, Pehuajó 6450 son BA).
+    if (cp >= 6000 && cp <= 6499) return ["Buenos Aires", "La Pampa"];
     if (cp >= 6500 && cp <= 6599) return ["Buenos Aires", "La Pampa"];
     if (cp >= 6600 && cp <= 6699) return ["La Pampa"];
     if (cp >= 6700 && cp <= 6799) return ["Buenos Aires"];
