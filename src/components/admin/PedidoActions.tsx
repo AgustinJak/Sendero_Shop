@@ -46,6 +46,9 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const [loading, setLoading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState<string | null>(null);
+  const [enviandoInventario, setEnviandoInventario] = useState(false);
+  const [inventarioError, setInventarioError] = useState<string | null>(null);
+  const [inventarioInfo, setInventarioInfo] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState(pedido.tracking_code || "");
   const [notas, setNotas] = useState(pedido.notas || "");
 
@@ -54,6 +57,12 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const puedeImportar =
     pedido.metodo_envio === "correo_argentino" &&
     !yaImportado &&
+    pedido.estado !== "cancelado" &&
+    pedido.estado !== "pendiente_pago";
+
+  const yaEnviadoInventario = Boolean(pedido.enviado_inventario);
+  const puedeEnviarInventario =
+    !yaEnviadoInventario &&
     pedido.estado !== "cancelado" &&
     pedido.estado !== "pendiente_pago";
 
@@ -74,6 +83,35 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
       setImportError((err as Error).message);
     } finally {
       setImporting(false);
+    }
+  }
+
+  async function enviarAInventario() {
+    setEnviandoInventario(true);
+    setInventarioError(null);
+    setInventarioInfo(null);
+    try {
+      const res = await fetch(`/api/admin/pedidos/${pedido.id}/enviar-inventario`, {
+        method: "POST",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setInventarioError(data.error || "Error al enviar al inventario");
+        return;
+      }
+      // Mensajes informativos según la respuesta
+      if (data.duplicate) {
+        setInventarioInfo("Este pedido ya estaba en el inventario. Se sincronizó el ID.");
+      } else if (data.warnings && data.warnings.length > 0) {
+        setInventarioInfo(
+          `Enviado con ${data.warnings.length} advertencia(s) — revisalo en el inventario.`
+        );
+      }
+      router.refresh();
+    } catch (err) {
+      setInventarioError((err as Error).message);
+    } finally {
+      setEnviandoInventario(false);
     }
   }
 
@@ -184,6 +222,58 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
           )}
         </div>
       )}
+
+      {/* Inventario Sendero 3D */}
+      <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-niebla">Inventario</h2>
+          {yaEnviadoInventario && (
+            <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+              Enviado
+            </span>
+          )}
+        </div>
+
+        {yaEnviadoInventario ? (
+          <div className="space-y-1 text-xs">
+            {pedido.inventario_pedido_id && (
+              <>
+                <p className="text-lavanda/60">Pedido ID</p>
+                <p className="text-lavanda-light font-mono">{pedido.inventario_pedido_id}</p>
+              </>
+            )}
+            {pedido.inventario_enviado_en && (
+              <p className="text-lavanda/40 pt-1">
+                Enviado el {new Date(pedido.inventario_enviado_en).toLocaleString("es-AR")}
+              </p>
+            )}
+          </div>
+        ) : (
+          <>
+            <p className="text-xs text-lavanda/60">
+              Enviar este pedido al sistema de inventario para gestionarlo desde ahí.
+            </p>
+            <button
+              onClick={enviarAInventario}
+              disabled={enviandoInventario || loading || !puedeEnviarInventario}
+              className="w-full py-2 bg-purpura hover:bg-purpura/80 text-niebla text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              title={!puedeEnviarInventario ? "El pedido tiene que estar confirmado y no cancelado" : undefined}
+            >
+              {enviandoInventario ? "Enviando..." : "Enviar al inventario"}
+            </button>
+            {inventarioError && (
+              <p className="text-xs text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg px-2 py-1.5">
+                {inventarioError}
+              </p>
+            )}
+            {inventarioInfo && (
+              <p className="text-xs text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-lg px-2 py-1.5">
+                {inventarioInfo}
+              </p>
+            )}
+          </>
+        )}
+      </div>
 
       {/* Tracking */}
       <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">

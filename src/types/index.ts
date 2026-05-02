@@ -170,6 +170,9 @@ export interface Pedido {
   correo_shipping_id: string | null;
   correo_imported_at: string | null;
   correo_import_response: Record<string, unknown> | null;
+  enviado_inventario: boolean;
+  inventario_pedido_id: string | null;
+  inventario_enviado_en: string | null;
   notas: string | null;
   cancelado_at: string | null;
   created_at: string;
