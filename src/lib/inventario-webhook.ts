@@ -18,12 +18,16 @@ import { createHmac } from "crypto";
 
 function getConfig() {
   const url = process.env.INVENTARIO_WEBHOOK_URL;
-  const secret = process.env.INVENTARIO_WEBHOOK_SECRET;
+  // Aceptamos SHOP_WEBHOOK_SECRET como fallback porque desde el lado del
+  // inventario el secret se llama así — tener el mismo nombre en ambos
+  // proyectos es razonable y evita renombrarlo en Vercel.
+  const secret =
+    process.env.INVENTARIO_WEBHOOK_SECRET || process.env.SHOP_WEBHOOK_SECRET;
   const tenant = process.env.INVENTARIO_TENANT_ID || "sendero3d";
 
   if (!url || !secret) {
     throw new Error(
-      "Faltan variables de entorno del inventario: INVENTARIO_WEBHOOK_URL y/o INVENTARIO_WEBHOOK_SECRET"
+      "Faltan variables de entorno del inventario: INVENTARIO_WEBHOOK_URL y/o INVENTARIO_WEBHOOK_SECRET (o SHOP_WEBHOOK_SECRET)"
     );
   }
 
