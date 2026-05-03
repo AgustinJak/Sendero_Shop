@@ -223,6 +223,33 @@ export function pedidoConfirmadoEmail(
         : ""
     }
 
+    ${
+      pedido.metodo_pago === "efectivo"
+        ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;">
+      <tr>
+        <td style="padding:16px;">
+          <p style="margin:0 0 8px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Pago en efectivo al retirar</p>
+          <p style="margin:0 0 12px;color:${COLORS.lavanda};font-size:13px;">
+            Tu pedido ya quedó confirmado y arranca producción. <strong style="color:${COLORS.niebla};">El pago lo hacés al retirarlo en persona</strong>, no antes.
+          </p>
+          <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Monto a pagar al retirar</p>
+          <p style="margin:0 0 12px;color:${COLORS.ambar};font-size:18px;font-weight:bold;">${formatPrice(pedido.total)}</p>
+          <p style="margin:0 0 12px;color:${COLORS.lavanda};font-size:13px;">
+            Te avisamos cuando esté listo para que coordinemos el retiro en Villa Crespo.
+          </p>
+          <p style="margin:0;text-align:center;">
+            <a href="https://wa.me/5491125502785?text=${encodeURIComponent(`Hola! Consulta sobre el pedido ${pedido.numero_pedido}`)}"
+               style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
+              Consultar por WhatsApp
+            </a>
+          </p>
+        </td>
+      </tr>
+    </table>`
+        : ""
+    }
+
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">

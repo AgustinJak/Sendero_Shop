@@ -56,8 +56,15 @@ export async function PATCH(
       if (pedido) {
         const p = pedido as Pedido;
         if (updates.estado === "pago_confirmado") {
-          const email = pagoRecibidoEmail(p);
-          await sendEmail({ to: p.email, ...email });
+          // Para efectivo no mandamos el email "Recibimos tu pago" porque el
+          // pago se cobra al retirar — todavía no se recibió. Los pedidos en
+          // efectivo nacen ya en pago_confirmado y reciben el email de
+          // confirmación inicial; este trigger solo aplica si admin rebobinea
+          // el estado.
+          if (p.metodo_pago !== "efectivo") {
+            const email = pagoRecibidoEmail(p);
+            await sendEmail({ to: p.email, ...email });
+          }
         } else if (updates.estado === "enviado") {
           const email = pedidoEnviadoEmail(p);
           await sendEmail({ to: p.email, ...email });
