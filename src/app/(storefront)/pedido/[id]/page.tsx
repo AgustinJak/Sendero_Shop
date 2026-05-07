@@ -221,55 +221,100 @@ export default async function PedidoPage({ params }: Props) {
       </div>
 
       {/* Seña / Saldo (solo si el pedido tiene seña) */}
-      {p.tiene_sena && p.monto_sena !== null && (
-        <div className="bg-purpura/10 border border-purpura/30 rounded-xl p-6 space-y-3">
-          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
-            Pago en 2 partes
-          </h2>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm text-lavanda-light">💰 Seña</p>
+      {p.tiene_sena && p.monto_sena !== null && (() => {
+        const saldo = Number(p.total) - Number(p.monto_sena);
+        const senaPagada = p.sena_pagada;
+        const todoPagado = senaPagada && p.saldo_pagado;
+        return (
+          <div
+            className={`rounded-xl p-6 space-y-4 border ${
+              todoPagado
+                ? "bg-emerald-400/10 border-emerald-400/30"
+                : senaPagada
+                ? "bg-emerald-400/5 border-emerald-400/20"
+                : "bg-purpura/10 border-purpura/30"
+            }`}
+          >
+            {/* Header dinámico según el estado */}
+            {todoPagado ? (
+              <div className="text-center space-y-1">
+                <p className="text-2xl">✅</p>
+                <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-emerald-400 uppercase tracking-wider">
+                  Pedido pagado en su totalidad
+                </h2>
                 <p className="text-xs text-lavanda/60">
-                  {p.sena_pagada
-                    ? `Confirmada${p.sena_pagada_at ? ` el ${new Date(p.sena_pagada_at).toLocaleDateString("es-AR")}` : ""}`
-                    : "Pendiente de confirmación"}
+                  Seña + saldo confirmados.
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-base font-bold text-ambar">{formatPrice(Number(p.monto_sena))}</p>
-                {p.sena_pagada ? (
-                  <span className="inline-block text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
-                    ✓ Pagada
-                  </span>
-                ) : (
-                  <span className="inline-block text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded-full">
-                    Pendiente
-                  </span>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-3 pt-2 border-t border-purpura/20">
-              <div>
-                <p className="text-sm text-lavanda-light">📦 Saldo al recibir/retirar</p>
-                <p className="text-xs text-lavanda/60">
-                  {p.saldo_pagado ? "Pagado" : "Lo abonás cuando recibís el pedido"}
+            ) : senaPagada ? (
+              <div className="space-y-1">
+                <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-emerald-400 uppercase tracking-wider">
+                  ✓ Seña abonada · Resto a pagar al recibir
+                </h2>
+                <p className="text-xs text-lavanda/70">
+                  Tu anticipo fue confirmado{p.sena_pagada_at ? ` el ${new Date(p.sena_pagada_at).toLocaleDateString("es-AR")}` : ""}.
+                  El saldo se cobra al recibir/retirar el pedido.
                 </p>
               </div>
-              <div className="text-right">
-                <p className="text-base font-bold text-niebla">
-                  {formatPrice(Number(p.total) - Number(p.monto_sena))}
+            ) : (
+              <div className="space-y-1">
+                <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+                  Pago en 2 partes
+                </h2>
+                <p className="text-xs text-lavanda/70">
+                  Pagás una seña ahora y el saldo al recibir el pedido.
                 </p>
-                {p.saldo_pagado && (
-                  <span className="inline-block text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
-                    ✓ Pagado
-                  </span>
-                )}
+              </div>
+            )}
+
+            {/* Cuando seña ya está pagada, destacamos el saldo restante con énfasis */}
+            {senaPagada && !p.saldo_pagado && (
+              <div className="bg-navy-deep rounded-lg p-4 text-center space-y-1">
+                <p className="text-xs text-lavanda/60 uppercase tracking-wider">Resto a pagar al recibir</p>
+                <p className="text-2xl font-bold text-ambar">{formatPrice(saldo)}</p>
+              </div>
+            )}
+
+            {/* Desglose */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-sm text-lavanda-light">💰 Seña</p>
+                </div>
+                <div className="text-right flex items-center gap-2">
+                  <p className={`text-base font-medium ${senaPagada ? "text-lavanda" : "text-ambar font-bold"}`}>
+                    {formatPrice(Number(p.monto_sena))}
+                  </p>
+                  {senaPagada ? (
+                    <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                      ✓ Pagada
+                    </span>
+                  ) : (
+                    <span className="text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                      Pendiente
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-lavanda/10">
+                <div>
+                  <p className="text-sm text-lavanda-light">📦 Saldo al recibir/retirar</p>
+                </div>
+                <div className="text-right flex items-center gap-2">
+                  <p className={`text-base font-medium ${p.saldo_pagado ? "text-lavanda" : "text-niebla font-bold"}`}>
+                    {formatPrice(saldo)}
+                  </p>
+                  {p.saldo_pagado && (
+                    <span className="text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+                      ✓ Pagado
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Review CTA — solo para pedidos entregados */}
       {p.estado === "entregado" && p.items && p.items.length > 0 && (

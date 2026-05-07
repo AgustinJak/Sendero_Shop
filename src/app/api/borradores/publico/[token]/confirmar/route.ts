@@ -210,17 +210,23 @@ export async function POST(
       }
     }
 
-    // 7. Calcular total con recargo MP si corresponde
+    // 7. Calcular total con recargo MP si corresponde.
+    // Si hay seña, no se aplica recargo MP (el anticipo se cobra pelado).
     const baseTotal = subtotal - descuento + costoEnvio;
     const recargoMP =
-      body.metodo_pago === "mercadopago"
+      body.metodo_pago === "mercadopago" && !tieneSena
         ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
         : 0;
     const total = baseTotal + recargoMP;
 
-    // 7b. Calcular monto de seña (frozen contra el total final)
+    // 7b. Calcular monto de seña sobre subtotal - descuento (NO incluye envío
+    //     ni recargo MP). El saldo absorbe el costo de envío.
     const montoSena = tieneSena
-      ? calculateSena(total, borrador.sena_tipo, Number(borrador.sena_valor))
+      ? calculateSena(
+          subtotal - descuento,
+          borrador.sena_tipo,
+          Number(borrador.sena_valor)
+        )
       : null;
 
     // 8. Estado inicial — efectivo arranca en pago_confirmado

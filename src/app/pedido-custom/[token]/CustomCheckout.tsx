@@ -188,7 +188,14 @@ export default function CustomCheckout({
           setCostoEnvio(null);
           return;
         }
-        setCostoEnvio(rate.price);
+        // El endpoint devuelve `precio` (español); aceptamos ambos por compat.
+        const precio = typeof rate.precio === "number" ? rate.precio : rate.price;
+        if (typeof precio !== "number" || isNaN(precio)) {
+          setCotizacionError("La cotización no devolvió un precio válido");
+          setCostoEnvio(null);
+          return;
+        }
+        setCostoEnvio(precio);
       })
       .catch(() => {
         if (!cancelled) setCotizacionError("Error de red al cotizar");
@@ -223,19 +230,24 @@ export default function CustomCheckout({
 
   // ----- Totales -----
   const baseTotal = subtotal - descuento + (costoEnvio ?? 0);
+  // Si hay seña, no se aplica recargo MP — el anticipo se cobra pelado para
+  // que la matemática sea limpia (cliente paga exactamente la seña).
   const recargoMP =
-    metodoPago === "mercadopago"
+    metodoPago === "mercadopago" && !tieneSena
       ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
       : 0;
   const total = baseTotal + recargoMP;
 
-  // Seña sobre el total final (cuando ya se cotizó el envío)
+  // Seña: se calcula sobre subtotal - descuento (NO incluye envío ni recargo).
+  // El saldo absorbe el costo del envío.
   const montoSena = useMemo(() => {
-    if (!tieneSena || costoEnvio === null) return null;
-    return calculateSena(total, borrador.sena_tipo, borrador.sena_valor);
-  }, [tieneSena, costoEnvio, total, borrador.sena_tipo, borrador.sena_valor]);
-  const montoSaldo = montoSena !== null ? total - montoSena : null;
-  // Lo que el cliente realmente paga ahora
+    if (!tieneSena) return null;
+    return calculateSena(subtotal - descuento, borrador.sena_tipo, borrador.sena_valor);
+  }, [tieneSena, subtotal, descuento, borrador.sena_tipo, borrador.sena_valor]);
+  // El saldo es lo que falta para llegar al total
+  const montoSaldo =
+    montoSena !== null && costoEnvio !== null ? total - montoSena : null;
+  // Lo que el cliente realmente paga ahora (seña si aplica, total si no)
   const montoAPagar = montoSena ?? total;
 
   // ----- Validación form -----

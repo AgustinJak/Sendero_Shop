@@ -360,14 +360,14 @@ export default function NuevoBorradorClient() {
         {senaPreview !== null && senaPreview > 0 && totalEstimado > 0 && (
           <div className="bg-purpura/10 border border-purpura/30 rounded-lg p-3 text-xs space-y-1">
             <p className="text-lavanda">
-              Preview (sin envío ni recargo MP, esos se calculan al confirmar):
+              La seña se calcula sobre el subtotal del pedido (sin envío). El saldo absorbe el costo del envío al entregar.
             </p>
-            <div className="flex justify-between text-niebla">
+            <div className="flex justify-between text-niebla pt-1">
               <span>Seña a cobrar ahora</span>
               <span className="font-medium text-ambar">{formatPrice(senaPreview)}</span>
             </div>
             <div className="flex justify-between text-lavanda-light">
-              <span>Saldo a cobrar al entregar</span>
+              <span>Resto del subtotal a cobrar al entregar (+ envío)</span>
               <span>{formatPrice(totalEstimado - senaPreview)}</span>
             </div>
           </div>
