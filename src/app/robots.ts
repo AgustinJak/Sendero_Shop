@@ -32,7 +32,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/admin/", "/api/", "/checkout/"],
+        disallow: ["/admin/", "/api/", "/checkout/", "/pedido-custom/"],
       },
       ...BLOCKED_BOTS.map((bot) => ({
         userAgent: bot,
