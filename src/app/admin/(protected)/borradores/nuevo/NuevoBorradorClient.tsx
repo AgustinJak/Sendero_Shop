@@ -8,11 +8,13 @@ import { formatPrice } from "@/lib/utils";
 import {
   calculateSubtotal,
   calculateDescuento,
+  calculateSena,
   DEFAULT_EXPIRACION_HORAS,
 } from "@/lib/borrador";
 import type {
   PedidoBorradorItem,
   MetodoPago,
+  SenaTipo,
 } from "@/types";
 
 interface ProductoBuscado {
@@ -62,6 +64,11 @@ export default function NuevoBorradorClient() {
   const [pkgAncho, setPkgAncho] = useState(15);
   const [pkgLargo, setPkgLargo] = useState(10);
 
+  // Seña
+  const [tipoSena, setTipoSena] = useState<"ninguna" | SenaTipo>("ninguna");
+  const [senaPct, setSenaPct] = useState(30); // default 30%
+  const [senaMonto, setSenaMonto] = useState(0);
+
   // Expiración
   const [expiracionHoras, setExpiracionHoras] = useState(DEFAULT_EXPIRACION_HORAS);
 
@@ -77,6 +84,12 @@ export default function NuevoBorradorClient() {
     tipoDescuento === "porcentaje" ? descuentoPct : 0
   );
   const totalEstimado = subtotal - descuento;
+  // Preview de la seña (sin envío ni recargo MP — esos los agrega el cliente)
+  const senaPreview = calculateSena(
+    totalEstimado,
+    tipoSena === "ninguna" ? null : tipoSena,
+    tipoSena === "porcentaje" ? senaPct : tipoSena === "monto_fijo" ? senaMonto : null
+  );
 
   function addCustomItem() {
     setItems([
@@ -139,6 +152,16 @@ export default function NuevoBorradorClient() {
       }
     }
 
+    // Validar seña
+    if (tipoSena === "porcentaje" && (senaPct < 10 || senaPct > 90)) {
+      setError("La seña en porcentaje tiene que estar entre 10% y 90%");
+      return;
+    }
+    if (tipoSena === "monto_fijo" && senaMonto <= 0) {
+      setError("La seña en monto fijo tiene que ser positiva");
+      return;
+    }
+
     setSubmitting(true);
     try {
       const body = {
@@ -153,6 +176,13 @@ export default function NuevoBorradorClient() {
         paquete_alto_cm: overridePaquete ? pkgAlto : null,
         paquete_ancho_cm: overridePaquete ? pkgAncho : null,
         paquete_largo_cm: overridePaquete ? pkgLargo : null,
+        sena_tipo: tipoSena === "ninguna" ? null : tipoSena,
+        sena_valor:
+          tipoSena === "porcentaje"
+            ? senaPct
+            : tipoSena === "monto_fijo"
+            ? senaMonto
+            : null,
         expiracion_horas: expiracionHoras,
       };
 
@@ -270,6 +300,82 @@ export default function NuevoBorradorClient() {
               className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
             />
           </div>
+        )}
+      </section>
+
+      {/* Seña */}
+      <section className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
+        <div>
+          <h2 className="text-sm font-semibold text-niebla">Seña / anticipo</h2>
+          <p className="text-xs text-lavanda/50 mt-0.5">
+            El cliente paga la seña ahora (MP o transferencia). El saldo se cobra al entregar/retirar.
+          </p>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {(
+            [
+              { v: "ninguna", label: "Sin seña" },
+              { v: "porcentaje", label: "Porcentaje" },
+              { v: "monto_fijo", label: "Monto fijo" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.v}
+              onClick={() => setTipoSena(opt.v)}
+              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                tipoSena === opt.v
+                  ? "border-purpura bg-purpura/20 text-ambar"
+                  : "border-lavanda/10 text-lavanda hover:bg-lavanda/5"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        {tipoSena === "porcentaje" && (
+          <div>
+            <label className="text-xs text-lavanda/60">Porcentaje (10-90)</label>
+            <input
+              type="number"
+              min={10}
+              max={90}
+              value={senaPct}
+              onChange={(e) => setSenaPct(Number(e.target.value) || 30)}
+              className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+            />
+          </div>
+        )}
+        {tipoSena === "monto_fijo" && (
+          <div>
+            <label className="text-xs text-lavanda/60">Monto fijo de la seña ($)</label>
+            <input
+              type="number"
+              min={1}
+              value={senaMonto || ""}
+              onChange={(e) => setSenaMonto(Number(e.target.value) || 0)}
+              className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+            />
+          </div>
+        )}
+        {senaPreview !== null && senaPreview > 0 && totalEstimado > 0 && (
+          <div className="bg-purpura/10 border border-purpura/30 rounded-lg p-3 text-xs space-y-1">
+            <p className="text-lavanda">
+              Preview (sin envío ni recargo MP, esos se calculan al confirmar):
+            </p>
+            <div className="flex justify-between text-niebla">
+              <span>Seña a cobrar ahora</span>
+              <span className="font-medium text-ambar">{formatPrice(senaPreview)}</span>
+            </div>
+            <div className="flex justify-between text-lavanda-light">
+              <span>Saldo a cobrar al entregar</span>
+              <span>{formatPrice(totalEstimado - senaPreview)}</span>
+            </div>
+          </div>
+        )}
+        {tipoSena !== "ninguna" && (
+          <p className="text-xs text-amber-400/80">
+            ⚠ Los pedidos con seña no permiten pago en efectivo (efectivo = pago todo al retirar, incompatible con anticipo).
+          </p>
         )}
       </section>
 

@@ -6,12 +6,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { formatPrice } from "@/lib/utils";
+import { calculateSena } from "@/lib/borrador";
 import type {
   PedidoBorradorItem,
   MetodoEnvio,
   MetodoPago,
   TipoEnvio,
   DireccionEnvio,
+  SenaTipo,
 } from "@/types";
 
 interface BorradorClient {
@@ -23,6 +25,8 @@ interface BorradorClient {
   costo_envio_override: number | null;
   envio_gratis: boolean;
   metodos_pago_permitidos: MetodoPago[] | null;
+  sena_tipo: SenaTipo | null;
+  sena_valor: number | null;
   expires_at: string;
 }
 
@@ -85,14 +89,19 @@ export default function CustomCheckout({
   const [cotizacionError, setCotizacionError] = useState<string | null>(null);
 
   // Pago
-  const metodosPermitidos =
+  const tieneSena = borrador.sena_tipo !== null && borrador.sena_valor !== null;
+  // Si tiene seña, efectivo no se permite (anticipo digital obligatorio)
+  const baseMetodos =
     borrador.metodos_pago_permitidos ??
     (["mercadopago", "transferencia", "efectivo"] as MetodoPago[]);
+  const metodosPermitidos = tieneSena
+    ? baseMetodos.filter((m) => m !== "efectivo")
+    : baseMetodos;
   const [metodoPago, setMetodoPago] = useState<MetodoPago>(metodosPermitidos[0]);
 
-  // En efectivo solo se permite si el método de envío es retiro
+  // En efectivo solo se permite si el método de envío es retiro Y no hay seña
   const efectivoDisponible =
-    metodosPermitidos.includes("efectivo") && metodoEnvio === "retiro";
+    metodosPermitidos.includes("efectivo") && metodoEnvio === "retiro" && !tieneSena;
 
   // Si cambia el envío y vuelve incompatible con efectivo, cambiar método
   useEffect(() => {
@@ -219,6 +228,15 @@ export default function CustomCheckout({
       ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
       : 0;
   const total = baseTotal + recargoMP;
+
+  // Seña sobre el total final (cuando ya se cotizó el envío)
+  const montoSena = useMemo(() => {
+    if (!tieneSena || costoEnvio === null) return null;
+    return calculateSena(total, borrador.sena_tipo, borrador.sena_valor);
+  }, [tieneSena, costoEnvio, total, borrador.sena_tipo, borrador.sena_valor]);
+  const montoSaldo = montoSena !== null ? total - montoSena : null;
+  // Lo que el cliente realmente paga ahora
+  const montoAPagar = montoSena ?? total;
 
   // ----- Validación form -----
   const validacion = useMemo(() => {
@@ -565,6 +583,26 @@ export default function CustomCheckout({
             <span>Total</span>
             <span className="text-ambar">{formatPrice(total)}</span>
           </div>
+
+          {/* Desglose de seña — solo se muestra cuando ya está cotizado */}
+          {tieneSena && montoSena !== null && montoSaldo !== null && (
+            <div className="mt-3 pt-3 border-t border-purpura/30 space-y-1.5 bg-purpura/5 -mx-4 -mb-4 px-4 pb-4 rounded-b-xl">
+              <p className="text-xs text-lavanda/70 uppercase tracking-wider pt-1">
+                Pagás en 2 partes
+              </p>
+              <div className="flex justify-between text-niebla">
+                <span className="font-medium">💰 Seña ahora</span>
+                <span className="font-semibold text-ambar">{formatPrice(montoSena)}</span>
+              </div>
+              <div className="flex justify-between text-lavanda">
+                <span>📦 Saldo al recibir/retirar</span>
+                <span>{formatPrice(montoSaldo)}</span>
+              </div>
+              <p className="text-xs text-lavanda/60 pt-1">
+                El saldo lo abonás al momento de recibir o retirar el pedido.
+              </p>
+            </div>
+          )}
         </section>
 
         {/* Turnstile */}
@@ -589,7 +627,11 @@ export default function CustomCheckout({
           disabled={submitting || Boolean(validacion)}
           className="w-full py-3 bg-purpura hover:bg-purpura/80 text-niebla font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {submitting ? "Confirmando…" : `Confirmar pedido — ${formatPrice(total)}`}
+          {submitting
+            ? "Confirmando…"
+            : tieneSena && montoSena !== null
+            ? `Confirmar y pagar seña — ${formatPrice(montoSena)}`
+            : `Confirmar pedido — ${formatPrice(montoAPagar)}`}
         </button>
 
         {validacion && !error && (

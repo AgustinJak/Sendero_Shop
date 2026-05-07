@@ -220,6 +220,57 @@ export default async function PedidoPage({ params }: Props) {
         </div>
       </div>
 
+      {/* Seña / Saldo (solo si el pedido tiene seña) */}
+      {p.tiene_sena && p.monto_sena !== null && (
+        <div className="bg-purpura/10 border border-purpura/30 rounded-xl p-6 space-y-3">
+          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+            Pago en 2 partes
+          </h2>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-lavanda-light">💰 Seña</p>
+                <p className="text-xs text-lavanda/60">
+                  {p.sena_pagada
+                    ? `Confirmada${p.sena_pagada_at ? ` el ${new Date(p.sena_pagada_at).toLocaleDateString("es-AR")}` : ""}`
+                    : "Pendiente de confirmación"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-base font-bold text-ambar">{formatPrice(Number(p.monto_sena))}</p>
+                {p.sena_pagada ? (
+                  <span className="inline-block text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+                    ✓ Pagada
+                  </span>
+                ) : (
+                  <span className="inline-block text-xs text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 px-2 py-0.5 rounded-full">
+                    Pendiente
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-3 pt-2 border-t border-purpura/20">
+              <div>
+                <p className="text-sm text-lavanda-light">📦 Saldo al recibir/retirar</p>
+                <p className="text-xs text-lavanda/60">
+                  {p.saldo_pagado ? "Pagado" : "Lo abonás cuando recibís el pedido"}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-base font-bold text-niebla">
+                  {formatPrice(Number(p.total) - Number(p.monto_sena))}
+                </p>
+                {p.saldo_pagado && (
+                  <span className="inline-block text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+                    ✓ Pagado
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Review CTA — solo para pedidos entregados */}
       {p.estado === "entregado" && p.items && p.items.length > 0 && (
         <div className="bg-purpura/10 border border-purpura/20 rounded-xl p-6 text-center space-y-3">

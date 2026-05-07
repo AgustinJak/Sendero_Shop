@@ -224,6 +224,32 @@ export function pedidoConfirmadoEmail(
     }
 
     ${
+      pedido.tiene_sena && pedido.monto_sena
+        ? `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;">
+      <tr>
+        <td style="padding:16px;">
+          <p style="margin:0 0 8px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Pago en 2 partes</p>
+          <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:6px 0;color:${COLORS.lavanda};font-size:13px;">💰 Seña ${pedido.metodo_pago === "mercadopago" ? "(via MercadoPago)" : "(transferencia)"}</td>
+              <td style="padding:6px 0;color:${COLORS.ambar};font-size:14px;font-weight:bold;text-align:right;">${formatPrice(Number(pedido.monto_sena))}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 0;border-top:1px solid ${COLORS.purpura}33;color:${COLORS.lavanda};font-size:13px;">📦 Saldo al recibir/retirar</td>
+              <td style="padding:6px 0;border-top:1px solid ${COLORS.purpura}33;color:${COLORS.niebla};font-size:14px;text-align:right;">${formatPrice(Number(pedido.total) - Number(pedido.monto_sena))}</td>
+            </tr>
+          </table>
+          <p style="margin:8px 0 0;color:${COLORS.lavanda};font-size:12px;">
+            Solo abonás <strong style="color:${COLORS.niebla};">${formatPrice(Number(pedido.monto_sena))}</strong> ahora. El saldo lo pagás al momento de recibir o retirar el pedido.
+          </p>
+        </td>
+      </tr>
+    </table>`
+        : ""
+    }
+
+    ${
       pedido.metodo_pago === "efectivo"
         ? `
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;">

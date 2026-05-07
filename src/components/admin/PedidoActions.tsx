@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Pedido, EstadoPedido } from "@/types";
 import { getEstadoLabel } from "@/lib/estado-labels";
+import { formatPrice } from "@/lib/utils";
 
 const ESTADO_COLORS: Record<EstadoPedido, string> = {
   pendiente_pago: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
@@ -220,6 +221,88 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
               )}
             </>
           )}
+        </div>
+      )}
+
+      {/* Seña / Saldo (solo si el pedido tiene seña) */}
+      {pedido.tiene_sena && pedido.monto_sena !== null && (
+        <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
+          <h2 className="text-sm font-semibold text-niebla">Seña / Saldo</h2>
+
+          {/* Seña */}
+          <div className="bg-navy-deep rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-lavanda/60">Seña</span>
+              <span className="text-xs text-niebla font-semibold">
+                {formatPrice(Number(pedido.monto_sena))}
+              </span>
+            </div>
+            {pedido.sena_pagada ? (
+              <div className="space-y-1">
+                <span className="inline-block text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+                  ✓ Pagada
+                </span>
+                {pedido.sena_pagada_at && (
+                  <p className="text-xs text-lavanda/40">
+                    {new Date(pedido.sena_pagada_at).toLocaleString("es-AR")}
+                  </p>
+                )}
+                <button
+                  onClick={() => updatePedido({ sena_pagada: false })}
+                  disabled={loading}
+                  className="text-xs text-lavanda/40 hover:text-lavanda underline transition-colors disabled:opacity-50"
+                >
+                  Desmarcar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => updatePedido({ sena_pagada: true })}
+                disabled={loading}
+                className="w-full py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
+              >
+                Marcar seña como pagada
+              </button>
+            )}
+          </div>
+
+          {/* Saldo */}
+          <div className="bg-navy-deep rounded-lg p-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-xs text-lavanda/60">Saldo al entregar</span>
+              <span className="text-xs text-niebla font-semibold">
+                {formatPrice(Number(pedido.total) - Number(pedido.monto_sena))}
+              </span>
+            </div>
+            {pedido.saldo_pagado ? (
+              <div className="space-y-1">
+                <span className="inline-block text-xs text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-2 py-0.5 rounded-full">
+                  ✓ Pagado
+                </span>
+                {pedido.saldo_pagado_at && (
+                  <p className="text-xs text-lavanda/40">
+                    {new Date(pedido.saldo_pagado_at).toLocaleString("es-AR")}
+                  </p>
+                )}
+                <button
+                  onClick={() => updatePedido({ saldo_pagado: false })}
+                  disabled={loading}
+                  className="text-xs text-lavanda/40 hover:text-lavanda underline transition-colors disabled:opacity-50"
+                >
+                  Desmarcar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => updatePedido({ saldo_pagado: true })}
+                disabled={loading || !pedido.sena_pagada}
+                className="w-full py-2 bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 text-xs font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title={!pedido.sena_pagada ? "Marcá la seña como pagada primero" : undefined}
+              >
+                Marcar saldo como pagado
+              </button>
+            )}
+          </div>
         </div>
       )}
 

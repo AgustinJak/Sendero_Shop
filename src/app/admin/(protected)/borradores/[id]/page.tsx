@@ -181,6 +181,20 @@ export default async function BorradorDetailPage({ params }: Props) {
             </p>
           </section>
 
+          {b.sena_tipo && (
+            <section className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-2">
+              <h2 className="text-sm font-semibold text-niebla">Seña / anticipo</h2>
+              <p className="text-sm text-lavanda-light">
+                {b.sena_tipo === "porcentaje"
+                  ? `${Number(b.sena_valor)}% del total`
+                  : `${formatPrice(Number(b.sena_valor))} (monto fijo)`}
+              </p>
+              <p className="text-xs text-lavanda/40">
+                El monto exacto se congela al confirmar el pedido (depende del envío + recargo MP).
+              </p>
+            </section>
+          )}
+
           <section className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-2">
             <h2 className="text-sm font-semibold text-niebla">Métodos de pago</h2>
             <p className="text-sm text-lavanda-light">

@@ -88,6 +88,8 @@ export default async function PedidoCustomPage({ params }: Props) {
             : null,
         envio_gratis: b.envio_gratis,
         metodos_pago_permitidos: b.metodos_pago_permitidos,
+        sena_tipo: b.sena_tipo,
+        sena_valor: b.sena_valor !== null ? Number(b.sena_valor) : null,
         expires_at: b.expires_at,
       }}
       subtotal={subtotal}
