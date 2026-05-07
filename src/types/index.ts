@@ -173,6 +173,14 @@ export interface Pedido {
   enviado_inventario: boolean;
   inventario_pedido_id: string | null;
   inventario_enviado_en: string | null;
+  // Custom orders / mayoristas
+  borrador_id: string | null;
+  descuento_monto: number;
+  descuento_descripcion: string | null;
+  paquete_peso_gr: number | null;
+  paquete_alto_cm: number | null;
+  paquete_ancho_cm: number | null;
+  paquete_largo_cm: number | null;
   notas: string | null;
   cancelado_at: string | null;
   created_at: string;
@@ -190,6 +198,63 @@ export interface PedidoItem {
   precio_unitario: number;
   opciones_seleccionadas: VarianteSeleccion[];
   subtotal: number;
+}
+
+// --- Pedidos borrador (custom orders) ---
+export type EstadoBorrador =
+  | "pendiente"
+  | "convertido"
+  | "expirado"
+  | "cancelado";
+
+/**
+ * Item dentro de un pedido_borrador. Vive en jsonb, no es una tabla aparte.
+ * `producto_id` null indica item custom (no está en el catálogo).
+ */
+export interface PedidoBorradorItem {
+  // Si viene del catálogo: linkea al producto. Si es custom: null.
+  producto_id: string | null;
+  sku: string | null;
+  nombre: string;
+  cantidad: number;
+  precio_unitario: number;
+  opciones_seleccionadas?: VarianteSeleccion[];
+  // Dimensiones por item (para cotización + MiCorreo).
+  // Si vienen del catálogo, se copian de productos.* al crear el borrador.
+  // Si son custom, las define el admin (con defaults razonables si las omite).
+  peso_gr?: number;
+  alto_cm?: number;
+  ancho_cm?: number;
+  largo_cm?: number;
+  // Solo relevante para items custom: opcional, mostrar en checkout del cliente.
+  imagen_url?: string;
+  descripcion?: string;
+}
+
+export interface PedidoBorrador {
+  id: string;
+  token: string;
+  notas_admin: string | null;
+  items: PedidoBorradorItem[];
+  // Descuento: monto fijo XOR porcentaje (validado por CHECK en DB)
+  descuento_monto: number;
+  descuento_porcentaje: number;
+  // Envío
+  costo_envio_override: number | null;
+  envio_gratis: boolean;
+  // Métodos de pago: null = todos permitidos
+  metodos_pago_permitidos: MetodoPago[] | null;
+  // Override del paquete completo para cotización + MiCorreo
+  paquete_peso_gr: number | null;
+  paquete_alto_cm: number | null;
+  paquete_ancho_cm: number | null;
+  paquete_largo_cm: number | null;
+  // Lifecycle
+  estado: EstadoBorrador;
+  pedido_id: string | null;
+  expires_at: string;
+  created_at: string;
+  created_by: string | null;
 }
 
 // --- Envíos ---
