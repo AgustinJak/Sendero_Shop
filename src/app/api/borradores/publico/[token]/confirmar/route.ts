@@ -210,11 +210,10 @@ export async function POST(
       }
     }
 
-    // 7. Calcular total con recargo MP si corresponde.
-    // Si hay seña, no se aplica recargo MP (el anticipo se cobra pelado).
+    // 7. Calcular total con recargo MP si corresponde
     const baseTotal = subtotal - descuento + costoEnvio;
     const recargoMP =
-      body.metodo_pago === "mercadopago" && !tieneSena
+      body.metodo_pago === "mercadopago"
         ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
         : 0;
     const total = baseTotal + recargoMP;

@@ -230,10 +230,8 @@ export default function CustomCheckout({
 
   // ----- Totales -----
   const baseTotal = subtotal - descuento + (costoEnvio ?? 0);
-  // Si hay seña, no se aplica recargo MP — el anticipo se cobra pelado para
-  // que la matemática sea limpia (cliente paga exactamente la seña).
   const recargoMP =
-    metodoPago === "mercadopago" && !tieneSena
+    metodoPago === "mercadopago"
       ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
       : 0;
   const total = baseTotal + recargoMP;
