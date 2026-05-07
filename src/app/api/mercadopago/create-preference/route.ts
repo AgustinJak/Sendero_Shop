@@ -35,39 +35,63 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "El pedido ya fue pagado o cancelado" }, { status: 400 });
     }
 
-    // Build MP preference items
-    const items: { id: string; title: string; quantity: number; unit_price: number; currency_id: string }[] = pedido.items.map((item: {
-      nombre_producto: string;
-      cantidad: number;
-      precio_unitario: number;
-    }) => ({
-      id: pedido_id,
-      title: item.nombre_producto.slice(0, 256),
-      quantity: Number(item.cantidad),
-      unit_price: Number(item.precio_unitario),
-      currency_id: "ARS",
-    }));
+    // Build MP preference items.
+    // Si el pedido tiene seña, MP cobra solo `monto_sena` (anticipo). El saldo
+    // se cobra offline al entregar/retirar. Mando UN solo item descriptivo.
+    let items: {
+      id: string;
+      title: string;
+      quantity: number;
+      unit_price: number;
+      currency_id: string;
+    }[];
 
-    // Add shipping as item if > 0
-    if (Number(pedido.costo_envio) > 0) {
-      items.push({
-        id: "envio",
-        title: "Costo de envío",
-        quantity: 1,
-        unit_price: Number(pedido.costo_envio),
-        currency_id: "ARS",
-      });
-    }
+    if (pedido.tiene_sena && Number(pedido.monto_sena) > 0) {
+      items = [
+        {
+          id: pedido_id,
+          title: `Seña pedido ${pedido.numero_pedido}`,
+          quantity: 1,
+          unit_price: Number(pedido.monto_sena),
+          currency_id: "ARS",
+        },
+      ];
+    } else {
+      items = pedido.items.map(
+        (item: {
+          nombre_producto: string;
+          cantidad: number;
+          precio_unitario: number;
+        }) => ({
+          id: pedido_id,
+          title: item.nombre_producto.slice(0, 256),
+          quantity: Number(item.cantidad),
+          unit_price: Number(item.precio_unitario),
+          currency_id: "ARS",
+        })
+      );
 
-    // Add MP surcharge as item if > 0
-    if (Number(pedido.recargo_mp) > 0) {
-      items.push({
-        id: "recargo-mp",
-        title: "Recargo MercadoPago",
-        quantity: 1,
-        unit_price: Number(pedido.recargo_mp),
-        currency_id: "ARS",
-      });
+      // Add shipping as item if > 0
+      if (Number(pedido.costo_envio) > 0) {
+        items.push({
+          id: "envio",
+          title: "Costo de envío",
+          quantity: 1,
+          unit_price: Number(pedido.costo_envio),
+          currency_id: "ARS",
+        });
+      }
+
+      // Add MP surcharge as item if > 0
+      if (Number(pedido.recargo_mp) > 0) {
+        items.push({
+          id: "recargo-mp",
+          title: "Recargo MercadoPago",
+          quantity: 1,
+          unit_price: Number(pedido.recargo_mp),
+          currency_id: "ARS",
+        });
+      }
     }
 
     const siteUrl = "https://sendero3d.com";

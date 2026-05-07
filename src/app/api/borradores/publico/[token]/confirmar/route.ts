@@ -7,6 +7,7 @@ import {
   calculateSubtotal,
   calculateDescuento,
   calculateBorradorPackage,
+  calculateSena,
 } from "@/lib/borrador";
 import { cotizar } from "@/lib/correo-argentino";
 import type {
@@ -152,6 +153,18 @@ export async function POST(
       );
     }
 
+    // 4b. Si el borrador tiene seña, no se puede pagar en efectivo (la seña
+    //     es un anticipo digital — efectivo es "pago todo al retirar", incompatible).
+    const tieneSena = borrador.sena_tipo !== null && borrador.sena_valor !== null;
+    if (tieneSena && body.metodo_pago === "efectivo") {
+      return NextResponse.json(
+        {
+          error: "Los pedidos con seña no se pueden pagar en efectivo. Elegí MercadoPago o transferencia.",
+        },
+        { status: 400 }
+      );
+    }
+
     // 5. Calcular subtotal y descuento
     const subtotal = calculateSubtotal(borrador.items);
     const descuento = calculateDescuento(
@@ -204,6 +217,11 @@ export async function POST(
         ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
         : 0;
     const total = baseTotal + recargoMP;
+
+    // 7b. Calcular monto de seña (frozen contra el total final)
+    const montoSena = tieneSena
+      ? calculateSena(total, borrador.sena_tipo, Number(borrador.sena_valor))
+      : null;
 
     // 8. Estado inicial — efectivo arranca en pago_confirmado
     const estadoInicial: EstadoPedido =
@@ -260,6 +278,9 @@ export async function POST(
         paquete_alto_cm: borrador.paquete_alto_cm,
         paquete_ancho_cm: borrador.paquete_ancho_cm,
         paquete_largo_cm: borrador.paquete_largo_cm,
+        // Seña
+        tiene_sena: tieneSena,
+        monto_sena: montoSena,
       })
       .select("id, numero_pedido")
       .single();
@@ -351,6 +372,12 @@ export async function POST(
         paquete_alto_cm: borrador.paquete_alto_cm,
         paquete_ancho_cm: borrador.paquete_ancho_cm,
         paquete_largo_cm: borrador.paquete_largo_cm,
+        tiene_sena: tieneSena,
+        monto_sena: montoSena,
+        sena_pagada: false,
+        sena_pagada_at: null,
+        saldo_pagado: false,
+        saldo_pagado_at: null,
         notas: null,
         cancelado_at: null,
         created_at: new Date().toISOString(),

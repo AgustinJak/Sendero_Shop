@@ -49,12 +49,20 @@ export async function POST(req: NextRequest) {
     if (payment.status === "approved") {
       // Only update if still pending payment
       if (pedido.estado === "pendiente_pago") {
+        const updates: Record<string, unknown> = {
+          estado: "pago_confirmado",
+          mp_payment_id: String(paymentId),
+        };
+        // Si el pedido tiene seña, MP cobró la seña — marcamos sena_pagada.
+        // El saldo se cobra offline después.
+        if (pedido.tiene_sena) {
+          updates.sena_pagada = true;
+          updates.sena_pagada_at = new Date().toISOString();
+        }
+
         await supabase
           .from("pedidos")
-          .update({
-            estado: "pago_confirmado",
-            mp_payment_id: String(paymentId),
-          })
+          .update(updates)
           .eq("id", pedidoId);
 
         // Send confirmation email
@@ -64,7 +72,16 @@ export async function POST(req: NextRequest) {
             .select("*")
             .eq("pedido_id", pedidoId);
 
-          const fullPedido = { ...pedido, estado: "pago_confirmado" as const, mp_payment_id: String(paymentId), items: items || [] };
+          const fullPedido = {
+            ...pedido,
+            estado: "pago_confirmado" as const,
+            mp_payment_id: String(paymentId),
+            sena_pagada: pedido.tiene_sena ? true : pedido.sena_pagada,
+            sena_pagada_at: pedido.tiene_sena
+              ? new Date().toISOString()
+              : pedido.sena_pagada_at,
+            items: items || [],
+          };
 
           // Email al cliente
           const emailData = pagoRecibidoEmail(fullPedido);

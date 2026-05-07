@@ -3,7 +3,7 @@
  */
 
 import { randomBytes } from "crypto";
-import type { PedidoBorrador, PedidoBorradorItem } from "@/types";
+import type { PedidoBorrador, PedidoBorradorItem, SenaTipo } from "@/types";
 
 // Defaults para items custom sin dimensiones cargadas (mismos que el flujo
 // de cotización/MiCorreo del checkout normal).
@@ -122,6 +122,25 @@ export function calculateBorradorPackage(
   }
 
   return { weight, height, width, length };
+}
+
+/**
+ * Calcula el monto de la seña dado el total final del pedido y la
+ * configuración del borrador. Devuelve null si el borrador no tiene seña.
+ *
+ * Para tipo='porcentaje', valor está validado 10-90 por la DB.
+ * Para tipo='monto_fijo', clampeamos al total para evitar montos imposibles.
+ */
+export function calculateSena(
+  totalPedido: number,
+  tipo: SenaTipo | null,
+  valor: number | null
+): number | null {
+  if (!tipo || valor === null || valor <= 0) return null;
+  if (tipo === "porcentaje") {
+    return Math.round((totalPedido * valor) / 100);
+  }
+  return Math.min(Math.round(valor), totalPedido);
 }
 
 /**

@@ -21,7 +21,14 @@ export async function PATCH(
     const body = await req.json();
 
     // Only allow updating specific fields
-    const allowedFields = ["estado", "tracking_code", "tracking_url", "notas"];
+    const allowedFields = [
+      "estado",
+      "tracking_code",
+      "tracking_url",
+      "notas",
+      "sena_pagada",
+      "saldo_pagado",
+    ];
     const updates: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (field in body) {
@@ -31,6 +38,15 @@ export async function PATCH(
 
     if (updates.estado === "cancelado") {
       updates.cancelado_at = new Date().toISOString();
+    }
+
+    // Timestamps automáticos cuando se marca seña/saldo como pagado.
+    // Si se desmarca (toggle a false), los limpiamos.
+    if ("sena_pagada" in updates) {
+      updates.sena_pagada_at = updates.sena_pagada ? new Date().toISOString() : null;
+    }
+    if ("saldo_pagado" in updates) {
+      updates.saldo_pagado_at = updates.saldo_pagado ? new Date().toISOString() : null;
     }
 
     const serviceClient = await createServiceRoleClient();

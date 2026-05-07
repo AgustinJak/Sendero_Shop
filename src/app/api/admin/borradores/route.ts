@@ -8,7 +8,7 @@ import {
   validateBorradorItem,
   DEFAULT_EXPIRACION_HORAS,
 } from "@/lib/borrador";
-import type { MetodoPago, PedidoBorradorItem } from "@/types";
+import type { MetodoPago, PedidoBorradorItem, SenaTipo } from "@/types";
 
 /**
  * Listar borradores. Soporta filtro opcional por estado.
@@ -56,6 +56,8 @@ interface CreateBody {
   paquete_alto_cm?: number | null;
   paquete_ancho_cm?: number | null;
   paquete_largo_cm?: number | null;
+  sena_tipo?: SenaTipo | null;
+  sena_valor?: number | null;
   expiracion_horas?: number; // override del default 48
 }
 
@@ -167,7 +169,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 5. Calcular expiración
+    // 5a. Validar seña
+    let senaTipo: SenaTipo | null = null;
+    let senaValor: number | null = null;
+    if (body.sena_tipo && body.sena_valor != null) {
+      if (body.sena_tipo !== "porcentaje" && body.sena_tipo !== "monto_fijo") {
+        return NextResponse.json(
+          { error: "Tipo de seña inválido" },
+          { status: 400 }
+        );
+      }
+      if (body.sena_valor <= 0) {
+        return NextResponse.json(
+          { error: "El valor de la seña tiene que ser positivo" },
+          { status: 400 }
+        );
+      }
+      if (body.sena_tipo === "porcentaje") {
+        if (body.sena_valor < 10 || body.sena_valor > 90) {
+          return NextResponse.json(
+            { error: "La seña en porcentaje tiene que estar entre 10% y 90%" },
+            { status: 400 }
+          );
+        }
+      }
+      senaTipo = body.sena_tipo;
+      senaValor = body.sena_valor;
+    }
+
+    // 5b. Calcular expiración
     const horas =
       body.expiracion_horas && body.expiracion_horas > 0
         ? body.expiracion_horas
@@ -193,6 +223,8 @@ export async function POST(req: NextRequest) {
         paquete_alto_cm: body.paquete_alto_cm ?? null,
         paquete_ancho_cm: body.paquete_ancho_cm ?? null,
         paquete_largo_cm: body.paquete_largo_cm ?? null,
+        sena_tipo: senaTipo,
+        sena_valor: senaValor,
         expires_at: expiresAt.toISOString(),
         created_by: user.id,
       })

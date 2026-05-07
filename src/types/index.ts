@@ -181,6 +181,13 @@ export interface Pedido {
   paquete_alto_cm: number | null;
   paquete_ancho_cm: number | null;
   paquete_largo_cm: number | null;
+  // Seña (solo para pedidos derivados de borrador con seña configurada)
+  tiene_sena: boolean;
+  monto_sena: number | null;
+  sena_pagada: boolean;
+  sena_pagada_at: string | null;
+  saldo_pagado: boolean;
+  saldo_pagado_at: string | null;
   notas: string | null;
   cancelado_at: string | null;
   created_at: string;
@@ -206,6 +213,8 @@ export type EstadoBorrador =
   | "convertido"
   | "expirado"
   | "cancelado";
+
+export type SenaTipo = "porcentaje" | "monto_fijo";
 
 /**
  * Item dentro de un pedido_borrador. Vive en jsonb, no es una tabla aparte.
@@ -249,6 +258,9 @@ export interface PedidoBorrador {
   paquete_alto_cm: number | null;
   paquete_ancho_cm: number | null;
   paquete_largo_cm: number | null;
+  // Seña (configuración — el monto real se calcula al convertir)
+  sena_tipo: SenaTipo | null;
+  sena_valor: number | null;
   // Lifecycle
   estado: EstadoBorrador;
   pedido_id: string | null;
