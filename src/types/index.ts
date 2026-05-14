@@ -39,6 +39,7 @@ export interface Producto {
   sku: string | null;
   meta_title: string | null;
   meta_description: string | null;
+  unidades_vendidas: number;
   created_at: string;
   updated_at: string;
   // Relaciones

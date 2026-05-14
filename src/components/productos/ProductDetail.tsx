@@ -70,6 +70,34 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
           )}
         </div>
 
+        {/* Social proof: unidades vendidas — solo cuando hay volumen */}
+        {producto.unidades_vendidas >= 3 && (
+          <p className="flex items-center gap-1.5 text-sm text-emerald-400">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-4 h-4"
+              aria-hidden="true"
+            >
+              <path
+                fillRule="evenodd"
+                d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                clipRule="evenodd"
+              />
+            </svg>
+            <span>
+              {/* Hasta 99 mostramos el número exacto.
+                  De 100 en adelante redondeamos a la centena hacia abajo
+                  con prefijo "+" (clásico social proof tipo MercadoLibre). */}
+              {producto.unidades_vendidas >= 100
+                ? `+${Math.floor(producto.unidades_vendidas / 100) * 100}`
+                : producto.unidades_vendidas}{" "}
+              vendidos
+            </span>
+          </p>
+        )}
+
         {/* Variantes */}
         {producto.variante_grupos && producto.variante_grupos.length > 0 && (
           <VariantSelector
