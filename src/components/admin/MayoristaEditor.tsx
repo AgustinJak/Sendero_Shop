@@ -100,6 +100,184 @@ function ItemCard({
   );
 }
 
+// ─── Manual Item Modal ────────────────────────────────────────────────────────
+
+function ManualItemModal({
+  onAdd,
+  onClose,
+}: {
+  onAdd: (
+    titulo: string,
+    files: File[],
+    codigo_ref: string,
+    precio_ars: number | null
+  ) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [titulo, setTitulo] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [precio, setPrecio] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [previews, setPreviews] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  function handleFiles(list: FileList | null) {
+    if (!list) return;
+    const arr = Array.from(list).filter((f) => f.type.startsWith("image/"));
+    setFiles((prev) => [...prev, ...arr]);
+    setPreviews((prev) => [...prev, ...arr.map((f) => URL.createObjectURL(f))]);
+  }
+
+  function removeFile(i: number) {
+    setFiles((prev) => prev.filter((_, idx) => idx !== i));
+    setPreviews((prev) => {
+      URL.revokeObjectURL(prev[i]);
+      return prev.filter((_, idx) => idx !== i);
+    });
+  }
+
+  async function submit() {
+    if (!titulo.trim()) {
+      setError("Poné un título");
+      return;
+    }
+    if (files.length === 0) {
+      setError("Subí al menos una imagen");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      await onAdd(
+        titulo.trim(),
+        files,
+        codigo.trim(),
+        precio ? Number(precio) : null
+      );
+      previews.forEach((p) => URL.revokeObjectURL(p));
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center pt-12 px-4 overflow-y-auto">
+      <div className="bg-navy-deep border border-lavanda/20 rounded-xl w-full max-w-xl mb-12">
+        <div className="flex items-center justify-between p-4 border-b border-lavanda/10">
+          <h3 className="font-[family-name:var(--font-cinzel)] text-niebla font-bold">
+            Subir producto manualmente
+          </h3>
+          <button onClick={onClose} className="text-lavanda/40 hover:text-niebla transition-colors text-xl leading-none">×</button>
+        </div>
+
+        <div className="p-4 space-y-4">
+          <div>
+            <label className="block text-xs text-lavanda/60 mb-1">Título *</label>
+            <input
+              value={titulo}
+              onChange={(e) => setTitulo(e.target.value)}
+              autoFocus
+              placeholder="Ej: Maceta minimalista geométrica 12cm"
+              className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-lavanda/60 mb-1">
+                Código <span className="text-lavanda/40">(opc.)</span>
+              </label>
+              <input
+                value={codigo}
+                onChange={(e) => setCodigo(e.target.value)}
+                placeholder="MAC-01"
+                className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-lavanda-light font-mono focus:outline-none focus:border-purpura"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-lavanda/60 mb-1">
+                Precio ARS <span className="text-lavanda/40">(opc.)</span>
+              </label>
+              <input
+                value={precio}
+                onChange={(e) => setPrecio(e.target.value)}
+                type="number"
+                placeholder="2500"
+                className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-ambar focus:outline-none focus:border-purpura"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs text-lavanda/60 mb-1.5">
+              Imágenes * <span className="text-lavanda/40">(podés subir varias)</span>
+            </label>
+            <label className="block border-2 border-dashed border-lavanda/20 hover:border-purpura rounded-lg p-6 text-center cursor-pointer transition-colors">
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e) => handleFiles(e.target.files)}
+                className="hidden"
+              />
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mx-auto text-lavanda/40 mb-1">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+              </svg>
+              <p className="text-sm text-lavanda-light">Click para seleccionar archivos</p>
+              <p className="text-xs text-lavanda/40 mt-0.5">PNG, JPG, WebP — múltiples</p>
+            </label>
+
+            {previews.length > 0 && (
+              <div className="grid grid-cols-4 gap-2 mt-3">
+                {previews.map((src, i) => (
+                  <div key={i} className="relative group">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={src} alt="" className="w-full aspect-square object-cover rounded-lg" />
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      className="absolute top-1 right-1 w-5 h-5 bg-black/70 hover:bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      aria-label="Quitar imagen"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400">
+              {error}
+            </div>
+          )}
+
+          <div className="flex gap-2 pt-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-lavanda/20 text-lavanda-light rounded-lg hover:bg-lavanda/10 transition-colors text-sm"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={submit}
+              disabled={submitting || !titulo.trim() || files.length === 0}
+              className="flex-1 py-2 bg-purpura hover:bg-purpura/80 text-niebla font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {submitting ? "Subiendo..." : "Agregar producto"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── MakerWorld Search Modal ──────────────────────────────────────────────────
 
 function MakerWorldModal({
@@ -221,6 +399,7 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
   const [savingMeta, setSavingMeta] = useState(false);
   const [addingSeccion, setAddingSeccion] = useState(false);
   const [searchModal, setSearchModal] = useState<string | null>(null); // seccionId
+  const [manualModal, setManualModal] = useState<string | null>(null); // seccionId
   const [copied, setCopied] = useState(false);
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
 
@@ -281,6 +460,36 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
         imagenes: model.imagenes,
       }),
     });
+    const item = await res.json();
+    setLista((prev) => ({
+      ...prev,
+      secciones: (prev.secciones ?? []).map((s) =>
+        s.id === seccionId ? { ...s, items: [...(s.items ?? []), item] } : s
+      ),
+    }));
+  }
+
+  async function addItemManual(
+    seccionId: string,
+    titulo: string,
+    files: File[],
+    codigo_ref: string,
+    precio_ars: number | null
+  ) {
+    const fd = new FormData();
+    fd.append("titulo", titulo);
+    fd.append("codigo_ref", codigo_ref);
+    if (precio_ars !== null) fd.append("precio_ars", String(precio_ars));
+    for (const f of files) fd.append("files", f);
+
+    const res = await fetch(
+      `/api/admin/mayoristas/${lista.id}/secciones/${seccionId}/items/manual`,
+      { method: "POST", body: fd }
+    );
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error ?? "Error al crear item");
+    }
     const item = await res.json();
     setLista((prev) => ({
       ...prev,
@@ -389,6 +598,7 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
           onTituloBlur={(titulo) => updateSeccionTitulo(seccion.id, titulo)}
           onDelete={() => deleteSeccion(seccion.id)}
           onOpenSearch={() => setSearchModal(seccion.id)}
+          onOpenManual={() => setManualModal(seccion.id)}
           onItemDelete={(itemId) => handleItemDelete(seccion.id, itemId)}
           onItemUpdate={(itemId, field, value) => handleItemUpdate(seccion.id, itemId, field, value)}
         />
@@ -412,6 +622,16 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
           }}
         />
       )}
+
+      {/* Modal de carga manual */}
+      {manualModal && (
+        <ManualItemModal
+          onClose={() => setManualModal(null)}
+          onAdd={async (titulo, files, codigo_ref, precio_ars) => {
+            await addItemManual(manualModal, titulo, files, codigo_ref, precio_ars);
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -424,6 +644,7 @@ function SeccionBlock({
   onTituloBlur,
   onDelete,
   onOpenSearch,
+  onOpenManual,
   onItemDelete,
   onItemUpdate,
 }: {
@@ -432,6 +653,7 @@ function SeccionBlock({
   onTituloBlur: (titulo: string) => void;
   onDelete: () => void;
   onOpenSearch: () => void;
+  onOpenManual: () => void;
   onItemDelete: (itemId: string) => void;
   onItemUpdate: (itemId: string, field: string, value: string | number | null) => void;
 }) {
@@ -475,16 +697,27 @@ function SeccionBlock({
         </div>
       )}
 
-      {/* Botón agregar productos */}
-      <button
-        onClick={onOpenSearch}
-        className="flex items-center gap-2 px-4 py-2 bg-navy border border-lavanda/20 text-lavanda-light text-sm rounded-lg hover:bg-lavanda/10 transition-colors"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-          <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-        </svg>
-        Buscar en MakerWorld
-      </button>
+      {/* Botones agregar productos */}
+      <div className="flex gap-2 flex-wrap">
+        <button
+          onClick={onOpenSearch}
+          className="flex items-center gap-2 px-4 py-2 bg-navy border border-lavanda/20 text-lavanda-light text-sm rounded-lg hover:bg-lavanda/10 transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+          </svg>
+          Buscar en MakerWorld
+        </button>
+        <button
+          onClick={onOpenManual}
+          className="flex items-center gap-2 px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-sm rounded-lg transition-colors"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+          </svg>
+          Subir manualmente
+        </button>
+      </div>
     </div>
   );
 }
