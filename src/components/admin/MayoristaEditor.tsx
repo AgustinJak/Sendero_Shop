@@ -72,20 +72,21 @@ function ItemCard({
           className="w-full bg-transparent text-sm text-niebla font-medium focus:outline-none border-b border-transparent focus:border-lavanda/30 pb-0.5 transition-colors"
           placeholder="Título del producto"
         />
-        <div className="flex gap-2">
-          <input
-            value={codigo}
-            onChange={(e) => setCodigo(e.target.value)}
-            onBlur={() => saveField("codigo_ref", codigo)}
-            className="flex-1 bg-navy-deep text-xs text-lavanda-light font-mono rounded px-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
-            placeholder="REF-001"
-          />
+        <input
+          value={codigo}
+          onChange={(e) => setCodigo(e.target.value)}
+          onBlur={() => saveField("codigo_ref", codigo)}
+          className="w-full bg-navy-deep text-xs text-lavanda-light font-mono rounded px-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
+          placeholder="REF-001"
+        />
+        <div className="relative">
+          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-lavanda/40 pointer-events-none">$</span>
           <input
             value={precio}
             onChange={(e) => setPrecio(e.target.value)}
             onBlur={() => saveField("precio_ars", precio ? Number(precio) : null)}
             type="number"
-            className="w-24 bg-navy-deep text-xs text-ambar font-medium rounded px-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
+            className="w-full bg-navy-deep text-xs text-ambar font-medium rounded pl-5 pr-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
             placeholder="Precio"
           />
         </div>

@@ -1,7 +1,8 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { MayoristaSeccion, MayoristaItem, MayoristaImagen } from "@/types";
+import type { MayoristaSeccion, MayoristaItem } from "@/types";
+import MayoristaItemCard from "@/components/mayorista/MayoristaItemCard";
 
 export async function generateMetadata({
   params,
@@ -14,55 +15,6 @@ export async function generateMetadata({
     description: `Lista de precios mayorista de Sendero 3D. Código: ${codigo}`,
     robots: "noindex",
   };
-}
-
-function formatPrice(n: number) {
-  return new Intl.NumberFormat("es-AR", { style: "currency", currency: "ARS", maximumFractionDigits: 0 }).format(n);
-}
-
-function ItemCard({ item }: { item: MayoristaItem }) {
-  const imagenes = (item.imagenes ?? []).sort(
-    (a: MayoristaImagen, b: MayoristaImagen) => a.orden - b.orden
-  );
-
-  return (
-    <div className="bg-[#0F1729] rounded-2xl overflow-hidden border border-[#8B85B2]/10 flex flex-col">
-      {/* Galería de imágenes */}
-      {imagenes.length > 0 ? (
-        <div className={`grid gap-0.5 ${imagenes.length === 1 ? "grid-cols-1" : imagenes.length <= 4 ? "grid-cols-2" : "grid-cols-3"}`}>
-          {imagenes.map((img: MayoristaImagen, i: number) => (
-            <img
-              key={img.id}
-              src={img.url}
-              alt={`${item.titulo} — vista ${i + 1}`}
-              className="aspect-square w-full object-cover"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="aspect-square bg-[#1C2541] flex items-center justify-center text-[#8B85B2]/20 text-xs">
-          sin imagen
-        </div>
-      )}
-
-      {/* Info */}
-      <div className="p-3 flex flex-col gap-1 flex-1">
-        <h3 className="text-[#E8E6F0] text-sm font-medium leading-snug">{item.titulo}</h3>
-        <div className="flex items-center justify-between mt-auto pt-2">
-          {item.codigo_ref && (
-            <span className="text-[10px] font-mono text-[#8B85B2]/60 bg-[#1C2541] px-2 py-0.5 rounded">
-              {item.codigo_ref}
-            </span>
-          )}
-          {item.precio_ars != null && (
-            <span className="text-sm font-bold text-[#D4A853] ml-auto">
-              {formatPrice(item.precio_ars)}
-            </span>
-          )}
-        </div>
-      </div>
-    </div>
-  );
 }
 
 export default async function MayoristaPublicPage({
@@ -149,7 +101,7 @@ export default async function MayoristaPublicPage({
               {/* Grid de productos */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {items.map((item: MayoristaItem) => (
-                  <ItemCard key={item.id} item={item} />
+                  <MayoristaItemCard key={item.id} item={item} />
                 ))}
               </div>
             </section>
