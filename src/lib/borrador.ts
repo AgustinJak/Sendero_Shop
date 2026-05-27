@@ -175,6 +175,22 @@ export function validateBorradorItem(item: unknown, idx: number): PedidoBorrador
     }
   }
 
+  // Normalizar imágenes: aceptar `imagenes_url` (nuevo, array) o `imagen_url` (viejo, single).
+  // Filtrar strings vacíos y limitar a URLs válidas. Si quedan ≥1, guardar como imagenes_url.
+  let imagenesUrl: string[] | undefined;
+  if (Array.isArray(o.imagenes_url)) {
+    imagenesUrl = (o.imagenes_url as unknown[])
+      .filter((u): u is string => typeof u === "string" && u.trim().length > 0)
+      .map((u) => u.trim());
+    if (imagenesUrl.length === 0) imagenesUrl = undefined;
+  }
+  // Si vino el campo viejo y no hay nuevo, migrarlo a array.
+  const imagenUrlSingle =
+    (typeof o.imagen_url === "string" && o.imagen_url.trim()) ? o.imagen_url.trim() : undefined;
+  if (!imagenesUrl && imagenUrlSingle) {
+    imagenesUrl = [imagenUrlSingle];
+  }
+
   return {
     producto_id: (o.producto_id as string | null) ?? null,
     sku: (o.sku as string | null) ?? null,
@@ -186,7 +202,20 @@ export function validateBorradorItem(item: unknown, idx: number): PedidoBorrador
     alto_cm: o.alto_cm as number | undefined,
     ancho_cm: o.ancho_cm as number | undefined,
     largo_cm: o.largo_cm as number | undefined,
-    imagen_url: (o.imagen_url as string | undefined) || undefined,
+    imagenes_url: imagenesUrl,
     descripcion: (o.descripcion as string | undefined) || undefined,
   };
+}
+
+/**
+ * Helper: devuelve todas las URLs de imágenes de un item, considerando el
+ * campo nuevo (`imagenes_url[]`) y el viejo (`imagen_url`). Items del catálogo
+ * podrían tener su imagen principal en otro lado — esto solo aplica a custom.
+ */
+export function getItemImagenes(item: Pick<PedidoBorradorItem, "imagen_url" | "imagenes_url">): string[] {
+  if (item.imagenes_url && item.imagenes_url.length > 0) {
+    return item.imagenes_url;
+  }
+  if (item.imagen_url) return [item.imagen_url];
+  return [];
 }

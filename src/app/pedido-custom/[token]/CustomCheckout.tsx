@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { formatPrice } from "@/lib/utils";
-import { calculateSena } from "@/lib/borrador";
+import { calculateSena, getItemImagenes } from "@/lib/borrador";
 import type {
   PedidoBorradorItem,
   MetodoEnvio,
@@ -118,6 +118,32 @@ export default function CustomCheckout({
   // Submit
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Lightbox de imágenes (array de URLs + índice activo)
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
+
+  // Cerrar lightbox con ESC + navegar con flechas
+  useEffect(() => {
+    if (!lightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (!lightbox) return;
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowRight") {
+        setLightbox((lb) =>
+          lb ? { ...lb, index: (lb.index + 1) % lb.images.length } : lb
+        );
+      }
+      if (e.key === "ArrowLeft") {
+        setLightbox((lb) =>
+          lb
+            ? { ...lb, index: (lb.index - 1 + lb.images.length) % lb.images.length }
+            : lb
+        );
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightbox]);
 
   // Countdown
   const [now, setNow] = useState(Date.now());
@@ -387,33 +413,75 @@ export default function CustomCheckout({
           <h2 className="font-[family-name:var(--font-cinzel)] text-sm text-niebla mb-3 uppercase tracking-wider">
             Tu pedido
           </h2>
-          <div className="space-y-3">
-            {borrador.items.map((it, idx) => (
-              <div key={idx} className="flex gap-3 items-center">
-                {it.imagen_url && (
-                  <Image
-                    src={it.imagen_url}
-                    alt={it.nombre}
-                    width={64}
-                    height={64}
-                    className="rounded-lg object-cover bg-navy-deep w-16 h-16"
-                    unoptimized
-                  />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-niebla">{it.nombre}</p>
-                  {it.descripcion && (
-                    <p className="text-xs text-lavanda/60">{it.descripcion}</p>
+          <div className="space-y-4">
+            {borrador.items.map((it, idx) => {
+              const imagenes = getItemImagenes(it);
+              const hasMultiple = imagenes.length > 1;
+              return (
+                <div key={idx} className="space-y-2">
+                  <div className="flex gap-3 items-center">
+                    {imagenes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setLightbox({ images: imagenes, index: 0 })}
+                        className="relative shrink-0 group focus:outline-none focus:ring-2 focus:ring-purpura rounded-lg"
+                        aria-label={`Ver imagen de ${it.nombre}`}
+                      >
+                        <Image
+                          src={imagenes[0]}
+                          alt={it.nombre}
+                          width={64}
+                          height={64}
+                          className="rounded-lg object-cover bg-navy-deep w-16 h-16 transition-transform group-hover:scale-105"
+                          unoptimized
+                        />
+                        {hasMultiple && (
+                          <span className="absolute bottom-0 right-0 bg-navy/90 text-niebla text-[10px] px-1.5 py-0.5 rounded-tl-lg rounded-br-lg font-medium">
+                            +{imagenes.length - 1}
+                          </span>
+                        )}
+                      </button>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-niebla">{it.nombre}</p>
+                      {it.descripcion && (
+                        <p className="text-xs text-lavanda/60">{it.descripcion}</p>
+                      )}
+                      <p className="text-xs text-lavanda">
+                        {it.cantidad} × {formatPrice(it.precio_unitario)}
+                      </p>
+                    </div>
+                    <p className="text-sm text-niebla font-medium whitespace-nowrap">
+                      {formatPrice(it.precio_unitario * it.cantidad)}
+                    </p>
+                  </div>
+
+                  {/* Strip de thumbnails extras (si hay >1 imagen) */}
+                  {hasMultiple && (
+                    <div className="flex gap-1.5 overflow-x-auto pl-[76px]">
+                      {imagenes.slice(1).map((url, i) => (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setLightbox({ images: imagenes, index: i + 1 })}
+                          className="shrink-0 rounded-md overflow-hidden focus:outline-none focus:ring-2 focus:ring-purpura"
+                          aria-label={`Ver imagen ${i + 2} de ${it.nombre}`}
+                        >
+                          <Image
+                            src={url}
+                            alt={`${it.nombre} ${i + 2}`}
+                            width={48}
+                            height={48}
+                            className="w-12 h-12 object-cover bg-navy-deep hover:opacity-80 transition-opacity"
+                            unoptimized
+                          />
+                        </button>
+                      ))}
+                    </div>
                   )}
-                  <p className="text-xs text-lavanda">
-                    {it.cantidad} × {formatPrice(it.precio_unitario)}
-                  </p>
                 </div>
-                <p className="text-sm text-niebla font-medium whitespace-nowrap">
-                  {formatPrice(it.precio_unitario * it.cantidad)}
-                </p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 
@@ -567,7 +635,12 @@ export default function CustomCheckout({
           </div>
           {descuento > 0 && (
             <div className="flex justify-between text-emerald-400">
-              <span>Descuento</span>
+              <span>
+                Descuento{" "}
+                {borrador.descuento_porcentaje > 0
+                  ? `(${borrador.descuento_porcentaje}%)`
+                  : "(monto fijo)"}
+              </span>
               <span>−{formatPrice(descuento)}</span>
             </div>
           )}
@@ -601,7 +674,12 @@ export default function CustomCheckout({
                 Pagás en 2 partes
               </p>
               <div className="flex justify-between text-niebla">
-                <span className="font-medium">💰 Seña ahora</span>
+                <span className="font-medium">
+                  💰 Seña ahora
+                  {borrador.sena_tipo === "porcentaje" && borrador.sena_valor
+                    ? ` (${borrador.sena_valor}%)`
+                    : ""}
+                </span>
                 <span className="font-semibold text-ambar">{formatPrice(montoSena)}</span>
               </div>
               <div className="flex justify-between text-lavanda">
@@ -648,6 +726,82 @@ export default function CustomCheckout({
           <p className="text-xs text-lavanda/50 text-center">{validacion}</p>
         )}
       </div>
+
+      {/* ─── Lightbox ─── */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-8"
+          onClick={() => setLightbox(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Vista de imagen ampliada"
+        >
+          {/* Botón cerrar */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setLightbox(null);
+            }}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors"
+            aria-label="Cerrar"
+          >
+            ×
+          </button>
+
+          {/* Contador */}
+          {lightbox.images.length > 1 && (
+            <div className="absolute top-4 left-4 px-3 py-1 bg-white/10 text-white text-sm rounded-full">
+              {lightbox.index + 1} / {lightbox.images.length}
+            </div>
+          )}
+
+          {/* Botón anterior */}
+          {lightbox.images.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightbox({
+                  ...lightbox,
+                  index: (lightbox.index - 1 + lightbox.images.length) % lightbox.images.length,
+                });
+              }}
+              className="absolute left-4 sm:left-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors"
+              aria-label="Imagen anterior"
+            >
+              ‹
+            </button>
+          )}
+
+          {/* Imagen */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={lightbox.images[lightbox.index]}
+            alt={`Imagen ${lightbox.index + 1}`}
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-full max-h-full object-contain rounded-lg cursor-default"
+          />
+
+          {/* Botón siguiente */}
+          {lightbox.images.length > 1 && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightbox({
+                  ...lightbox,
+                  index: (lightbox.index + 1) % lightbox.images.length,
+                });
+              }}
+              className="absolute right-4 sm:right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors"
+              aria-label="Imagen siguiente"
+            >
+              ›
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

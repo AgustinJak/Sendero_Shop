@@ -237,7 +237,10 @@ export interface PedidoBorradorItem {
   ancho_cm?: number;
   largo_cm?: number;
   // Solo relevante para items custom: opcional, mostrar en checkout del cliente.
+  // imagen_url: campo viejo (single image, mantenido para retrocompat con borradores existentes).
+  // imagenes_url: nuevo (multi-image). Si está presente, ignorar imagen_url.
   imagen_url?: string;
+  imagenes_url?: string[];
   descripcion?: string;
 }
 
@@ -288,6 +291,43 @@ export interface Configuracion {
   key: string;
   value: string;
   updated_at: string;
+}
+
+// --- Mayoristas ---
+export interface MayoristaLista {
+  id: string;
+  codigo: string;
+  nombre: string;
+  activa: boolean;
+  created_at: string;
+  secciones?: MayoristaSeccion[];
+}
+
+export interface MayoristaSeccion {
+  id: string;
+  lista_id: string;
+  titulo: string;
+  orden: number;
+  items?: MayoristaItem[];
+}
+
+export interface MayoristaItem {
+  id: string;
+  seccion_id: string;
+  titulo: string;
+  codigo_ref: string;
+  precio_ars: number | null;
+  makerworld_url: string | null;
+  orden: number;
+  imagenes?: MayoristaImagen[];
+}
+
+export interface MayoristaImagen {
+  id: string;
+  item_id: string;
+  url: string;
+  storage_path: string | null;
+  orden: number;
 }
 
 // --- Colecciones ---

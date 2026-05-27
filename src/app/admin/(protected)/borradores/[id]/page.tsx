@@ -2,7 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
-import { calculateSubtotal, calculateDescuento } from "@/lib/borrador";
+import { calculateSubtotal, calculateDescuento, getItemImagenes } from "@/lib/borrador";
 import type { EstadoBorrador, PedidoBorrador } from "@/types";
 import BorradorActions from "@/components/admin/BorradorActions";
 
@@ -71,12 +71,22 @@ export default async function BorradorDetailPage({ params }: Props) {
             Creado el {new Date(b.created_at).toLocaleString("es-AR")}
           </p>
         </div>
-        <Link
-          href="/admin/borradores"
-          className="text-sm text-lavanda hover:text-niebla transition-colors"
-        >
-          ← Volver
-        </Link>
+        <div className="flex items-center gap-3">
+          {b.estado === "pendiente" && (
+            <Link
+              href={`/admin/borradores/${b.id}/editar`}
+              className="px-3 py-1.5 bg-ambar/10 hover:bg-ambar/20 text-ambar text-sm rounded-lg transition-colors"
+            >
+              Editar
+            </Link>
+          )}
+          <Link
+            href="/admin/borradores"
+            className="text-sm text-lavanda hover:text-niebla transition-colors"
+          >
+            ← Volver
+          </Link>
+        </div>
       </div>
 
       {/* Estado */}
@@ -108,32 +118,48 @@ export default async function BorradorDetailPage({ params }: Props) {
           <section className="bg-navy rounded-xl border border-lavanda/10 p-4">
             <h2 className="text-sm font-semibold text-niebla mb-3">Items</h2>
             <div className="space-y-2">
-              {b.items.map((it, idx) => (
-                <div key={idx} className="bg-navy-deep rounded-lg p-3">
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 text-xs text-lavanda/40 mb-1">
-                        {it.producto_id ? (
-                          <span className="px-1.5 py-0.5 bg-emerald-400/10 text-emerald-400 rounded text-[10px]">
-                            CATÁLOGO {it.sku ? `· ${it.sku}` : ""}
-                          </span>
-                        ) : (
-                          <span className="px-1.5 py-0.5 bg-ambar/10 text-ambar rounded text-[10px]">
-                            CUSTOM
-                          </span>
-                        )}
+              {b.items.map((it, idx) => {
+                const imagenes = getItemImagenes(it);
+                return (
+                  <div key={idx} className="bg-navy-deep rounded-lg p-3">
+                    <div className="flex justify-between items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 text-xs text-lavanda/40 mb-1">
+                          {it.producto_id ? (
+                            <span className="px-1.5 py-0.5 bg-emerald-400/10 text-emerald-400 rounded text-[10px]">
+                              CATÁLOGO {it.sku ? `· ${it.sku}` : ""}
+                            </span>
+                          ) : (
+                            <span className="px-1.5 py-0.5 bg-ambar/10 text-ambar rounded text-[10px]">
+                              CUSTOM
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-niebla">{it.nombre}</p>
+                        <p className="text-xs text-lavanda/60">
+                          {it.cantidad} × {formatPrice(it.precio_unitario)}
+                        </p>
                       </div>
-                      <p className="text-sm text-niebla">{it.nombre}</p>
-                      <p className="text-xs text-lavanda/60">
-                        {it.cantidad} × {formatPrice(it.precio_unitario)}
+                      <p className="text-sm text-niebla font-medium whitespace-nowrap">
+                        {formatPrice(it.precio_unitario * it.cantidad)}
                       </p>
                     </div>
-                    <p className="text-sm text-niebla font-medium whitespace-nowrap">
-                      {formatPrice(it.precio_unitario * it.cantidad)}
-                    </p>
+                    {imagenes.length > 0 && (
+                      <div className="flex gap-1.5 mt-2 overflow-x-auto">
+                        {imagenes.map((url, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={i}
+                            src={url}
+                            alt={`${it.nombre} ${i + 1}`}
+                            className="w-14 h-14 rounded object-cover bg-navy border border-lavanda/10 shrink-0"
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
 
