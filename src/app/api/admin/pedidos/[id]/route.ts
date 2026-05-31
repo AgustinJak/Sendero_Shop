@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pagoRecibidoEmail, pedidoEnviadoEmail, pedidoListoRetiroEmail, pedidoEntregadoEmail, pedidoCanceladoEmail } from "@/lib/email/templates";
+import { getWhatsapp } from "@/lib/site-config";
 import type { Pedido } from "@/types";
 
 export async function PATCH(
@@ -71,6 +72,7 @@ export async function PATCH(
 
       if (pedido) {
         const p = pedido as Pedido;
+        const whatsapp = await getWhatsapp();
         if (updates.estado === "pago_confirmado") {
           // Para efectivo no mandamos el email "Recibimos tu pago" porque el
           // pago se cobra al retirar — todavía no se recibió. Los pedidos en
@@ -78,21 +80,21 @@ export async function PATCH(
           // confirmación inicial; este trigger solo aplica si admin rebobinea
           // el estado.
           if (p.metodo_pago !== "efectivo") {
-            const email = pagoRecibidoEmail(p);
+            const email = pagoRecibidoEmail(p, whatsapp);
             await sendEmail({ to: p.email, ...email });
           }
         } else if (updates.estado === "enviado") {
-          const email = pedidoEnviadoEmail(p);
+          const email = pedidoEnviadoEmail(p, whatsapp);
           await sendEmail({ to: p.email, ...email });
         } else if (updates.estado === "esperando_retiro") {
-          const email = pedidoListoRetiroEmail(p);
+          const email = pedidoListoRetiroEmail(p, whatsapp);
           await sendEmail({ to: p.email, ...email });
         } else if (updates.estado === "entregado") {
-          const email = pedidoEntregadoEmail(p);
+          const email = pedidoEntregadoEmail(p, whatsapp);
           await sendEmail({ to: p.email, ...email });
         } else if (updates.estado === "cancelado") {
           const motivo = body.motivo_cancelacion || undefined;
-          const email = pedidoCanceladoEmail(p, motivo);
+          const email = pedidoCanceladoEmail(p, whatsapp, motivo);
           await sendEmail({ to: p.email, ...email });
         }
       }

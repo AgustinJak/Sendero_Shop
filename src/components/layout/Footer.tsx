@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { formatWhatsappDisplay } from "@/lib/utils";
 
-export default function Footer() {
+export default function Footer({ whatsapp }: { whatsapp: string }) {
   return (
     <footer className="bg-navy-deep border-t border-lavanda/10 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -120,12 +121,12 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://wa.me/5491125502785"
+                  href={`https://wa.me/${whatsapp}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-lavanda-light hover:text-niebla transition-colors"
                 >
-                  WhatsApp: +54 9 11 2550-2785
+                  WhatsApp: {formatWhatsappDisplay(whatsapp)}
                 </a>
               </li>
             </ul>

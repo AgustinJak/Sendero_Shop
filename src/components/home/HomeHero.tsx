@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { whatsappLink } from "@/lib/utils";
 
-export default function HomeHero() {
+export default function HomeHero({ whatsapp }: { whatsapp: string }) {
   return (
     <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Partículas flotantes */}
@@ -67,7 +68,7 @@ export default function HomeHero() {
           </Link>
 
           <a
-            href="https://wa.me/5491125502785?text=Hola!%20Quiero%20consultar%20por%20un%20producto"
+            href={whatsappLink(whatsapp, "Hola! Quiero consultar por un producto")}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center px-8 py-3 border border-lavanda/30 text-lavanda-light hover:bg-lavanda/10 rounded-lg transition-colors"

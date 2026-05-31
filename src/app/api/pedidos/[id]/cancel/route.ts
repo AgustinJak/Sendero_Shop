@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoCanceladoEmail } from "@/lib/email/templates";
+import { getWhatsapp } from "@/lib/site-config";
 import type { Pedido } from "@/types";
 
 const CANCELLABLE_STATES = ["pendiente_pago", "pago_confirmado"];
@@ -59,7 +60,8 @@ export async function POST(
   }
 
   // Send cancellation email to customer
-  const cancelEmail = pedidoCanceladoEmail(p, "Cancelado por el cliente");
+  const whatsapp = await getWhatsapp();
+  const cancelEmail = pedidoCanceladoEmail(p, whatsapp, "Cancelado por el cliente");
   await sendEmail({ to: p.email, ...cancelEmail });
 
   // Notify admin

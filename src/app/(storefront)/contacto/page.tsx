@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import ContactForm from "./ContactForm";
+import { getWhatsapp } from "@/lib/site-config";
+import { whatsappLink, formatWhatsappDisplay } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Contacto",
@@ -8,7 +10,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://sendero3d.com/contacto" },
 };
 
-export default function ContactoPage() {
+export default async function ContactoPage() {
+  const whatsapp = await getWhatsapp();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
       <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-4 text-center">
@@ -22,7 +25,7 @@ export default function ContactoPage() {
         {/* WhatsApp + info */}
         <div className="space-y-6">
           <a
-            href="https://wa.me/5491125502785?text=Hola!%20Quiero%20hacer%20una%20consulta"
+            href={whatsappLink(whatsapp, "Hola! Quiero hacer una consulta")}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-4 bg-green-600/10 border border-green-600/30 rounded-xl p-5 hover:bg-green-600/15 transition-colors group"
@@ -37,7 +40,7 @@ export default function ContactoPage() {
                 WhatsApp
               </p>
               <p className="text-sm text-lavanda/75">
-                +54 9 11 2550-2785
+                {formatWhatsappDisplay(whatsapp)}
               </p>
             </div>
           </a>

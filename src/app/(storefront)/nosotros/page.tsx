@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { getWhatsapp } from "@/lib/site-config";
+import { whatsappLink } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Nosotros",
@@ -7,7 +9,8 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://sendero3d.com/nosotros" },
 };
 
-export default function NosotrosPage() {
+export default async function NosotrosPage() {
+  const whatsapp = await getWhatsapp();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
       <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-8 text-center">
@@ -68,7 +71,7 @@ export default function NosotrosPage() {
 
         <div className="text-center pt-4">
           <a
-            href="https://wa.me/5491125502785?text=Hola!%20Quiero%20saber%20m%C3%A1s%20sobre%20Sendero%20Shop"
+            href={whatsappLink(whatsapp, "Hola! Quiero saber más sobre Sendero Shop")}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"

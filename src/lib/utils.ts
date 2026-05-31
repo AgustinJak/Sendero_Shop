@@ -38,10 +38,24 @@ export function calcularRecargoMP(subtotal: number): number {
   return Math.round(subtotal * MP_RECARGO);
 }
 
-// WhatsApp link
-export function whatsappLink(message: string): string {
-  const encoded = encodeURIComponent(message);
-  return `https://wa.me/5491125502785?text=${encoded}`;
+// WhatsApp link — el número viene de configuracion (lib/site-config.ts).
+// Esta función es pura: pasale el phone (sin "+" ni espacios) y opcionalmente un mensaje.
+export function whatsappLink(phone: string, message?: string): string {
+  const base = `https://wa.me/${phone}`;
+  if (!message) return base;
+  return `${base}?text=${encodeURIComponent(message)}`;
+}
+
+/**
+ * Formatea "5491128290007" → "+54 9 11 2829-0007" para mostrar al usuario.
+ * Si el número no matchea el patrón esperado, devuelve "+<phone>" tal cual.
+ */
+export function formatWhatsappDisplay(phone: string): string {
+  const clean = phone.replace(/\D/g, "");
+  if (clean.length === 13 && clean.startsWith("549")) {
+    return `+${clean.slice(0, 2)} ${clean.slice(2, 3)} ${clean.slice(3, 5)} ${clean.slice(5, 9)}-${clean.slice(9)}`;
+  }
+  return `+${clean}`;
 }
 
 // Rich text prose styles (Tailwind v4 utility classes)

@@ -6,20 +6,7 @@ import { CartProvider } from "@/components/carrito/CartProvider";
 import CartDrawer from "@/components/carrito/CartDrawer";
 import PopupBanner from "@/components/home/PopupBanner";
 import { getBanners } from "@/lib/queries";
-
-const organizationLd = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  name: "Sendero Shop",
-  alternateName: "Sendero de los Sueños",
-  url: "https://sendero3d.com",
-  contactPoint: {
-    "@type": "ContactPoint",
-    contactType: "customer service",
-    url: "https://wa.me/5491125502785",
-    availableLanguage: "Spanish",
-  },
-};
+import { getWhatsapp } from "@/lib/site-config";
 
 const websiteLd = {
   "@context": "https://schema.org",
@@ -33,14 +20,31 @@ export default async function StorefrontLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const popupBanners = await getBanners("popup");
+  const [popupBanners, whatsapp] = await Promise.all([
+    getBanners("popup"),
+    getWhatsapp(),
+  ]);
+
+  const organizationLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Sendero Shop",
+    alternateName: "Sendero de los Sueños",
+    url: "https://sendero3d.com",
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer service",
+      url: `https://wa.me/${whatsapp}`,
+      availableLanguage: "Spanish",
+    },
+  };
 
   return (
     <CartProvider>
       <Header />
       <main className="flex-1">{children}</main>
-      <Footer />
-      <WhatsAppButton />
+      <Footer whatsapp={whatsapp} />
+      <WhatsAppButton phone={whatsapp} />
       <ScrollToTop />
       <CartDrawer />
       {popupBanners.length > 0 && <PopupBanner banner={popupBanners[0]} />}

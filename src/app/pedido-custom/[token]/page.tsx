@@ -1,4 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
+import { getWhatsapp } from "@/lib/site-config";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { calculateSubtotal, calculateDescuento } from "@/lib/borrador";
@@ -16,10 +17,11 @@ export const metadata = {
 
 export default async function PedidoCustomPage({ params }: Props) {
   const { token } = await params;
+  const whatsapp = await getWhatsapp();
 
   // Validar formato del token
   if (!token || !/^[a-f0-9]{32}$/.test(token)) {
-    return <ErrorScreen titulo="Link inválido" mensaje="Verificá la dirección que te pasaron." />;
+    return <ErrorScreen titulo="Link inválido" mensaje="Verificá la dirección que te pasaron." whatsapp={whatsapp} />;
   }
 
   const supabase = await createServiceRoleClient();
@@ -34,6 +36,7 @@ export default async function PedidoCustomPage({ params }: Props) {
       <ErrorScreen
         titulo="Link no encontrado"
         mensaje="Este pedido custom no existe o el link es incorrecto. Pedile al vendedor que te pase el link de nuevo."
+        whatsapp={whatsapp}
       />
     );
   }
@@ -50,6 +53,7 @@ export default async function PedidoCustomPage({ params }: Props) {
       <ErrorScreen
         titulo="Este pedido fue cancelado"
         mensaje="El vendedor canceló este link. Pedile uno nuevo si querés seguir con la compra."
+        whatsapp={whatsapp}
       />
     );
   }
@@ -62,6 +66,7 @@ export default async function PedidoCustomPage({ params }: Props) {
       <ErrorScreen
         titulo="Este link expiró"
         mensaje="Pedile al vendedor que te genere uno nuevo. Los pedidos custom tienen tiempo de validez para asegurarte el precio."
+        whatsapp={whatsapp}
       />
     );
   }
@@ -95,11 +100,12 @@ export default async function PedidoCustomPage({ params }: Props) {
       subtotal={subtotal}
       descuento={descuento}
       turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || null}
+      whatsapp={whatsapp}
     />
   );
 }
 
-function ErrorScreen({ titulo, mensaje }: { titulo: string; mensaje: string }) {
+function ErrorScreen({ titulo, mensaje, whatsapp }: { titulo: string; mensaje: string; whatsapp: string }) {
   return (
     <div className="min-h-screen bg-navy-deep flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-navy rounded-xl border border-lavanda/10 p-8 text-center space-y-4">
@@ -115,7 +121,7 @@ function ErrorScreen({ titulo, mensaje }: { titulo: string; mensaje: string }) {
             Ir a la tienda
           </Link>
           <a
-            href="https://wa.me/5491125502785"
+            href={`https://wa.me/${whatsapp}`}
             target="_blank"
             rel="noopener"
             className="px-4 py-2 bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] text-sm rounded-lg transition-colors"

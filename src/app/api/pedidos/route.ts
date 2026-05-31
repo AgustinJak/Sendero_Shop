@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
+import { getWhatsapp } from "@/lib/site-config";
 import { rateLimitByIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
@@ -188,7 +189,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Email al cliente
-    const clientEmail = pedidoConfirmadoEmail(fullPedido, datosBancarios);
+    const whatsapp = await getWhatsapp();
+    const clientEmail = pedidoConfirmadoEmail(fullPedido, whatsapp, datosBancarios);
     await sendEmail({ to: datos_personales.email, ...clientEmail });
 
     // Email al admin

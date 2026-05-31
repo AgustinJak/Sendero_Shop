@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { getWhatsapp } from "@/lib/site-config";
+import { formatWhatsappDisplay } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Términos y Condiciones",
   alternates: { canonical: "https://sendero3d.com/terminos" },
 };
 
-export default function TerminosPage() {
+export default async function TerminosPage() {
+  const whatsapp = await getWhatsapp();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
       <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-8 text-center">
@@ -75,7 +78,7 @@ export default function TerminosPage() {
 
         <Section title="8. Contacto">
           <p>
-            Para consultas sobre estos términos, contactar a través de WhatsApp al +54 9 11 2550-2785
+            Para consultas sobre estos términos, contactar a través de WhatsApp al {formatWhatsappDisplay(whatsapp)}
             o por email a ayuda@sendero3d.com.
           </p>
         </Section>

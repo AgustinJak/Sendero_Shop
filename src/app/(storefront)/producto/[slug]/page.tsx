@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { getProductoBySlug } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
+import { getWhatsapp } from "@/lib/site-config";
 import ProductDetail from "@/components/productos/ProductDetail";
 import ReviewList from "@/components/reviews/ReviewList";
 import { createServiceRoleClient } from "@/lib/supabase-server";
@@ -58,6 +59,8 @@ export default async function ProductoPage({ params }: Props) {
   if (!producto) {
     notFound();
   }
+
+  const whatsapp = await getWhatsapp();
 
   const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
@@ -154,7 +157,7 @@ export default async function ProductoPage({ params }: Props) {
         <span className="text-lavanda-light">{producto.nombre}</span>
       </nav>
 
-      <ProductDetail producto={producto} />
+      <ProductDetail producto={producto} whatsapp={whatsapp} />
 
       {/* Reviews */}
       <ReviewList productoId={producto.id} />

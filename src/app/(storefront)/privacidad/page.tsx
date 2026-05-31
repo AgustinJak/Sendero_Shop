@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
+import { getWhatsapp } from "@/lib/site-config";
+import { formatWhatsappDisplay } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Política de Privacidad",
   alternates: { canonical: "https://sendero3d.com/privacidad" },
 };
 
-export default function PrivacidadPage() {
+export default async function PrivacidadPage() {
+  const whatsapp = await getWhatsapp();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
       <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-8 text-center">
@@ -68,7 +71,7 @@ export default function PrivacidadPage() {
           <p>
             De acuerdo con la Ley 25.326 de Protección de Datos Personales, tenés derecho a acceder,
             rectificar y suprimir tus datos personales. Para ejercer estos derechos, contactanos por
-            WhatsApp al +54 9 11 2550-2785 o por email a ayuda@sendero3d.com.
+            WhatsApp al {formatWhatsappDisplay(whatsapp)} o por email a ayuda@sendero3d.com.
           </p>
         </Section>
 

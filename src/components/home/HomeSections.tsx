@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import type { Categoria, Coleccion } from "@/types";
+import { whatsappLink } from "@/lib/utils";
 
 /* ── Colecciones con banner/imagen ── */
 
@@ -116,7 +117,7 @@ export function CategoriesSection({ categorias }: { categorias: Categoria[] }) {
   );
 }
 
-export function WhatsAppCTA() {
+export function WhatsAppCTA({ whatsapp }: { whatsapp: string }) {
   return (
     <section className="py-16 px-4">
       <div className="max-w-3xl mx-auto text-center bg-navy-deep rounded-2xl p-8 sm:p-12 border border-lavanda/10">
@@ -139,7 +140,7 @@ export function WhatsAppCTA() {
           sobre tu próxima pieza.
         </motion.p>
         <motion.a
-          href="https://wa.me/5491125502785?text=Hola!%20Quiero%20consultar%20por%20un%20producto%20personalizado"
+          href={whatsappLink(whatsapp, "Hola! Quiero consultar por un producto personalizado")}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"

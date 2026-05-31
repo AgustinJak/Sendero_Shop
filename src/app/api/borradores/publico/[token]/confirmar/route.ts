@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
+import { getWhatsapp } from "@/lib/site-config";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import {
   calculateSubtotal,
@@ -410,7 +411,8 @@ export async function POST(
         }
       }
 
-      const clientEmail = pedidoConfirmadoEmail(fullPedido, datosBancarios);
+      const whatsapp = await getWhatsapp();
+      const clientEmail = pedidoConfirmadoEmail(fullPedido, whatsapp, datosBancarios);
       await sendEmail({ to: body.datos_personales.email, ...clientEmail });
 
       if (process.env.SMTP_USER) {

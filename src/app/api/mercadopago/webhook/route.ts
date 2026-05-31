@@ -3,6 +3,7 @@ import { MercadoPagoConfig, Payment } from "mercadopago";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pagoRecibidoEmail, pagoConfirmadoAdminEmail } from "@/lib/email/templates";
+import { getWhatsapp } from "@/lib/site-config";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -84,7 +85,8 @@ export async function POST(req: NextRequest) {
           };
 
           // Email al cliente
-          const emailData = pagoRecibidoEmail(fullPedido);
+          const whatsapp = await getWhatsapp();
+          const emailData = pagoRecibidoEmail(fullPedido, whatsapp);
           await sendEmail({ to: pedido.email, ...emailData });
 
           // Email al admin

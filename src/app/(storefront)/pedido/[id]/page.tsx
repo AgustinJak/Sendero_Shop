@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { formatPrice, whatsappLink } from "@/lib/utils";
+import { getWhatsapp } from "@/lib/site-config";
 import type { Pedido, PedidoItem } from "@/types";
 import OrderTimeline from "@/components/pedido/OrderTimeline";
 import CancelOrderButton from "@/components/pedido/CancelOrderButton";
@@ -28,6 +29,8 @@ export default async function PedidoPage({ params }: Props) {
     .single();
 
   if (!pedido) notFound();
+
+  const whatsapp = await getWhatsapp();
 
   const p = pedido as Pedido & { items: PedidoItem[] };
 
@@ -131,7 +134,7 @@ export default async function PedidoPage({ params }: Props) {
             Tenés 48 horas para enviar el comprobante. Después el pedido se cancela automáticamente.
           </p>
           <a
-            href={whatsappLink(`Hola! Te envío el comprobante del pedido ${p.numero_pedido} por ${formatPrice(p.total)}`)}
+            href={whatsappLink(whatsapp, `Hola! Te envío el comprobante del pedido ${p.numero_pedido} por ${formatPrice(p.total)}`)}
             target="_blank"
             rel="noopener noreferrer"
             className="block w-full text-center py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
@@ -365,7 +368,7 @@ export default async function PedidoPage({ params }: Props) {
         </p>
         <p className="text-xs text-lavanda/75">
           ¿Dudas? Escribinos por{" "}
-          <a href={whatsappLink(`Hola, tengo una consulta sobre el pedido ${p.numero_pedido}`)} className="text-ambar hover:underline" target="_blank" rel="noopener noreferrer">
+          <a href={whatsappLink(whatsapp, `Hola, tengo una consulta sobre el pedido ${p.numero_pedido}`)} className="text-ambar hover:underline" target="_blank" rel="noopener noreferrer">
             WhatsApp
           </a>
         </p>

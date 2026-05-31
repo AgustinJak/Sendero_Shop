@@ -53,11 +53,13 @@ export default function CustomCheckout({
   subtotal,
   descuento,
   turnstileSiteKey,
+  whatsapp,
 }: {
   borrador: BorradorClient;
   subtotal: number;
   descuento: number;
   turnstileSiteKey: string | null;
+  whatsapp: string;
 }) {
   const router = useRouter();
 
@@ -372,7 +374,7 @@ export default function CustomCheckout({
             Pedile al vendedor que te genere uno nuevo.
           </p>
           <a
-            href="https://wa.me/5491125502785"
+            href={`https://wa.me/${whatsapp}`}
             className="inline-block px-4 py-2 bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#25D366] text-sm rounded-lg transition-colors"
           >
             WhatsApp

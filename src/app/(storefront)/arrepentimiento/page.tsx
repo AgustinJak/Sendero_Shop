@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getWhatsapp } from "@/lib/site-config";
+import { whatsappLink, formatWhatsappDisplay } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Botón de Arrepentimiento",
@@ -8,7 +10,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "https://sendero3d.com/arrepentimiento" },
 };
 
-export default function ArrepentimientoPage() {
+export default async function ArrepentimientoPage() {
+  const whatsapp = await getWhatsapp();
+  const msg = "Hola! Quiero ejercer mi derecho de arrepentimiento. Mi número de pedido es: ";
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
       <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-8 text-center">
@@ -41,12 +45,12 @@ export default function ArrepentimientoPage() {
             <li>
               <strong className="text-lavanda-light">Contactarnos por WhatsApp:</strong> Escribinos al{" "}
               <a
-                href="https://wa.me/5491125502785?text=Hola!%20Quiero%20ejercer%20mi%20derecho%20de%20arrepentimiento.%20Mi%20número%20de%20pedido%20es:%20"
+                href={whatsappLink(whatsapp, msg)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-purpura hover:text-purpura/80 underline"
               >
-                +54 9 11 2550-2785
+                {formatWhatsappDisplay(whatsapp)}
               </a>{" "}
               indicando tu número de pedido.
             </li>
@@ -92,7 +96,7 @@ export default function ArrepentimientoPage() {
 
         <div className="text-center pt-4">
           <a
-            href="https://wa.me/5491125502785?text=Hola!%20Quiero%20ejercer%20mi%20derecho%20de%20arrepentimiento.%20Mi%20número%20de%20pedido%20es:%20"
+            href={whatsappLink(whatsapp, msg)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 px-6 py-3 bg-ambar hover:bg-ambar-light text-navy font-semibold rounded-lg transition-colors"

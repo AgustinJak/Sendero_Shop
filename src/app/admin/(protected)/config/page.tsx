@@ -3,7 +3,7 @@ import ConfigForm from "@/components/admin/ConfigForm";
 import OptimizarBucketButton from "@/components/admin/OptimizarBucketButton";
 
 const CONFIG_KEYS = [
-  { key: "whatsapp", label: "WhatsApp (con código país)", placeholder: "5491125502785" },
+  { key: "whatsapp", label: "WhatsApp (con código país)", placeholder: "5491128290007" },
   { key: "cbu", label: "CBU para transferencias", placeholder: "0000003100..." },
   { key: "alias", label: "Alias bancario", placeholder: "sendero.shop" },
   { key: "titular_cuenta", label: "Titular de la cuenta", placeholder: "Nombre Apellido" },

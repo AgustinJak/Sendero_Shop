@@ -2,6 +2,7 @@ import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import type { MayoristaSeccion, MayoristaItem } from "@/types";
+import { getWhatsapp } from "@/lib/site-config";
 import MayoristaItemCard from "@/components/mayorista/MayoristaItemCard";
 
 export async function generateMetadata({
@@ -23,7 +24,10 @@ export default async function MayoristaPublicPage({
   params: Promise<{ codigo: string }>;
 }) {
   const { codigo } = await params;
-  const db = await createServiceRoleClient();
+  const [db, whatsapp] = await Promise.all([
+    createServiceRoleClient(),
+    getWhatsapp(),
+  ]);
 
   const { data: lista } = await db
     .from("mayorista_listas")
@@ -114,7 +118,7 @@ export default async function MayoristaPublicPage({
         <div className="max-w-5xl mx-auto px-4 py-6 flex items-center justify-between text-xs text-[#8B85B2]/40">
           <p>Sendero 3D — Villa Crespo, Buenos Aires</p>
           <a
-            href="https://wa.me/5491125502785"
+            href={`https://wa.me/${whatsapp}`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-[#8B85B2] hover:text-[#E8E6F0] transition-colors"

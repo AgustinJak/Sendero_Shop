@@ -10,9 +10,10 @@ import AddToCartButton from "./AddToCartButton";
 
 interface ProductDetailProps {
   producto: Producto;
+  whatsapp: string;
 }
 
-export default function ProductDetail({ producto }: ProductDetailProps) {
+export default function ProductDetail({ producto, whatsapp }: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
 
   useEffect(() => {
@@ -118,6 +119,7 @@ export default function ProductDetail({ producto }: ProductDetailProps) {
         {/* WhatsApp */}
         <a
           href={whatsappLink(
+            whatsapp,
             `Hola! Quiero consultar por: ${producto.nombre}`
           )}
           target="_blank"

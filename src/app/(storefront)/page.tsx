@@ -1,4 +1,5 @@
 import { getBanners, getProductosDestacados, getCategorias, getColecciones } from "@/lib/queries";
+import { getWhatsapp } from "@/lib/site-config";
 import HeroBanners from "@/components/home/HeroBanners";
 import HomeHero from "@/components/home/HomeHero";
 import ProductGrid from "@/components/productos/ProductGrid";
@@ -6,11 +7,12 @@ import TrackItemList from "@/components/productos/TrackItemList";
 import { CategoriesSection, CollectionsSection, WhatsAppCTA } from "@/components/home/HomeSections";
 
 export default async function Home() {
-  const [heroBanners, destacados, categorias, colecciones] = await Promise.all([
+  const [heroBanners, destacados, categorias, colecciones, whatsapp] = await Promise.all([
     getBanners("hero"),
     getProductosDestacados(8),
     getCategorias(),
     getColecciones(),
+    getWhatsapp(),
   ]);
 
   return (
@@ -19,7 +21,7 @@ export default async function Home() {
       {heroBanners.length > 0 ? (
         <HeroBanners banners={heroBanners} />
       ) : (
-        <HomeHero />
+        <HomeHero whatsapp={whatsapp} />
       )}
 
       {/* Productos Destacados */}
@@ -45,7 +47,7 @@ export default async function Home() {
       <CategoriesSection categorias={categorias} />
 
       {/* CTA WhatsApp */}
-      <WhatsAppCTA />
+      <WhatsAppCTA whatsapp={whatsapp} />
     </>
   );
 }

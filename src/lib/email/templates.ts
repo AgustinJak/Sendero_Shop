@@ -142,6 +142,7 @@ function totalsBlock(pedido: Pedido): string {
 // ==========================================
 export function pedidoConfirmadoEmail(
   pedido: Pedido & { items: PedidoItem[] },
+  whatsapp: string,
   datosBancarios?: { cbu?: string; alias?: string }
 ): {
   subject: string;
@@ -212,7 +213,7 @@ export function pedidoConfirmadoEmail(
             Tenés <strong style="color:${COLORS.niebla};">48 horas</strong> para enviar el comprobante. Después el pedido se cancela automáticamente.
           </p>
           <p style="margin:0;text-align:center;">
-            <a href="https://wa.me/5491125502785?text=${encodeURIComponent(`Hola! Te envío el comprobante del pedido ${pedido.numero_pedido} por ${formatPrice(pedido.total)}`)}"
+            <a href="https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola! Te envío el comprobante del pedido ${pedido.numero_pedido} por ${formatPrice(pedido.total)}`)}"
                style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
               Enviar comprobante por WhatsApp
             </a>
@@ -265,7 +266,7 @@ export function pedidoConfirmadoEmail(
             Te avisamos cuando esté listo para que coordinemos el retiro en Villa Crespo.
           </p>
           <p style="margin:0;text-align:center;">
-            <a href="https://wa.me/5491125502785?text=${encodeURIComponent(`Hola! Consulta sobre el pedido ${pedido.numero_pedido}`)}"
+            <a href="https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola! Consulta sobre el pedido ${pedido.numero_pedido}`)}"
                style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
               Consultar por WhatsApp
             </a>
@@ -279,7 +280,7 @@ export function pedidoConfirmadoEmail(
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -292,7 +293,7 @@ export function pedidoConfirmadoEmail(
 // ==========================================
 // Email: Pago recibido (al cliente)
 // ==========================================
-export function pagoRecibidoEmail(pedido: Pedido): {
+export function pagoRecibidoEmail(pedido: Pedido, whatsapp: string): {
   subject: string;
   html: string;
 } {
@@ -318,7 +319,7 @@ export function pagoRecibidoEmail(pedido: Pedido): {
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -331,7 +332,7 @@ export function pagoRecibidoEmail(pedido: Pedido): {
 // ==========================================
 // Email: Pedido enviado (al cliente)
 // ==========================================
-export function pedidoEnviadoEmail(pedido: Pedido): {
+export function pedidoEnviadoEmail(pedido: Pedido, whatsapp: string): {
   subject: string;
   html: string;
 } {
@@ -382,7 +383,7 @@ export function pedidoEnviadoEmail(pedido: Pedido): {
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -395,7 +396,7 @@ export function pedidoEnviadoEmail(pedido: Pedido): {
 // ==========================================
 // Email: Pedido listo para retirar (al cliente)
 // ==========================================
-export function pedidoListoRetiroEmail(pedido: Pedido): {
+export function pedidoListoRetiroEmail(pedido: Pedido, whatsapp: string): {
   subject: string;
   html: string;
 } {
@@ -427,7 +428,7 @@ export function pedidoListoRetiroEmail(pedido: Pedido): {
     </table>
 
     <p style="margin:0;text-align:center;">
-      <a href="https://wa.me/5491125502785?text=${encodeURIComponent(`Hola! Quiero coordinar el retiro del pedido ${pedido.numero_pedido}`)}"
+      <a href="https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola! Quiero coordinar el retiro del pedido ${pedido.numero_pedido}`)}"
          style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
         Coordinar retiro por WhatsApp
       </a>
@@ -436,7 +437,7 @@ export function pedidoListoRetiroEmail(pedido: Pedido): {
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -449,7 +450,7 @@ export function pedidoListoRetiroEmail(pedido: Pedido): {
 // ==========================================
 // Email: Pedido entregado (al cliente)
 // ==========================================
-export function pedidoEntregadoEmail(pedido: Pedido): {
+export function pedidoEntregadoEmail(pedido: Pedido, whatsapp: string): {
   subject: string;
   html: string;
 } {
@@ -488,7 +489,7 @@ export function pedidoEntregadoEmail(pedido: Pedido): {
     </p>
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -503,6 +504,7 @@ export function pedidoEntregadoEmail(pedido: Pedido): {
 // ==========================================
 export function pedidoCanceladoEmail(
   pedido: Pedido,
+  whatsapp: string,
   motivo?: string
 ): { subject: string; html: string } {
   const content = `
@@ -546,7 +548,7 @@ export function pedidoCanceladoEmail(
     </p>
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/5491125502785" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 

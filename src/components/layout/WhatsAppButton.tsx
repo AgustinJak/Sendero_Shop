@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { whatsappLink } from "@/lib/utils";
 
-export default function WhatsAppButton() {
+export default function WhatsAppButton({ phone }: { phone: string }) {
   return (
     <motion.a
-      href="https://wa.me/5491125502785?text=Hola!%20Quiero%20consultar%20por%20un%20producto"
+      href={whatsappLink(phone, "Hola! Quiero consultar por un producto")}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Contactar por WhatsApp"
