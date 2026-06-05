@@ -1,5 +1,6 @@
 import type { Pedido, PedidoItem } from "@/types";
 import { formatPrice } from "@/lib/utils";
+import { resolveTrackingUrl } from "@/lib/correo-argentino";
 
 // ==========================================
 // Shared styles
@@ -351,24 +352,35 @@ export function pedidoEnviadoEmail(pedido: Pedido, whatsapp: string): {
       </tr>
     </table>
 
-    ${
-      pedido.tracking_code
-        ? `
+    ${(() => {
+      if (!pedido.tracking_code) return "";
+      const trackingUrl = resolveTrackingUrl({
+        tracking_url: pedido.tracking_url,
+        metodo_envio: pedido.metodo_envio,
+      });
+      const esCorreoArg =
+        !pedido.tracking_url && pedido.metodo_envio === "correo_argentino";
+      return `
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;margin-bottom:16px;">
       <tr>
         <td style="padding:16px;">
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Código de seguimiento</p>
           <p style="margin:0;color:${COLORS.niebla};font-size:16px;font-family:monospace;font-weight:bold;">${pedido.tracking_code}</p>
           ${
-            pedido.tracking_url
-              ? `<p style="margin:8px 0 0;"><a href="${pedido.tracking_url}" style="color:${COLORS.ambar};font-size:13px;text-decoration:none;">Seguir envío →</a></p>`
+            trackingUrl
+              ? `<p style="margin:8px 0 0;"><a href="${trackingUrl}" style="color:${COLORS.ambar};font-size:13px;text-decoration:none;">${
+                  esCorreoArg ? "Consultar estado en Correo Argentino →" : "Seguir envío →"
+                }</a></p>${
+                  esCorreoArg
+                    ? `<p style="margin:6px 0 0;color:${COLORS.lavanda}99;font-size:11px;">Copiá el código de arriba y pegalo en el formulario.</p>`
+                    : ""
+                }`
               : ""
           }
         </td>
       </tr>
-    </table>`
-        : ""
-    }
+    </table>`;
+    })()}
 
     <p style="margin:0;color:${COLORS.lavanda};font-size:14px;">
       ${

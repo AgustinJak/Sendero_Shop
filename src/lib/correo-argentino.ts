@@ -5,6 +5,31 @@
  * Designed to run server-side only (API routes).
  */
 
+// ---------- Constants ----------
+
+/**
+ * Página pública donde el cliente ingresa su código de tracking para ver
+ * el estado del envío en Correo Argentino. No soporta auto-fill por query
+ * string — el cliente tiene que pegar el código manualmente.
+ */
+export const CORREO_ARGENTINO_TRACKING_URL =
+  "https://www.correoargentino.com.ar/formularios/e-commerce";
+
+/**
+ * Resuelve el link de tracking a mostrar al cliente.
+ * - Si admin seteó `tracking_url` explícito, lo respeta (override manual).
+ * - Si no, y el envío es por Correo Argentino, devuelve el formulario público.
+ * - Si no, null.
+ */
+export function resolveTrackingUrl(args: {
+  tracking_url: string | null;
+  metodo_envio: string;
+}): string | null {
+  if (args.tracking_url) return args.tracking_url;
+  if (args.metodo_envio === "correo_argentino") return CORREO_ARGENTINO_TRACKING_URL;
+  return null;
+}
+
 // ---------- Types ----------
 
 export interface CorreoRate {

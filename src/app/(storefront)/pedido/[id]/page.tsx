@@ -4,6 +4,7 @@ import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { formatPrice, whatsappLink } from "@/lib/utils";
 import { getWhatsapp } from "@/lib/site-config";
+import { resolveTrackingUrl } from "@/lib/correo-argentino";
 import type { Pedido, PedidoItem } from "@/types";
 import OrderTimeline from "@/components/pedido/OrderTimeline";
 import CancelOrderButton from "@/components/pedido/CancelOrderButton";
@@ -145,24 +146,39 @@ export default async function PedidoPage({ params }: Props) {
       )}
 
       {/* Tracking info */}
-      {p.tracking_code && (
-        <div className="bg-purpura/10 border border-purpura/20 rounded-xl p-6 space-y-2">
-          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
-            Seguimiento de envío
-          </h2>
-          <p className="text-niebla font-mono text-lg font-bold">{p.tracking_code}</p>
-          {p.tracking_url && (
-            <a
-              href={p.tracking_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block text-ambar text-sm hover:underline"
-            >
-              Seguir envío →
-            </a>
-          )}
-        </div>
-      )}
+      {p.tracking_code && (() => {
+        const trackingUrl = resolveTrackingUrl({
+          tracking_url: p.tracking_url,
+          metodo_envio: p.metodo_envio,
+        });
+        const esCorreoArg =
+          !p.tracking_url && p.metodo_envio === "correo_argentino";
+        return (
+          <div className="bg-purpura/10 border border-purpura/20 rounded-xl p-6 space-y-2">
+            <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+              Seguimiento de envío
+            </h2>
+            <p className="text-niebla font-mono text-lg font-bold">{p.tracking_code}</p>
+            {trackingUrl && (
+              <>
+                <a
+                  href={trackingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-block text-ambar text-sm hover:underline"
+                >
+                  {esCorreoArg ? "Consultar estado en Correo Argentino →" : "Seguir envío →"}
+                </a>
+                {esCorreoArg && (
+                  <p className="text-xs text-lavanda/60 mt-1">
+                    Copiá el código de arriba y pegalo en el formulario de Correo Argentino.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Order summary */}
       <div className="bg-navy-deep rounded-xl border border-lavanda/10 p-6 space-y-4">
