@@ -39,7 +39,7 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
                 </svg>
               </a>
               <a
-                href="https://www.tiktok.com/@aguspiun"
+                href="https://www.tiktok.com/@sendero.3d"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="TikTok"

@@ -37,8 +37,6 @@ const PROVINCIAS = [
   "Santa Fe", "Santiago del Estero", "Tierra del Fuego", "Tucumán",
 ];
 
-const RECARGO_MP_PCT = 13;
-
 interface Sucursal {
   id: string;
   nombre: string;
@@ -54,12 +52,14 @@ export default function CustomCheckout({
   descuento,
   turnstileSiteKey,
   whatsapp,
+  recargoPct,
 }: {
   borrador: BorradorClient;
   subtotal: number;
   descuento: number;
   turnstileSiteKey: string | null;
   whatsapp: string;
+  recargoPct: number;
 }) {
   const router = useRouter();
 
@@ -260,7 +260,7 @@ export default function CustomCheckout({
   const baseTotal = subtotal - descuento + (costoEnvio ?? 0);
   const recargoMP =
     metodoPago === "mercadopago"
-      ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
+      ? Math.round((baseTotal * recargoPct) / 100)
       : 0;
   const total = baseTotal + recargoMP;
 
@@ -610,7 +610,7 @@ export default function CustomCheckout({
                 checked={metodoPago === "mercadopago"}
                 onClick={() => setMetodoPago("mercadopago")}
                 title="MercadoPago"
-                desc="Tarjeta, dinero en cuenta, Rapipago. +13% recargo."
+                desc={`Tarjeta, dinero en cuenta, Rapipago. +${recargoPct}% recargo.`}
               />
             )}
             {metodosPermitidos.includes("efectivo") && efectivoDisponible && (
@@ -660,7 +660,7 @@ export default function CustomCheckout({
           </div>
           {recargoMP > 0 && (
             <div className="flex justify-between text-ambar">
-              <span>Recargo MercadoPago (13%)</span>
+              <span>Recargo MercadoPago ({recargoPct}%)</span>
               <span>{formatPrice(recargoMP)}</span>
             </div>
           )}

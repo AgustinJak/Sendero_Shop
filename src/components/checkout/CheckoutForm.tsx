@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useCartContext } from "@/components/carrito/CartProvider";
-import { formatPrice, calcularRecargoMP, validarDNI } from "@/lib/utils";
+import { formatPrice, calcularRecargoMP, validarDNI, MP_RECARGO_DEFAULT_PCT } from "@/lib/utils";
 import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type {
@@ -207,8 +207,9 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
     return 0;
   }
 
+  const recargoPct = Number(configuracion.recargo_mp_porcentaje) || MP_RECARGO_DEFAULT_PCT;
   const costoEnvio = getCostoEnvio();
-  const recargoMP = metodoPago === "mercadopago" ? calcularRecargoMP(cart.subtotal + costoEnvio) : 0;
+  const recargoMP = metodoPago === "mercadopago" ? calcularRecargoMP(cart.subtotal + costoEnvio, recargoPct) : 0;
   const total = cart.subtotal + costoEnvio + recargoMP;
 
   // Validaciones
@@ -720,7 +721,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                 <input type="radio" name="pago" checked={metodoPago === "mercadopago"} onChange={() => setMetodoPago("mercadopago")} className="accent-purpura" />
                 <div>
                   <p className="text-sm font-medium text-niebla">MercadoPago</p>
-                  <p className="text-xs text-lavanda/70">Tarjeta, dinero en cuenta, Rapipago. +13% recargo.</p>
+                  <p className="text-xs text-lavanda/70">Tarjeta, dinero en cuenta, Rapipago. +{recargoPct}% recargo.</p>
                 </div>
               </label>
 
@@ -741,7 +742,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
 
             {metodoPago === "mercadopago" && (
               <div className="bg-ambar/10 border border-ambar/20 rounded-lg px-4 py-3 text-sm text-ambar-light">
-                Recargo MercadoPago (13%): {formatPrice(recargoMP)}
+                Recargo MercadoPago ({recargoPct}%): {formatPrice(recargoMP)}
               </div>
             )}
 
@@ -777,7 +778,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
               })()}
               <SummaryRow label="Pago" value={
                 metodoPago === "transferencia" ? "Transferencia" :
-                metodoPago === "mercadopago" ? "MercadoPago (+13%)" : "Efectivo"
+                metodoPago === "mercadopago" ? `MercadoPago (+${recargoPct}%)` : "Efectivo"
               } />
             </div>
 
@@ -843,7 +844,7 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
             </div>
             {recargoMP > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-lavanda/75">Recargo MP (13%)</span>
+                <span className="text-lavanda/75">Recargo MP ({recargoPct}%)</span>
                 <span className="text-ambar">{formatPrice(recargoMP)}</span>
               </div>
             )}

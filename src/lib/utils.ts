@@ -31,11 +31,17 @@ export function validarDNI(dni: string): boolean {
   return cleaned.length >= 7 && cleaned.length <= 8;
 }
 
-// Recargo MercadoPago (13%)
-export const MP_RECARGO = 0.13;
+// Recargo MercadoPago — el porcentaje viene de configuracion.recargo_mp_porcentaje.
+// Default de fallback si no está seteado.
+export const MP_RECARGO_DEFAULT_PCT = 13;
 
-export function calcularRecargoMP(subtotal: number): number {
-  return Math.round(subtotal * MP_RECARGO);
+/**
+ * Calcula el recargo de MercadoPago sobre una base.
+ * @param base monto sobre el que se aplica el recargo (subtotal + envío)
+ * @param pct porcentaje de recargo (ej: 7 para 7%). Default 13.
+ */
+export function calcularRecargoMP(base: number, pct: number = MP_RECARGO_DEFAULT_PCT): number {
+  return Math.round((base * pct) / 100);
 }
 
 // WhatsApp link — el número viene de configuracion (lib/site-config.ts).

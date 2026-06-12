@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
-import { getWhatsapp } from "@/lib/site-config";
+import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import {
   calculateSubtotal,
@@ -40,8 +40,6 @@ interface ConfirmarBody {
   // Anti-abuso
   captchaToken?: string;
 }
-
-const RECARGO_MP_PCT = 13;
 
 export async function POST(
   req: NextRequest,
@@ -211,11 +209,13 @@ export async function POST(
       }
     }
 
-    // 7. Calcular total con recargo MP si corresponde
+    // 7. Calcular total con recargo MP si corresponde.
+    //    El porcentaje viene de configuracion.recargo_mp_porcentaje.
     const baseTotal = subtotal - descuento + costoEnvio;
+    const { recargo_mp_porcentaje: recargoPct } = await getSiteConfig();
     const recargoMP =
       body.metodo_pago === "mercadopago"
-        ? Math.round((baseTotal * RECARGO_MP_PCT) / 100)
+        ? Math.round((baseTotal * recargoPct) / 100)
         : 0;
     const total = baseTotal + recargoMP;
 

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
-import { getWhatsapp } from "@/lib/site-config";
+import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
 import { rateLimitByIp } from "@/lib/rate-limit";
 
 export async function POST(req: NextRequest) {
@@ -21,9 +21,7 @@ export async function POST(req: NextRequest) {
       metodo_pago,
       items,
       costoEnvio,
-      recargoMP,
       subtotal,
-      total,
       captchaToken,
       sucursal_correo_id,
       sucursal_correo_nombre,
@@ -76,6 +74,16 @@ export async function POST(req: NextRequest) {
       .upsert({ key: "pedido_counter", value: String(nextNum) }, { onConflict: "key" });
 
     const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
+
+    // Recargo MP autoritativo: lo recalcula el server desde la config
+    // (configuracion.recargo_mp_porcentaje), sin confiar en lo que mande el
+    // cliente. Base = subtotal + envío.
+    const { recargo_mp_porcentaje: recargoPct } = await getSiteConfig();
+    const recargoMP =
+      metodo_pago === "mercadopago"
+        ? Math.round((Number(subtotal) + Number(costoEnvio)) * recargoPct / 100)
+        : 0;
+    const total = Number(subtotal) + Number(costoEnvio) + recargoMP;
 
     // En efectivo no hay pago online que esperar — el dinero se cobra al
     // retiro/entrega. El pedido nace directamente "confirmado" (estado

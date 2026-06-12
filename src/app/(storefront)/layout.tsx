@@ -1,6 +1,7 @@
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import WhatsAppButton from "@/components/layout/WhatsAppButton";
+import MercadoLibreButton from "@/components/layout/MercadoLibreButton";
 import ScrollToTop from "@/components/layout/ScrollToTop";
 import { CartProvider } from "@/components/carrito/CartProvider";
 import CartDrawer from "@/components/carrito/CartDrawer";
@@ -44,6 +45,7 @@ export default async function StorefrontLayout({
       <Header />
       <main className="flex-1">{children}</main>
       <Footer whatsapp={whatsapp} />
+      <MercadoLibreButton />
       <WhatsAppButton phone={whatsapp} />
       <ScrollToTop />
       <CartDrawer />

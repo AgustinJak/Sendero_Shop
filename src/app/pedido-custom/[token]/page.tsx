@@ -1,5 +1,5 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
-import { getWhatsapp } from "@/lib/site-config";
+import { getSiteConfig } from "@/lib/site-config";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { calculateSubtotal, calculateDescuento } from "@/lib/borrador";
@@ -17,7 +17,7 @@ export const metadata = {
 
 export default async function PedidoCustomPage({ params }: Props) {
   const { token } = await params;
-  const whatsapp = await getWhatsapp();
+  const { whatsapp, recargo_mp_porcentaje: recargoPct } = await getSiteConfig();
 
   // Validar formato del token
   if (!token || !/^[a-f0-9]{32}$/.test(token)) {
@@ -101,6 +101,7 @@ export default async function PedidoCustomPage({ params }: Props) {
       descuento={descuento}
       turnstileSiteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || null}
       whatsapp={whatsapp}
+      recargoPct={recargoPct}
     />
   );
 }
