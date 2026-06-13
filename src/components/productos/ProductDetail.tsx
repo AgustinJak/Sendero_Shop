@@ -71,8 +71,8 @@ export default function ProductDetail({ producto, whatsapp }: ProductDetailProps
           )}
         </div>
 
-        {/* Social proof: unidades vendidas — solo cuando hay volumen */}
-        {producto.unidades_vendidas >= 3 && (
+        {/* Social proof: unidades vendidas — desde la primera unidad */}
+        {producto.unidades_vendidas >= 1 && (
           <p className="flex items-center gap-1.5 text-sm text-emerald-400">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -94,7 +94,7 @@ export default function ProductDetail({ producto, whatsapp }: ProductDetailProps
               {producto.unidades_vendidas >= 100
                 ? `+${Math.floor(producto.unidades_vendidas / 100) * 100}`
                 : producto.unidades_vendidas}{" "}
-              vendidos
+              {producto.unidades_vendidas === 1 ? "vendido" : "vendidos"}
             </span>
           </p>
         )}

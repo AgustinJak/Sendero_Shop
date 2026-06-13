@@ -82,8 +82,8 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
             )}
           </div>
 
-          {/* Social proof — solo a partir de 3 unidades vendidas */}
-          {producto.unidades_vendidas >= 3 && (
+          {/* Social proof — desde la primera unidad vendida */}
+          {producto.unidades_vendidas >= 1 && (
             <p className="mt-1.5 flex items-center gap-1 text-xs text-emerald-400/90">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -102,7 +102,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
                 {producto.unidades_vendidas >= 100
                   ? `+${Math.floor(producto.unidades_vendidas / 100) * 100}`
                   : producto.unidades_vendidas}{" "}
-                vendidos
+                {producto.unidades_vendidas === 1 ? "vendido" : "vendidos"}
               </span>
             </p>
           )}
