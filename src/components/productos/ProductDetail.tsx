@@ -7,6 +7,7 @@ import { trackViewItem } from "@/lib/analytics";
 import ProductGallery from "./ProductGallery";
 import VariantSelector from "./VariantSelector";
 import AddToCartButton from "./AddToCartButton";
+import MayoristaCallout from "./MayoristaCallout";
 
 interface ProductDetailProps {
   producto: Producto;
@@ -39,12 +40,18 @@ export default function ProductDetail({ producto, whatsapp }: ProductDetailProps
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-      {/* Galería */}
-      <ProductGallery
-        imagenes={producto.imagenes || []}
-        nombre={producto.nombre}
-        selecciones={selecciones}
-      />
+      {/* Galería + callout mayorista debajo de las fotos */}
+      <div className="space-y-6 self-start">
+        <ProductGallery
+          imagenes={producto.imagenes || []}
+          nombre={producto.nombre}
+          selecciones={selecciones}
+        />
+        {/* Desktop: debajo de las fotos */}
+        <div className="hidden md:block">
+          <MayoristaCallout whatsapp={whatsapp} nombreProducto={producto.nombre} />
+        </div>
+      </div>
 
       {/* Info */}
       <div className="space-y-6">
@@ -128,6 +135,11 @@ export default function ProductDetail({ producto, whatsapp }: ProductDetailProps
         >
           ¿Tenés dudas? Consultanos por WhatsApp
         </a>
+
+        {/* Mobile: callout mayorista después del CTA de compra */}
+        <div className="md:hidden">
+          <MayoristaCallout whatsapp={whatsapp} nombreProducto={producto.nombre} />
+        </div>
 
         {/* Info adicional */}
         <div className="border-t border-lavanda/10 pt-6 space-y-3">
