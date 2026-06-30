@@ -157,7 +157,12 @@ export default async function ProductoPage({ params }: Props) {
         <span className="text-lavanda-light">{producto.nombre}</span>
       </nav>
 
-      <ProductDetail producto={producto} whatsapp={whatsapp} />
+      <ProductDetail
+        producto={producto}
+        whatsapp={whatsapp}
+        reviewCount={reviewCount}
+        avgRating={avgRating}
+      />
 
       {/* Reviews */}
       <ReviewList productoId={producto.id} />

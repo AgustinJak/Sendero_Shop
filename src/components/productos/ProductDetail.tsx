@@ -8,13 +8,21 @@ import ProductGallery from "./ProductGallery";
 import VariantSelector from "./VariantSelector";
 import AddToCartButton from "./AddToCartButton";
 import MayoristaCallout from "./MayoristaCallout";
+import { StarRating, TrustBadges } from "./TrustSignals";
 
 interface ProductDetailProps {
   producto: Producto;
   whatsapp: string;
+  reviewCount: number;
+  avgRating: number;
 }
 
-export default function ProductDetail({ producto, whatsapp }: ProductDetailProps) {
+export default function ProductDetail({
+  producto,
+  whatsapp,
+  reviewCount,
+  avgRating,
+}: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
 
   useEffect(() => {
@@ -78,6 +86,9 @@ export default function ProductDetail({ producto, whatsapp }: ProductDetailProps
           )}
         </div>
 
+        {/* Estrellas / reseñas (solo si hay) */}
+        <StarRating rating={avgRating} count={reviewCount} />
+
         {/* Social proof: unidades vendidas — desde la primera unidad */}
         {producto.unidades_vendidas >= 1 && (
           <p className="flex items-center gap-1.5 text-sm text-emerald-400">
@@ -122,6 +133,9 @@ export default function ProductDetail({ producto, whatsapp }: ProductDetailProps
           selecciones={selecciones}
           precioFinal={precioFinal}
         />
+
+        {/* Señales de confianza cerca del CTA de compra */}
+        <TrustBadges />
 
         {/* WhatsApp */}
         <a
