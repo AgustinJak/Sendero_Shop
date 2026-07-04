@@ -13,7 +13,7 @@ export async function PATCH(
   const body = await req.json();
   const db = await createServiceRoleClient();
 
-  const allowed = ["titulo", "codigo_ref", "precio_ars", "makerworld_url", "orden"];
+  const allowed = ["titulo", "codigo_ref", "precio_ars", "precio_pvp", "destacado", "orden"];
   const update = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k))
   );

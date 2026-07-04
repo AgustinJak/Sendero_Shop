@@ -1,7 +1,7 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { MayoristaSeccion, MayoristaItem } from "@/types";
+import type { MayoristaLista, MayoristaSeccion, MayoristaItem, MayoristaTramo } from "@/types";
 import { getWhatsapp } from "@/lib/site-config";
 import MayoristaItemCard from "@/components/mayorista/MayoristaItemCard";
 
@@ -18,6 +18,14 @@ export async function generateMetadata({
   };
 }
 
+function formatFecha(d: string) {
+  return new Date(`${d}T00:00:00`).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 export default async function MayoristaPublicPage({
   params,
 }: {
@@ -29,7 +37,7 @@ export default async function MayoristaPublicPage({
     getWhatsapp(),
   ]);
 
-  const { data: lista } = await db
+  const { data: listaRaw } = await db
     .from("mayorista_listas")
     .select(`
       *,
@@ -45,7 +53,8 @@ export default async function MayoristaPublicPage({
     .eq("activa", true)
     .single();
 
-  if (!lista) notFound();
+  if (!listaRaw) notFound();
+  const lista = listaRaw as MayoristaLista;
 
   const secciones: MayoristaSeccion[] = ((lista.secciones ?? []) as MayoristaSeccion[])
     .sort((a, b) => a.orden - b.orden)
@@ -55,29 +64,70 @@ export default async function MayoristaPublicPage({
     }));
 
   const totalItems = secciones.reduce((acc, s) => acc + (s.items?.length ?? 0), 0);
+  const tramos: MayoristaTramo[] = (lista.descuento_tramos ?? [])
+    .filter((t) => t.min > 0 && t.pct > 0)
+    .sort((a, b) => a.min - b.min);
+
+  const waHref = `https://wa.me/${whatsapp}?text=${encodeURIComponent(
+    `Hola! Quiero un presupuesto mayorista de la lista "${lista.nombre}".`
+  )}`;
 
   return (
     <div className="min-h-screen bg-[#1C2541]">
       {/* Header */}
       <header className="bg-[#0F1729] border-b border-[#8B85B2]/10">
-        <div className="max-w-5xl mx-auto px-4 py-5 flex items-center justify-between">
-          <div>
+        <div className="max-w-5xl mx-auto px-4 py-5 flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <p className="text-[10px] uppercase tracking-widest text-[#8B85B2]/50 mb-1">
               Lista de Precios Mayorista
             </p>
-            <h1
-              className="text-[#E8E6F0] text-xl font-bold"
-              style={{ fontFamily: "var(--font-cinzel, serif)" }}
-            >
+            <h1 className="text-[#E8E6F0] text-xl font-bold truncate" style={{ fontFamily: "var(--font-cinzel, serif)" }}>
               Sendero 3D
             </h1>
           </div>
-          <div className="text-right text-xs text-[#8B85B2]/40 space-y-0.5">
+          <div className="text-right text-xs text-[#8B85B2]/40 space-y-0.5 shrink-0">
             <p>{totalItems} productos</p>
-            <p>{new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "short", year: "numeric" })}</p>
+            {lista.validez_hasta && <p>Válida hasta {formatFecha(lista.validez_hasta)}</p>}
           </div>
         </div>
       </header>
+
+      {/* Banner B2B: tramos + MOQ + disclaimer */}
+      <div className="bg-[#0F1729]/60 border-b border-[#8B85B2]/10">
+        <div className="max-w-5xl mx-auto px-4 py-5 space-y-4">
+          {tramos.length > 0 && (
+            <div>
+              <p className="text-xs uppercase tracking-widest text-[#8B85B2]/50 mb-2">
+                Llevando más, pagás menos
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {tramos.map((t) => (
+                  <span
+                    key={t.min}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#D4A853]/10 border border-[#D4A853]/25"
+                  >
+                    <span className="text-sm text-[#B8B3D1]">Desde {t.min}u</span>
+                    <span className="text-sm font-bold text-[#D4A853]">{t.pct}% OFF</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+            {lista.moq != null && (
+              <span className="text-[#B8B3D1]">
+                Pedido mínimo:{" "}
+                <span className="text-[#E8E6F0] font-semibold">{lista.moq} unidades</span>
+              </span>
+            )}
+            <span className="text-[#8B85B2]/50 text-xs">
+              Precios mayoristas sujetos a modificación sin previo aviso
+              {lista.validez_hasta ? ` · vigentes hasta el ${formatFecha(lista.validez_hasta)}` : ""}.
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* Contenido */}
       <main className="max-w-5xl mx-auto px-4 py-8 space-y-12">
@@ -91,18 +141,14 @@ export default async function MayoristaPublicPage({
 
           return (
             <section key={seccion.id}>
-              {/* Separador de sección */}
               <div className="flex items-center gap-4 mb-6">
                 <div className="h-px flex-1 bg-[#8B85B2]/15" />
-                <h2
-                  className="text-[#B8B3D1] text-xs uppercase tracking-widest font-semibold px-2"
-                >
+                <h2 className="text-[#B8B3D1] text-xs uppercase tracking-widest font-semibold px-2">
                   {seccion.titulo}
                 </h2>
                 <div className="h-px flex-1 bg-[#8B85B2]/15" />
               </div>
 
-              {/* Grid de productos */}
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {items.map((item: MayoristaItem) => (
                   <MayoristaItemCard key={item.id} item={item} />
@@ -111,6 +157,46 @@ export default async function MayoristaPublicPage({
             </section>
           );
         })}
+
+        {/* CTA fuerte */}
+        <div className="rounded-2xl bg-gradient-to-br from-[#D4A853]/15 to-[#0F1729] border border-[#D4A853]/25 p-6 sm:p-8 text-center">
+          <h2 className="text-[#E8E6F0] text-lg sm:text-xl font-bold" style={{ fontFamily: "var(--font-cinzel, serif)" }}>
+            ¿Armamos tu pedido mayorista?
+          </h2>
+          <p className="mt-2 text-sm text-[#B8B3D1] max-w-md mx-auto">
+            Escribinos por WhatsApp con los productos y las cantidades, y te
+            pasamos tu presupuesto con el mejor precio por volumen.
+          </p>
+          <a
+            href={waHref}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-[#25D366] hover:bg-[#20BD5A] text-white font-semibold rounded-lg transition-colors"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+              <path d="M12 0C5.373 0 0 5.373 0 12c0 2.123.555 4.116 1.528 5.843L.057 23.5l5.799-1.52A11.93 11.93 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 0 1-5.006-1.37l-.36-.214-3.727.977.995-3.636-.235-.374A9.818 9.818 0 1 1 12 21.818z" />
+            </svg>
+            Pedí tu presupuesto mayorista
+          </a>
+        </div>
+
+        {/* Confianza B2B */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {[
+            { t: "Fabricantes directos", d: "Producción propia, sin intermediarios" },
+            { t: "MercadoLíder Gold", d: "Reputación verde en Mercado Libre" },
+            { t: "Reposición a pedido", d: "Te reponemos según tu demanda" },
+            { t: "Envíos a todo el país", d: "Correo Argentino" },
+            { t: "Seña para pedidos grandes", d: "Coordinamos anticipo y saldo" },
+            { t: "Pagos flexibles", d: "MercadoPago, transferencia y efectivo" },
+          ].map((b) => (
+            <div key={b.t} className="rounded-xl bg-[#0F1729] border border-[#8B85B2]/10 p-3">
+              <p className="text-sm text-[#E8E6F0] font-medium">{b.t}</p>
+              <p className="text-xs text-[#8B85B2]/60 mt-0.5">{b.d}</p>
+            </div>
+          ))}
+        </div>
       </main>
 
       {/* Footer */}
@@ -118,7 +204,7 @@ export default async function MayoristaPublicPage({
         <div className="max-w-5xl mx-auto px-4 py-6 flex items-center justify-between text-xs text-[#8B85B2]/40">
           <p>Sendero 3D — Villa Crespo, Buenos Aires</p>
           <a
-            href={`https://wa.me/${whatsapp}`}
+            href={waHref}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-[#8B85B2] hover:text-[#E8E6F0] transition-colors"

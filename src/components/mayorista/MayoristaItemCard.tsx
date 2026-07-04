@@ -81,22 +81,48 @@ export default function MayoristaItemCard({ item }: { item: MayoristaItem }) {
           </div>
         )}
 
+        {/* Badge destacado */}
+        {item.destacado && (
+          <span className="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-[#D4A853] text-[#1C2541]">
+            🔥 Alta rotación
+          </span>
+        )}
+
         {/* Info */}
-        <div className="p-3 flex flex-col gap-1 flex-1">
+        <div className="p-3 flex flex-col gap-1.5 flex-1">
           <h3 className="text-[#E8E6F0] text-sm font-medium leading-snug">
             {item.titulo}
           </h3>
-          <div className="flex items-center justify-between mt-auto pt-2">
-            {item.codigo_ref && (
-              <span className="text-[10px] font-mono text-[#8B85B2]/60 bg-[#1C2541] px-2 py-0.5 rounded">
-                {item.codigo_ref}
-              </span>
+
+          {item.codigo_ref && (
+            <span className="text-[10px] font-mono text-[#8B85B2]/60 self-start bg-[#1C2541] px-2 py-0.5 rounded">
+              {item.codigo_ref}
+            </span>
+          )}
+
+          {/* Pricing B2B */}
+          <div className="mt-auto pt-2 space-y-0.5">
+            {item.precio_pvp != null && (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-[#8B85B2]/70">PVP sugerido</span>
+                <span className="text-[#8B85B2] line-through">{formatPrice(item.precio_pvp)}</span>
+              </div>
             )}
             {item.precio_ars != null && (
-              <span className="text-sm font-bold text-[#D4A853] ml-auto">
-                {formatPrice(item.precio_ars)}
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-[#B8B3D1]">Mayorista</span>
+                <span className="text-base font-bold text-[#D4A853]">{formatPrice(item.precio_ars)}</span>
+              </div>
             )}
+            {item.precio_pvp != null &&
+              item.precio_ars != null &&
+              item.precio_pvp > item.precio_ars && (
+                <div className="mt-1 rounded-md bg-emerald-400/10 border border-emerald-400/20 px-2 py-1 text-center">
+                  <span className="text-xs font-semibold text-emerald-400">
+                    Ganás {formatPrice(item.precio_pvp - item.precio_ars)} / u
+                  </span>
+                </div>
+              )}
           </div>
         </div>
       </div>

@@ -1,11 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import type { MayoristaLista, MayoristaSeccion, MayoristaItem } from "@/types";
-import type { ScrapedModel } from "@/app/api/admin/mayoristas/scrape/route";
+import { createClient } from "@/lib/supabase";
+import { formatPrice } from "@/lib/utils";
+import type {
+  MayoristaLista,
+  MayoristaSeccion,
+  MayoristaItem,
+  MayoristaTramo,
+} from "@/types";
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+type ItemValue = string | number | boolean | null;
+
+// ─── ItemCard ─────────────────────────────────────────────────────────────────
 
 function ItemCard({
   item,
@@ -18,13 +26,13 @@ function ItemCard({
   listaId: string;
   seccionId: string;
   onDelete: (id: string) => void;
-  onUpdate: (id: string, field: string, value: string | number | null) => void;
+  onUpdate: (id: string, field: string, value: ItemValue) => void;
 }) {
-  const [titulo, setTitulo] = useState(item.titulo);
   const [codigo, setCodigo] = useState(item.codigo_ref);
+  const [pvp, setPvp] = useState(item.precio_pvp?.toString() ?? "");
   const [precio, setPrecio] = useState(item.precio_ars?.toString() ?? "");
 
-  async function saveField(field: string, value: string | number | null) {
+  async function saveField(field: string, value: ItemValue) {
     await fetch(`/api/admin/mayoristas/${listaId}/secciones/${seccionId}/items/${item.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -34,62 +42,97 @@ function ItemCard({
   }
 
   async function handleDelete() {
-    if (!confirm("¿Eliminar este producto de la lista?")) return;
+    if (!confirm("¿Quitar este producto de la lista?")) return;
     await fetch(`/api/admin/mayoristas/${listaId}/secciones/${seccionId}/items/${item.id}`, {
       method: "DELETE",
     });
     onDelete(item.id);
   }
 
-  const imagenes = item.imagenes ?? [];
+  const imagen = (item.imagenes ?? [])[0];
+  const pvpNum = pvp ? Number(pvp) : null;
+  const marNum = precio ? Number(precio) : null;
+  const ganancia = pvpNum != null && marNum != null ? pvpNum - marNum : null;
 
   return (
-    <div className="bg-navy border border-lavanda/10 rounded-xl overflow-hidden">
-      {/* Imágenes */}
-      {imagenes.length > 0 ? (
-        <div className="flex gap-1 p-2 overflow-x-auto">
-          {imagenes.map((img) => (
-            <img
-              key={img.id}
-              src={img.url}
-              alt={titulo}
-              className="w-20 h-20 object-cover rounded-lg shrink-0"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="h-16 flex items-center justify-center text-lavanda/20 text-xs bg-navy-deep">
-          sin imágenes
-        </div>
-      )}
+    <div className="bg-navy border border-lavanda/10 rounded-xl overflow-hidden flex flex-col">
+      {/* Imagen */}
+      <div className="relative">
+        {imagen ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={imagen.url} alt={item.titulo} className="w-full aspect-square object-cover" />
+        ) : (
+          <div className="w-full aspect-square flex items-center justify-center text-lavanda/20 text-xs bg-navy-deep">
+            sin imagen
+          </div>
+        )}
+        {/* Toggle destacado */}
+        <button
+          onClick={() => saveField("destacado", !item.destacado)}
+          title={item.destacado ? "Quitar de destacados" : "Marcar como destacado / alta rotación"}
+          className={`absolute top-1.5 right-1.5 w-7 h-7 rounded-full flex items-center justify-center text-sm transition-colors ${
+            item.destacado
+              ? "bg-ambar text-navy"
+              : "bg-black/50 text-lavanda/60 hover:text-ambar"
+          }`}
+        >
+          ★
+        </button>
+      </div>
 
       {/* Campos */}
       <div className="p-3 space-y-2">
-        <input
-          value={titulo}
-          onChange={(e) => setTitulo(e.target.value)}
-          onBlur={() => saveField("titulo", titulo)}
-          className="w-full bg-transparent text-sm text-niebla font-medium focus:outline-none border-b border-transparent focus:border-lavanda/30 pb-0.5 transition-colors"
-          placeholder="Título del producto"
-        />
+        <p className="text-sm text-niebla font-medium leading-snug line-clamp-2" title={item.titulo}>
+          {item.titulo}
+        </p>
+
         <input
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
           onBlur={() => saveField("codigo_ref", codigo)}
           className="w-full bg-navy-deep text-xs text-lavanda-light font-mono rounded px-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
-          placeholder="REF-001"
+          placeholder="SKU / código"
         />
-        <div className="relative">
-          <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-lavanda/40 pointer-events-none">$</span>
-          <input
-            value={precio}
-            onChange={(e) => setPrecio(e.target.value)}
-            onBlur={() => saveField("precio_ars", precio ? Number(precio) : null)}
-            type="number"
-            className="w-full bg-navy-deep text-xs text-ambar font-medium rounded pl-5 pr-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
-            placeholder="Precio"
-          />
-        </div>
+
+        {/* PVP */}
+        <label className="block">
+          <span className="text-[10px] text-lavanda/50 uppercase tracking-wide">PVP (venta público)</span>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-lavanda/40 pointer-events-none">$</span>
+            <input
+              value={pvp}
+              onChange={(e) => setPvp(e.target.value)}
+              onBlur={() => saveField("precio_pvp", pvp ? Number(pvp) : null)}
+              type="number"
+              className="w-full bg-navy-deep text-xs text-lavanda-light rounded pl-5 pr-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
+              placeholder="PVP"
+            />
+          </div>
+        </label>
+
+        {/* Precio mayorista */}
+        <label className="block">
+          <span className="text-[10px] text-ambar/70 uppercase tracking-wide">Precio mayorista</span>
+          <div className="relative">
+            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-ambar/50 pointer-events-none">$</span>
+            <input
+              value={precio}
+              onChange={(e) => setPrecio(e.target.value)}
+              onBlur={() => saveField("precio_ars", precio ? Number(precio) : null)}
+              type="number"
+              className="w-full bg-navy-deep text-xs text-ambar font-medium rounded pl-5 pr-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
+              placeholder="Mayorista"
+            />
+          </div>
+        </label>
+
+        {/* Ganancia calculada */}
+        {ganancia != null && ganancia > 0 && (
+          <p className="text-[11px] text-emerald-400 text-center">
+            Ganás {formatPrice(ganancia)} / u
+          </p>
+        )}
+
         <button
           onClick={handleDelete}
           className="w-full text-xs text-red-400/60 hover:text-red-400 transition-colors text-left"
@@ -101,214 +144,78 @@ function ItemCard({
   );
 }
 
-// ─── Manual Item Modal ────────────────────────────────────────────────────────
+// ─── Catálogo Modal ───────────────────────────────────────────────────────────
 
-function ManualItemModal({
-  onAdd,
-  onClose,
-}: {
-  onAdd: (
-    titulo: string,
-    files: File[],
-    codigo_ref: string,
-    precio_ars: number | null
-  ) => Promise<void>;
-  onClose: () => void;
-}) {
-  const [titulo, setTitulo] = useState("");
-  const [codigo, setCodigo] = useState("");
-  const [precio, setPrecio] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  function handleFiles(list: FileList | null) {
-    if (!list) return;
-    const arr = Array.from(list).filter((f) => f.type.startsWith("image/"));
-    setFiles((prev) => [...prev, ...arr]);
-    setPreviews((prev) => [...prev, ...arr.map((f) => URL.createObjectURL(f))]);
-  }
-
-  function removeFile(i: number) {
-    setFiles((prev) => prev.filter((_, idx) => idx !== i));
-    setPreviews((prev) => {
-      URL.revokeObjectURL(prev[i]);
-      return prev.filter((_, idx) => idx !== i);
-    });
-  }
-
-  async function submit() {
-    if (!titulo.trim()) {
-      setError("Poné un título");
-      return;
-    }
-    if (files.length === 0) {
-      setError("Subí al menos una imagen");
-      return;
-    }
-    setSubmitting(true);
-    setError("");
-    try {
-      await onAdd(
-        titulo.trim(),
-        files,
-        codigo.trim(),
-        precio ? Number(precio) : null
-      );
-      previews.forEach((p) => URL.revokeObjectURL(p));
-      onClose();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 bg-black/70 z-50 flex items-start justify-center pt-12 px-4 overflow-y-auto">
-      <div className="bg-navy-deep border border-lavanda/20 rounded-xl w-full max-w-xl mb-12">
-        <div className="flex items-center justify-between p-4 border-b border-lavanda/10">
-          <h3 className="font-[family-name:var(--font-cinzel)] text-niebla font-bold">
-            Subir producto manualmente
-          </h3>
-          <button onClick={onClose} className="text-lavanda/40 hover:text-niebla transition-colors text-xl leading-none">×</button>
-        </div>
-
-        <div className="p-4 space-y-4">
-          <div>
-            <label className="block text-xs text-lavanda/60 mb-1">Título *</label>
-            <input
-              value={titulo}
-              onChange={(e) => setTitulo(e.target.value)}
-              autoFocus
-              placeholder="Ej: Maceta minimalista geométrica 12cm"
-              className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs text-lavanda/60 mb-1">
-                Código <span className="text-lavanda/40">(opc.)</span>
-              </label>
-              <input
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value)}
-                placeholder="MAC-01"
-                className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-lavanda-light font-mono focus:outline-none focus:border-purpura"
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-lavanda/60 mb-1">
-                Precio ARS <span className="text-lavanda/40">(opc.)</span>
-              </label>
-              <input
-                value={precio}
-                onChange={(e) => setPrecio(e.target.value)}
-                type="number"
-                placeholder="2500"
-                className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-ambar focus:outline-none focus:border-purpura"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs text-lavanda/60 mb-1.5">
-              Imágenes * <span className="text-lavanda/40">(podés subir varias)</span>
-            </label>
-            <label className="block border-2 border-dashed border-lavanda/20 hover:border-purpura rounded-lg p-6 text-center cursor-pointer transition-colors">
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                onChange={(e) => handleFiles(e.target.files)}
-                className="hidden"
-              />
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 mx-auto text-lavanda/40 mb-1">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
-              </svg>
-              <p className="text-sm text-lavanda-light">Click para seleccionar archivos</p>
-              <p className="text-xs text-lavanda/40 mt-0.5">PNG, JPG, WebP — múltiples</p>
-            </label>
-
-            {previews.length > 0 && (
-              <div className="grid grid-cols-4 gap-2 mt-3">
-                {previews.map((src, i) => (
-                  <div key={i} className="relative group">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="w-full aspect-square object-cover rounded-lg" />
-                    <button
-                      type="button"
-                      onClick={() => removeFile(i)}
-                      className="absolute top-1 right-1 w-5 h-5 bg-black/70 hover:bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                      aria-label="Quitar imagen"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400">
-              {error}
-            </div>
-          )}
-
-          <div className="flex gap-2 pt-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border border-lavanda/20 text-lavanda-light rounded-lg hover:bg-lavanda/10 transition-colors text-sm"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={submit}
-              disabled={submitting || !titulo.trim() || files.length === 0}
-              className="flex-1 py-2 bg-purpura hover:bg-purpura/80 text-niebla font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-            >
-              {submitting ? "Subiendo..." : "Agregar producto"}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+interface ProductoBuscado {
+  id: string;
+  nombre: string;
+  sku: string | null;
+  precio: number;
+  precio_oferta: number | null;
+  imagen?: string;
 }
 
-// ─── MakerWorld Search Modal ──────────────────────────────────────────────────
-
-function MakerWorldModal({
+function CatalogoModal({
   onAdd,
   onClose,
 }: {
-  onAdd: (model: ScrapedModel) => void;
+  onAdd: (productoId: string) => Promise<void>;
   onClose: () => void;
 }) {
-  const [keyword, setKeyword] = useState("");
-  const [results, setResults] = useState<ScrapedModel[]>([]);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<ProductoBuscado[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [adding, setAdding] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  async function search() {
-    if (!keyword.trim()) return;
-    setLoading(true);
-    setError("");
-    setResults([]);
-    const res = await fetch(`/api/admin/mayoristas/scrape?keyword=${encodeURIComponent(keyword)}&limit=5`);
-    const data = await res.json();
-    setLoading(false);
-    setResults(data.results ?? []);
-    if (data.error) setError(data.error);
-  }
+  useEffect(() => {
+    setTimeout(() => inputRef.current?.focus(), 50);
+  }, []);
 
-  async function handleAdd(model: ScrapedModel) {
-    setAdding(model.id);
-    await onAdd(model);
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      return;
+    }
+    const ctrl = new AbortController();
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("productos")
+          .select("id, nombre, sku, precio, precio_oferta, imagenes:producto_imagenes(url, orden, tipo)")
+          .eq("activo", true)
+          .ilike("nombre", `%${query}%`)
+          .limit(15);
+        if (ctrl.signal.aborted) return;
+        const mapped: ProductoBuscado[] = (data ?? []).map((p) => {
+          const img = (p.imagenes as { url: string; orden: number; tipo?: string }[] | null)
+            ?.filter((i) => i.tipo !== "video")
+            ?.sort((a, b) => a.orden - b.orden)[0];
+          return {
+            id: p.id,
+            nombre: p.nombre,
+            sku: p.sku,
+            precio: p.precio,
+            precio_oferta: p.precio_oferta,
+            imagen: img?.url,
+          };
+        });
+        setResults(mapped);
+      } finally {
+        setLoading(false);
+      }
+    }, 250);
+    return () => {
+      ctrl.abort();
+      clearTimeout(t);
+    };
+  }, [query]);
+
+  async function handleAdd(id: string) {
+    setAdding(id);
+    await onAdd(id);
     setAdding(null);
   }
 
@@ -317,77 +224,170 @@ function MakerWorldModal({
       <div className="bg-navy-deep border border-lavanda/20 rounded-xl w-full max-w-2xl mb-12">
         <div className="flex items-center justify-between p-4 border-b border-lavanda/10">
           <h3 className="font-[family-name:var(--font-cinzel)] text-niebla font-bold">
-            Buscar en MakerWorld
+            Agregar del catálogo
           </h3>
           <button onClick={onClose} className="text-lavanda/40 hover:text-niebla transition-colors text-xl leading-none">×</button>
         </div>
 
         <div className="p-4 space-y-4">
-          <div className="flex gap-2">
-            <input
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && search()}
-              placeholder='Ej: "maceta minimalista geometrica"'
-              autoFocus
-              className="flex-1 bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
-            />
-            <button
-              onClick={search}
-              disabled={loading || !keyword.trim()}
-              className="px-4 py-2 bg-purpura hover:bg-purpura/80 text-niebla text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
-            >
-              {loading ? "Buscando..." : "Buscar"}
-            </button>
-          </div>
+          <input
+            ref={inputRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar producto por nombre..."
+            className="w-full bg-navy border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-niebla focus:outline-none focus:border-purpura"
+          />
 
-          {error && (
-            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-sm text-red-400">
-              {error}
-            </div>
-          )}
-
-          {results.length > 0 && (
-            <div className="space-y-3">
-              {results.map((model) => (
-                <div
-                  key={model.id}
-                  className="flex items-center gap-3 bg-navy border border-lavanda/10 rounded-xl p-3"
-                >
-                  {/* Thumbnails */}
-                  <div className="flex gap-1 shrink-0">
-                    {model.imagenes.slice(0, 3).map((img, i) => (
-                      <img
-                        key={i}
-                        src={img}
-                        alt={model.titulo}
-                        className="w-14 h-14 object-cover rounded-lg"
-                      />
-                    ))}
-                  </div>
+          <div className="max-h-[50vh] overflow-auto">
+            {loading && <p className="text-sm text-lavanda/40 py-4 text-center">Buscando...</p>}
+            {!loading && query && results.length === 0 && (
+              <p className="text-sm text-lavanda/40 py-4 text-center">Sin resultados</p>
+            )}
+            {!loading && !query && (
+              <p className="text-sm text-lavanda/40 py-4 text-center">Escribí para buscar en el catálogo</p>
+            )}
+            <div className="space-y-2">
+              {results.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 bg-navy border border-lavanda/10 rounded-xl p-2.5">
+                  {p.imagen ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={p.imagen} alt={p.nombre} className="w-12 h-12 object-cover rounded-lg shrink-0" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-lg bg-navy-deep shrink-0" />
+                  )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm text-niebla font-medium truncate">{model.titulo}</p>
-                    <p className="text-xs text-lavanda/40 truncate">{model.url}</p>
-                    <p className="text-xs text-lavanda/40">{model.imagenes.length} imágenes</p>
+                    <p className="text-sm text-niebla truncate">{p.nombre}</p>
+                    <p className="text-xs text-lavanda/50">
+                      {p.sku ? `${p.sku} · ` : ""}
+                      {formatPrice(p.precio_oferta ?? p.precio)}
+                    </p>
                   </div>
                   <button
-                    onClick={() => handleAdd(model)}
-                    disabled={adding === model.id}
+                    onClick={() => handleAdd(p.id)}
+                    disabled={adding === p.id}
                     className="shrink-0 px-3 py-1.5 bg-purpura/20 hover:bg-purpura text-lavanda-light hover:text-niebla text-xs font-medium rounded-lg transition-colors disabled:opacity-50"
                   >
-                    {adding === model.id ? "Agregando..." : "+ Agregar"}
+                    {adding === p.id ? "Agregando..." : "+ Agregar"}
                   </button>
                 </div>
               ))}
             </div>
-          )}
-
-          {!loading && results.length === 0 && keyword && !error && (
-            <p className="text-sm text-lavanda/40 text-center py-4">No se encontraron resultados</p>
-          )}
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// ─── Config de la lista (MOQ / validez / tramos) ──────────────────────────────
+
+function ListaConfig({
+  lista,
+  onChange,
+}: {
+  lista: MayoristaLista;
+  onChange: (patch: Partial<MayoristaLista>) => void;
+}) {
+  const [moq, setMoq] = useState(lista.moq?.toString() ?? "");
+  const [validez, setValidez] = useState(lista.validez_hasta ?? "");
+  const [tramos, setTramos] = useState<MayoristaTramo[]>(lista.descuento_tramos ?? []);
+
+  async function patch(body: Partial<MayoristaLista>) {
+    await fetch(`/api/admin/mayoristas/${lista.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    onChange(body);
+  }
+
+  function saveTramos(next: MayoristaTramo[]) {
+    setTramos(next);
+    patch({ descuento_tramos: next });
+  }
+
+  return (
+    <section className="bg-navy border border-lavanda/10 rounded-xl p-4 space-y-4">
+      <h2 className="text-sm font-semibold text-niebla">Configuración de la lista</h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-xs text-lavanda/60 mb-1">Pedido mínimo (unidades)</label>
+          <input
+            type="number"
+            value={moq}
+            onChange={(e) => setMoq(e.target.value)}
+            onBlur={() => patch({ moq: moq ? Number(moq) : null })}
+            placeholder="Ej: 5"
+            className="w-full bg-navy-deep border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+          />
+        </div>
+        <div>
+          <label className="block text-xs text-lavanda/60 mb-1">Lista válida hasta</label>
+          <input
+            type="date"
+            value={validez}
+            onChange={(e) => setValidez(e.target.value)}
+            onBlur={() => patch({ validez_hasta: validez || null })}
+            className="w-full bg-navy-deep border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+          />
+        </div>
+      </div>
+
+      {/* Tramos por cantidad */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <label className="text-xs text-lavanda/60">Tramos por cantidad (descuento sobre PVP)</label>
+          <button
+            onClick={() => saveTramos([...tramos, { min: 0, pct: 0 }])}
+            className="text-xs text-purpura hover:text-purpura/80"
+          >
+            + Agregar tramo
+          </button>
+        </div>
+        <div className="space-y-2">
+          {tramos.length === 0 && (
+            <p className="text-xs text-lavanda/40">Sin tramos. Ej: desde 5u → 10%, 10u → 20%, 20u → 30%.</p>
+          )}
+          {tramos.map((t, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-xs text-lavanda/50">Desde</span>
+              <input
+                type="number"
+                value={t.min || ""}
+                onChange={(e) => {
+                  const next = [...tramos];
+                  next[i] = { ...next[i], min: Number(e.target.value) || 0 };
+                  setTramos(next);
+                }}
+                onBlur={() => saveTramos(tramos)}
+                className="w-20 bg-navy-deep border border-lavanda/20 rounded px-2 py-1 text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+              />
+              <span className="text-xs text-lavanda/50">unidades →</span>
+              <input
+                type="number"
+                value={t.pct || ""}
+                onChange={(e) => {
+                  const next = [...tramos];
+                  next[i] = { ...next[i], pct: Number(e.target.value) || 0 };
+                  setTramos(next);
+                }}
+                onBlur={() => saveTramos(tramos)}
+                className="w-20 bg-navy-deep border border-lavanda/20 rounded px-2 py-1 text-sm text-ambar focus:outline-none focus:border-purpura"
+              />
+              <span className="text-xs text-ambar">% OFF</span>
+              <button
+                onClick={() => saveTramos(tramos.filter((_, idx) => idx !== i))}
+                className="ml-auto text-red-400/60 hover:text-red-400 text-sm"
+                aria-label="Quitar tramo"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -399,12 +399,10 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
   const [nombre, setNombre] = useState(initialLista.nombre);
   const [savingMeta, setSavingMeta] = useState(false);
   const [addingSeccion, setAddingSeccion] = useState(false);
-  const [searchModal, setSearchModal] = useState<string | null>(null); // seccionId
-  const [manualModal, setManualModal] = useState<string | null>(null); // seccionId
+  const [catalogoModal, setCatalogoModal] = useState<string | null>(null); // seccionId
   const [copied, setCopied] = useState(false);
   const siteUrl = typeof window !== "undefined" ? window.location.origin : "";
 
-  // ── Meta update ─────────────────────────────────────────────────────────────
   async function saveMeta() {
     if (nombre === initialLista.nombre) return;
     setSavingMeta(true);
@@ -416,7 +414,6 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
     setSavingMeta(false);
   }
 
-  // ── Secciones ────────────────────────────────────────────────────────────────
   async function addSeccion() {
     setAddingSeccion(true);
     const res = await fetch(`/api/admin/mayoristas/${lista.id}/secciones`, {
@@ -449,47 +446,16 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
     }));
   }
 
-  // ── Items ────────────────────────────────────────────────────────────────────
-  async function addItemFromMakerWorld(seccionId: string, model: ScrapedModel) {
+  async function addItemFromCatalogo(seccionId: string, productoId: string) {
     const res = await fetch(`/api/admin/mayoristas/${lista.id}/secciones/${seccionId}/items`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        titulo: model.titulo,
-        codigo_ref: "",
-        makerworld_url: model.url,
-        imagenes: model.imagenes,
-      }),
+      body: JSON.stringify({ producto_id: productoId }),
     });
-    const item = await res.json();
-    setLista((prev) => ({
-      ...prev,
-      secciones: (prev.secciones ?? []).map((s) =>
-        s.id === seccionId ? { ...s, items: [...(s.items ?? []), item] } : s
-      ),
-    }));
-  }
-
-  async function addItemManual(
-    seccionId: string,
-    titulo: string,
-    files: File[],
-    codigo_ref: string,
-    precio_ars: number | null
-  ) {
-    const fd = new FormData();
-    fd.append("titulo", titulo);
-    fd.append("codigo_ref", codigo_ref);
-    if (precio_ars !== null) fd.append("precio_ars", String(precio_ars));
-    for (const f of files) fd.append("files", f);
-
-    const res = await fetch(
-      `/api/admin/mayoristas/${lista.id}/secciones/${seccionId}/items/manual`,
-      { method: "POST", body: fd }
-    );
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err.error ?? "Error al crear item");
+      alert(err.error ?? "Error al agregar el producto");
+      return;
     }
     const item = await res.json();
     setLista((prev) => ({
@@ -511,7 +477,7 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
     }));
   }
 
-  function handleItemUpdate(seccionId: string, itemId: string, field: string, value: string | number | null) {
+  function handleItemUpdate(seccionId: string, itemId: string, field: string, value: ItemValue) {
     setLista((prev) => ({
       ...prev,
       secciones: (prev.secciones ?? []).map((s) =>
@@ -590,6 +556,12 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
 
       {savingMeta && <p className="text-xs text-lavanda/40">Guardando...</p>}
 
+      {/* Config de la lista */}
+      <ListaConfig
+        lista={lista}
+        onChange={(patch) => setLista((prev) => ({ ...prev, ...patch }))}
+      />
+
       {/* Secciones */}
       {secciones.map((seccion) => (
         <SeccionBlock
@@ -598,8 +570,7 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
           listaId={lista.id}
           onTituloBlur={(titulo) => updateSeccionTitulo(seccion.id, titulo)}
           onDelete={() => deleteSeccion(seccion.id)}
-          onOpenSearch={() => setSearchModal(seccion.id)}
-          onOpenManual={() => setManualModal(seccion.id)}
+          onOpenCatalogo={() => setCatalogoModal(seccion.id)}
           onItemDelete={(itemId) => handleItemDelete(seccion.id, itemId)}
           onItemUpdate={(itemId, field, value) => handleItemUpdate(seccion.id, itemId, field, value)}
         />
@@ -614,22 +585,12 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
         {addingSeccion ? "Agregando..." : "+ Agregar sección"}
       </button>
 
-      {/* Modal de búsqueda */}
-      {searchModal && (
-        <MakerWorldModal
-          onClose={() => setSearchModal(null)}
-          onAdd={async (model) => {
-            await addItemFromMakerWorld(searchModal, model);
-          }}
-        />
-      )}
-
-      {/* Modal de carga manual */}
-      {manualModal && (
-        <ManualItemModal
-          onClose={() => setManualModal(null)}
-          onAdd={async (titulo, files, codigo_ref, precio_ars) => {
-            await addItemManual(manualModal, titulo, files, codigo_ref, precio_ars);
+      {/* Modal catálogo */}
+      {catalogoModal && (
+        <CatalogoModal
+          onClose={() => setCatalogoModal(null)}
+          onAdd={async (productoId) => {
+            await addItemFromCatalogo(catalogoModal, productoId);
           }}
         />
       )}
@@ -644,8 +605,7 @@ function SeccionBlock({
   listaId,
   onTituloBlur,
   onDelete,
-  onOpenSearch,
-  onOpenManual,
+  onOpenCatalogo,
   onItemDelete,
   onItemUpdate,
 }: {
@@ -653,10 +613,9 @@ function SeccionBlock({
   listaId: string;
   onTituloBlur: (titulo: string) => void;
   onDelete: () => void;
-  onOpenSearch: () => void;
-  onOpenManual: () => void;
+  onOpenCatalogo: () => void;
   onItemDelete: (itemId: string) => void;
-  onItemUpdate: (itemId: string, field: string, value: string | number | null) => void;
+  onItemUpdate: (itemId: string, field: string, value: ItemValue) => void;
 }) {
   const [titulo, setTitulo] = useState(seccion.titulo);
   const items = seccion.items ?? [];
@@ -698,27 +657,16 @@ function SeccionBlock({
         </div>
       )}
 
-      {/* Botones agregar productos */}
-      <div className="flex gap-2 flex-wrap">
-        <button
-          onClick={onOpenSearch}
-          className="flex items-center gap-2 px-4 py-2 bg-navy border border-lavanda/20 text-lavanda-light text-sm rounded-lg hover:bg-lavanda/10 transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-          </svg>
-          Buscar en MakerWorld
-        </button>
-        <button
-          onClick={onOpenManual}
-          className="flex items-center gap-2 px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-sm rounded-lg transition-colors"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
-          </svg>
-          Subir manualmente
-        </button>
-      </div>
+      {/* Agregar del catálogo */}
+      <button
+        onClick={onOpenCatalogo}
+        className="flex items-center gap-2 px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-sm rounded-lg transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007Z" />
+        </svg>
+        Agregar del catálogo
+      </button>
     </div>
   );
 }

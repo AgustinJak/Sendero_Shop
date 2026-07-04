@@ -294,11 +294,20 @@ export interface Configuracion {
 }
 
 // --- Mayoristas ---
+/** Un tramo de descuento por cantidad (a nivel lista). */
+export interface MayoristaTramo {
+  min: number; // cantidad mínima
+  pct: number; // % de descuento sobre el PVP
+}
+
 export interface MayoristaLista {
   id: string;
   codigo: string;
   nombre: string;
   activa: boolean;
+  moq: number | null; // pedido mínimo mayorista
+  validez_hasta: string | null; // fecha (YYYY-MM-DD)
+  descuento_tramos: MayoristaTramo[];
   created_at: string;
   secciones?: MayoristaSeccion[];
 }
@@ -316,8 +325,11 @@ export interface MayoristaItem {
   seccion_id: string;
   titulo: string;
   codigo_ref: string;
-  precio_ars: number | null;
-  makerworld_url: string | null;
+  precio_ars: number | null; // precio mayorista
+  precio_pvp: number | null; // precio de venta al público (snapshot del catálogo)
+  producto_id: string | null; // vínculo al producto del catálogo
+  destacado: boolean; // gancho: alta rotación / destacado
+  makerworld_url: string | null; // legacy, sin uso
   orden: number;
   imagenes?: MayoristaImagen[];
 }

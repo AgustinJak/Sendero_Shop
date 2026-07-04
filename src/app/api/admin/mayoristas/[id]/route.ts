@@ -37,9 +37,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const body = await req.json();
   const db = await createServiceRoleClient();
 
+  const allowed = ["nombre", "activa", "moq", "validez_hasta", "descuento_tramos"];
+  const update = Object.fromEntries(
+    Object.entries(body).filter(([k]) => allowed.includes(k))
+  );
+
   const { data, error } = await db
     .from("mayorista_listas")
-    .update(body)
+    .update(update)
     .eq("id", id)
     .select()
     .single();
