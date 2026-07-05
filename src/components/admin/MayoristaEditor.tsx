@@ -48,7 +48,8 @@ function ItemCard({
     onDelete(item.id);
   }
 
-  const imagen = (item.imagenes ?? [])[0];
+  const media = item.imagenes ?? [];
+  const imagen = media.find((m) => m.tipo !== "video") ?? media[0];
 
   return (
     <div className="bg-navy border border-lavanda/10 rounded-xl overflow-hidden flex flex-col">

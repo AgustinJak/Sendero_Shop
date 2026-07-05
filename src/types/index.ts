@@ -339,6 +339,7 @@ export interface MayoristaImagen {
   item_id: string;
   url: string;
   storage_path: string | null;
+  tipo: "imagen" | "video";
   orden: number;
 }
 

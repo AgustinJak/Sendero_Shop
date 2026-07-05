@@ -28,7 +28,7 @@ export async function POST(
 
   const db = await createServiceRoleClient();
 
-  // Traer el producto + su imagen principal
+  // Traer el producto + todas sus imágenes/videos
   const { data: producto, error: prodErr } = await db
     .from("productos")
     .select("id, nombre, sku, precio, precio_oferta, imagenes:producto_imagenes(url, orden, tipo)")
@@ -39,9 +39,9 @@ export async function POST(
     return NextResponse.json({ error: "Producto no encontrado" }, { status: 404 });
   }
 
-  const imagenPrincipal = (producto.imagenes as { url: string; orden: number; tipo?: string }[] | null)
-    ?.filter((i) => i.tipo !== "video")
-    ?.sort((a, b) => a.orden - b.orden)[0];
+  const mediaProducto = ((producto.imagenes as { url: string; orden: number; tipo?: string }[] | null) ?? [])
+    .slice()
+    .sort((a, b) => a.orden - b.orden);
 
   const pvp = producto.precio_oferta ?? producto.precio;
 
@@ -70,14 +70,19 @@ export async function POST(
 
   if (itemError) return NextResponse.json({ error: itemError.message }, { status: 500 });
 
-  // Referenciar la imagen principal del producto (sin re-subir; es URL pública)
-  if (imagenPrincipal?.url) {
-    await db.from("mayorista_imagenes").insert({
-      item_id: item.id,
-      url: imagenPrincipal.url,
-      storage_path: null,
-      orden: 0,
-    });
+  // Referenciar todas las imágenes/videos del producto (sin re-subir; son URLs
+  // públicas del bucket productos / YouTube). storage_path=null → no se borran
+  // del bucket de productos al quitar el item de la lista.
+  if (mediaProducto.length > 0) {
+    await db.from("mayorista_imagenes").insert(
+      mediaProducto.map((m, i) => ({
+        item_id: item.id,
+        url: m.url,
+        storage_path: null,
+        tipo: m.tipo === "video" ? "video" : "imagen",
+        orden: i,
+      }))
+    );
   }
 
   const { data: full } = await db

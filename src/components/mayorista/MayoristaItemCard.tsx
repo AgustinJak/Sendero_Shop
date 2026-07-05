@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { MayoristaItem, MayoristaImagen, MayoristaTramo } from "@/types";
+import { extractYouTubeId, getYouTubeThumbnail, isYouTubeUrl } from "@/lib/youtube";
 
 function formatPrice(n: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -11,6 +12,20 @@ function formatPrice(n: number) {
   }).format(n);
 }
 
+function PlayBadge({ small = false }: { small?: boolean }) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+      <div
+        className={`${small ? "w-6 h-6" : "w-11 h-11"} rounded-full bg-black/55 flex items-center justify-center`}
+      >
+        <svg className={`${small ? "w-3 h-3" : "w-5 h-5"} text-white ml-0.5`} fill="currentColor" viewBox="0 0 24 24">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      </div>
+    </div>
+  );
+}
+
 export default function MayoristaItemCard({
   item,
   tramos,
@@ -18,9 +33,40 @@ export default function MayoristaItemCard({
   item: MayoristaItem;
   tramos: MayoristaTramo[];
 }) {
-  const imagenes = (item.imagenes ?? [])
+  const media = (item.imagenes ?? [])
     .slice()
     .sort((a: MayoristaImagen, b: MayoristaImagen) => a.orden - b.orden);
+
+  const [current, setCurrent] = useState(0);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [ytPlaying, setYtPlaying] = useState(false);
+
+  const hasMedia = media.length > 0;
+  const hasMultiple = media.length > 1;
+  const activo = hasMedia ? media[Math.min(current, media.length - 1)] : null;
+
+  function go(dir: number) {
+    setYtPlaying(false);
+    setCurrent((c) => (c + dir + media.length) % media.length);
+  }
+
+  // Lightbox: teclado + bloqueo de scroll
+  useEffect(() => {
+    if (!lightboxOpen) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightboxOpen(false);
+      if (e.key === "ArrowRight") go(1);
+      if (e.key === "ArrowLeft") go(-1);
+    }
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightboxOpen, media.length]);
 
   // Precio de lista (PVP). El descuento se aplica por cantidad según los tramos.
   const pvp = item.precio_pvp;
@@ -33,83 +79,113 @@ export default function MayoristaItemCard({
         }))
       : [];
 
-  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const lightboxOpen = lightboxIndex !== null;
+  function isVid(m: MayoristaImagen | null) {
+    return m?.tipo === "video";
+  }
+  function isYT(m: MayoristaImagen | null) {
+    return !!m && m.tipo === "video" && isYouTubeUrl(m.url);
+  }
 
-  useEffect(() => {
-    if (!lightboxOpen) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setLightboxIndex(null);
-      if (e.key === "ArrowRight") {
-        setLightboxIndex((i) =>
-          i === null ? null : (i + 1) % imagenes.length
-        );
-      }
-      if (e.key === "ArrowLeft") {
-        setLightboxIndex((i) =>
-          i === null ? null : (i - 1 + imagenes.length) % imagenes.length
-        );
-      }
+  function thumbFor(m: MayoristaImagen) {
+    if (isYT(m)) {
+      const id = extractYouTubeId(m.url);
+      return id ? getYouTubeThumbnail(id) : m.url;
     }
-    window.addEventListener("keydown", onKey);
-    // Bloquear scroll del body mientras está abierto
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      document.body.style.overflow = prev;
-    };
-  }, [lightboxOpen, imagenes.length]);
+    return m.url;
+  }
 
   return (
     <>
       <div className="bg-[#0F1729] rounded-2xl overflow-hidden border border-[#8B85B2]/10 flex flex-col">
-        {/* Galería de imágenes */}
-        {imagenes.length > 0 ? (
-          <div
-            className={`grid gap-0.5 ${
-              imagenes.length === 1
-                ? "grid-cols-1"
-                : imagenes.length <= 4
-                ? "grid-cols-2"
-                : "grid-cols-3"
-            }`}
+        {/* Media principal */}
+        <div className="relative group">
+          <button
+            type="button"
+            onClick={() => hasMedia && setLightboxOpen(true)}
+            className="block w-full aspect-square focus:outline-none"
+            aria-label={`Ver ${item.titulo}`}
           >
-            {imagenes.map((img: MayoristaImagen, i: number) => (
+            {!activo ? (
+              <div className="w-full h-full bg-[#1C2541] flex items-center justify-center text-[#8B85B2]/20 text-xs">
+                sin imagen
+              </div>
+            ) : isVid(activo) ? (
+              <div className="relative w-full h-full bg-black">
+                {isYT(activo) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={thumbFor(activo)} alt={item.titulo} className="w-full h-full object-cover" />
+                ) : (
+                  <video src={activo.url} muted preload="metadata" className="w-full h-full object-cover" />
+                )}
+                <PlayBadge />
+              </div>
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={activo.url}
+                alt={item.titulo}
+                className="w-full h-full object-cover transition-transform group-hover:scale-[1.03] cursor-zoom-in"
+              />
+            )}
+          </button>
+
+          {/* Badge destacado */}
+          {item.destacado && (
+            <span className="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-[#D4A853] text-[#1C2541]">
+              🔥 Alta rotación
+            </span>
+          )}
+
+          {/* Flechas */}
+          {hasMultiple && (
+            <>
               <button
-                key={img.id}
                 type="button"
-                onClick={() => setLightboxIndex(i)}
-                className="relative group focus:outline-none focus:ring-2 focus:ring-[#D4A853] focus:z-10"
-                aria-label={`Ver imagen ${i + 1} de ${item.titulo}`}
+                onClick={(e) => { e.stopPropagation(); go(-1); }}
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+                aria-label="Anterior"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); go(1); }}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/50 hover:bg-black/70 text-white flex items-center justify-center transition-colors"
+                aria-label="Siguiente"
+              >
+                ›
+              </button>
+              <span className="absolute bottom-1.5 right-1.5 text-[10px] px-1.5 py-0.5 rounded bg-black/50 text-white/80">
+                {current + 1}/{media.length}
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Thumbnails */}
+        {hasMultiple && (
+          <div className="flex gap-1 p-1.5 overflow-x-auto">
+            {media.map((m, i) => (
+              <button
+                key={m.id}
+                type="button"
+                onClick={() => { setYtPlaying(false); setCurrent(i); }}
+                className={`relative w-10 h-10 shrink-0 rounded-md overflow-hidden border-2 transition-colors ${
+                  i === current ? "border-[#D4A853]" : "border-transparent hover:border-[#8B85B2]/40"
+                }`}
+                aria-label={`Ver ${i + 1}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={img.url}
-                  alt={`${item.titulo} — vista ${i + 1}`}
-                  className="aspect-square w-full object-cover transition-transform group-hover:scale-105 cursor-zoom-in"
-                />
+                <img src={thumbFor(m)} alt="" className="w-full h-full object-cover" />
+                {isVid(m) && <PlayBadge small />}
               </button>
             ))}
           </div>
-        ) : (
-          <div className="aspect-square bg-[#1C2541] flex items-center justify-center text-[#8B85B2]/20 text-xs">
-            sin imagen
-          </div>
-        )}
-
-        {/* Badge destacado */}
-        {item.destacado && (
-          <span className="absolute top-2 left-2 z-10 text-[10px] font-bold uppercase tracking-wide px-2 py-1 rounded-md bg-[#D4A853] text-[#1C2541]">
-            🔥 Alta rotación
-          </span>
         )}
 
         {/* Info */}
         <div className="p-3 flex flex-col gap-1.5 flex-1">
-          <h3 className="text-[#E8E6F0] text-sm font-medium leading-snug">
-            {item.titulo}
-          </h3>
+          <h3 className="text-[#E8E6F0] text-sm font-medium leading-snug">{item.titulo}</h3>
 
           {item.codigo_ref && (
             <span className="text-[10px] font-mono text-[#8B85B2]/60 self-start bg-[#1C2541] px-2 py-0.5 rounded">
@@ -121,12 +197,9 @@ export default function MayoristaItemCard({
           <div className="mt-auto pt-2">
             {pvp != null ? (
               <>
-                {/* Precio de lista */}
                 <div className="flex items-center justify-end">
                   <span className="text-lg font-bold text-[#E8E6F0]">{formatPrice(pvp)}</span>
                 </div>
-
-                {/* Precio mayorista según cantidad */}
                 {preciosPorTramo.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-[#8B85B2]/10 space-y-1">
                     <p className="text-[10px] uppercase tracking-wide text-[#8B85B2]/50">Precio mayorista:</p>
@@ -141,7 +214,6 @@ export default function MayoristaItemCard({
                     ))}
                   </div>
                 )}
-
               </>
             ) : (
               <p className="text-xs text-[#8B85B2]/60">Precio a consultar</p>
@@ -151,10 +223,10 @@ export default function MayoristaItemCard({
       </div>
 
       {/* Lightbox */}
-      {lightboxOpen && (
+      {lightboxOpen && activo && (
         <div
           className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-8"
-          onClick={() => setLightboxIndex(null)}
+          onClick={() => setLightboxOpen(false)}
           role="dialog"
           aria-modal="true"
           aria-label={`Imagen ampliada de ${item.titulo}`}
@@ -162,11 +234,8 @@ export default function MayoristaItemCard({
           {/* Cerrar */}
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setLightboxIndex(null);
-            }}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors"
+            onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors z-10"
             aria-label="Cerrar"
           >
             ×
@@ -174,54 +243,65 @@ export default function MayoristaItemCard({
 
           {/* Contador + título */}
           <div className="absolute top-4 left-4 flex items-center gap-3 max-w-[calc(100%-4rem)]">
-            {imagenes.length > 1 && (
+            {hasMultiple && (
               <span className="px-3 py-1 bg-white/10 text-white text-sm rounded-full whitespace-nowrap">
-                {lightboxIndex! + 1} / {imagenes.length}
+                {current + 1} / {media.length}
               </span>
             )}
             <span className="text-white/70 text-sm truncate">{item.titulo}</span>
           </div>
 
-          {/* Anterior */}
-          {imagenes.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxIndex(
-                  (lightboxIndex! - 1 + imagenes.length) % imagenes.length
-                );
-              }}
-              className="absolute left-4 sm:left-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors"
-              aria-label="Imagen anterior"
-            >
-              ‹
-            </button>
+          {/* Anterior / Siguiente */}
+          {hasMultiple && (
+            <>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); go(-1); }}
+                className="absolute left-4 sm:left-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors z-10"
+                aria-label="Imagen anterior"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); go(1); }}
+                className="absolute right-4 sm:right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors z-10"
+                aria-label="Imagen siguiente"
+              >
+                ›
+              </button>
+            </>
           )}
 
-          {/* Imagen */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={imagenes[lightboxIndex!].url}
-            alt={`${item.titulo} — vista ${lightboxIndex! + 1}`}
-            onClick={(e) => e.stopPropagation()}
-            className="max-w-full max-h-full object-contain rounded-lg cursor-default"
-          />
-
-          {/* Siguiente */}
-          {imagenes.length > 1 && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxIndex((lightboxIndex! + 1) % imagenes.length);
-              }}
-              className="absolute right-4 sm:right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors"
-              aria-label="Imagen siguiente"
-            >
-              ›
-            </button>
-          )}
+          {/* Contenido */}
+          <div className="max-w-full max-h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+            {isYT(activo) ? (
+              ytPlaying ? (
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${extractYouTubeId(activo.url)}?autoplay=1&rel=0&modestbranding=1`}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={item.titulo}
+                  className="w-[90vw] max-w-[1000px] aspect-video rounded-lg"
+                />
+              ) : (
+                <button type="button" onClick={() => setYtPlaying(true)} className="relative w-[90vw] max-w-[1000px] aspect-video">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={thumbFor(activo)} alt={item.titulo} className="w-full h-full object-contain rounded-lg" />
+                  <PlayBadge />
+                </button>
+              )
+            ) : isVid(activo) ? (
+              <video src={activo.url} controls autoPlay playsInline className="max-w-full max-h-[85vh] rounded-lg bg-black" />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={activo.url}
+                alt={item.titulo}
+                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+              />
+            )}
+          </div>
         </div>
       )}
     </>
