@@ -154,6 +154,65 @@ export async function getProductosDestacados(
   return (data as unknown as Producto[]) || [];
 }
 
+/**
+ * Productos relacionados a uno dado, para "Te puede interesar".
+ * Prioridad: misma línea/franquicia → misma categoría → novedades (relleno).
+ * Excluye el producto actual y evita duplicados.
+ */
+export async function getProductosRelacionados(
+  producto: Pick<Producto, "id" | "linea" | "categoria_id">,
+  limit = 4
+): Promise<Producto[]> {
+  const supabase = await createServerSupabaseClient();
+  const select = `*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)`;
+  const collected = new Map<string, Producto>();
+
+  function add(rows: Producto[] | null) {
+    for (const p of rows ?? []) {
+      if (p.id === producto.id || collected.has(p.id)) continue;
+      if (collected.size >= limit) break;
+      collected.set(p.id, p);
+    }
+  }
+
+  // 1) Misma línea / franquicia (más vendidos primero)
+  if (producto.linea) {
+    const { data } = await supabase
+      .from("productos")
+      .select(select)
+      .eq("activo", true)
+      .eq("linea", producto.linea)
+      .order("unidades_vendidas", { ascending: false })
+      .limit(limit + 4);
+    add(data as unknown as Producto[]);
+  }
+
+  // 2) Misma categoría
+  if (collected.size < limit && producto.categoria_id) {
+    const { data } = await supabase
+      .from("productos")
+      .select(select)
+      .eq("activo", true)
+      .eq("categoria_id", producto.categoria_id)
+      .order("unidades_vendidas", { ascending: false })
+      .limit(limit + 4);
+    add(data as unknown as Producto[]);
+  }
+
+  // 3) Relleno con novedades
+  if (collected.size < limit) {
+    const { data } = await supabase
+      .from("productos")
+      .select(select)
+      .eq("activo", true)
+      .order("created_at", { ascending: false })
+      .limit(limit + 4);
+    add(data as unknown as Producto[]);
+  }
+
+  return Array.from(collected.values()).slice(0, limit);
+}
+
 // --- Categorías ---
 
 export async function getCategorias(): Promise<Categoria[]> {

@@ -1,11 +1,13 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { cache } from "react";
-import { getProductoBySlug } from "@/lib/queries";
+import { getProductoBySlug, getProductosRelacionados } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
 import { getWhatsapp } from "@/lib/site-config";
 import ProductDetail from "@/components/productos/ProductDetail";
+import ProductGrid from "@/components/productos/ProductGrid";
 import ReviewList from "@/components/reviews/ReviewList";
+import TrackItemList from "@/components/productos/TrackItemList";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 
 const getProducto = cache(async (slug: string) => {
@@ -61,6 +63,7 @@ export default async function ProductoPage({ params }: Props) {
   }
 
   const whatsapp = await getWhatsapp();
+  const relacionados = await getProductosRelacionados(producto, 4);
 
   const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
@@ -166,6 +169,24 @@ export default async function ProductoPage({ params }: Props) {
 
       {/* Reviews */}
       <ReviewList productoId={producto.id} />
+
+      {/* Te puede interesar */}
+      {relacionados.length > 0 && (
+        <section className="mt-16">
+          <h2 className="font-[family-name:var(--font-cinzel)] text-2xl font-bold text-niebla mb-8 text-center">
+            Te puede interesar
+          </h2>
+          <ProductGrid productos={relacionados} />
+          <TrackItemList
+            listName="Relacionados"
+            products={relacionados.map((p) => ({
+              id: p.id,
+              name: p.nombre,
+              price: p.precio_oferta || p.precio,
+            }))}
+          />
+        </section>
+      )}
 
       {/* JSON-LD */}
       <script
