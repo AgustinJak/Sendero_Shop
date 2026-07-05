@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { MayoristaItem, MayoristaImagen } from "@/types";
+import type { MayoristaItem, MayoristaImagen, MayoristaTramo } from "@/types";
 
 function formatPrice(n: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -11,10 +11,27 @@ function formatPrice(n: number) {
   }).format(n);
 }
 
-export default function MayoristaItemCard({ item }: { item: MayoristaItem }) {
+export default function MayoristaItemCard({
+  item,
+  tramos,
+}: {
+  item: MayoristaItem;
+  tramos: MayoristaTramo[];
+}) {
   const imagenes = (item.imagenes ?? [])
     .slice()
     .sort((a: MayoristaImagen, b: MayoristaImagen) => a.orden - b.orden);
+
+  // Precio de lista (PVP). El descuento se aplica por cantidad según los tramos.
+  const pvp = item.precio_pvp;
+  const preciosPorTramo =
+    pvp != null
+      ? tramos.map((t) => ({
+          min: t.min,
+          pct: t.pct,
+          precio: Math.round(pvp * (1 - t.pct / 100)),
+        }))
+      : [];
 
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const lightboxOpen = lightboxIndex !== null;
@@ -101,28 +118,35 @@ export default function MayoristaItemCard({ item }: { item: MayoristaItem }) {
           )}
 
           {/* Pricing B2B */}
-          <div className="mt-auto pt-2 space-y-0.5">
-            {item.precio_pvp != null && (
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-[#8B85B2]/70">PVP sugerido</span>
-                <span className="text-[#8B85B2] line-through">{formatPrice(item.precio_pvp)}</span>
-              </div>
-            )}
-            {item.precio_ars != null && (
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-[#B8B3D1]">Mayorista</span>
-                <span className="text-base font-bold text-[#D4A853]">{formatPrice(item.precio_ars)}</span>
-              </div>
-            )}
-            {item.precio_pvp != null &&
-              item.precio_ars != null &&
-              item.precio_pvp > item.precio_ars && (
-                <div className="mt-1 rounded-md bg-emerald-400/10 border border-emerald-400/20 px-2 py-1 text-center">
-                  <span className="text-xs font-semibold text-emerald-400">
-                    Ganás {formatPrice(item.precio_pvp - item.precio_ars)} / u
-                  </span>
+          <div className="mt-auto pt-2">
+            {pvp != null ? (
+              <>
+                {/* PVP sugerido (a cuánto lo revende el comercio) */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[#B8B3D1]">PVP sugerido</span>
+                  <span className="text-base font-bold text-[#E8E6F0]">{formatPrice(pvp)}</span>
                 </div>
-              )}
+
+                {/* Tu precio según cantidad */}
+                {preciosPorTramo.length > 0 && (
+                  <div className="mt-2 pt-2 border-t border-[#8B85B2]/10 space-y-1">
+                    <p className="text-[10px] uppercase tracking-wide text-[#8B85B2]/50">Tu precio</p>
+                    {preciosPorTramo.map((t) => (
+                      <div key={t.min} className="flex items-center justify-between text-xs">
+                        <span className="text-[#8B85B2]">Desde {t.min}u</span>
+                        <span className="text-[#D4A853] font-medium">
+                          {formatPrice(t.precio)}{" "}
+                          <span className="text-[#D4A853]/60">(-{t.pct}%)</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+              </>
+            ) : (
+              <p className="text-xs text-[#8B85B2]/60">Precio a consultar</p>
+            )}
           </div>
         </div>
       </div>

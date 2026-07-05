@@ -30,7 +30,6 @@ function ItemCard({
 }) {
   const [codigo, setCodigo] = useState(item.codigo_ref);
   const [pvp, setPvp] = useState(item.precio_pvp?.toString() ?? "");
-  const [precio, setPrecio] = useState(item.precio_ars?.toString() ?? "");
 
   async function saveField(field: string, value: ItemValue) {
     await fetch(`/api/admin/mayoristas/${listaId}/secciones/${seccionId}/items/${item.id}`, {
@@ -50,9 +49,6 @@ function ItemCard({
   }
 
   const imagen = (item.imagenes ?? [])[0];
-  const pvpNum = pvp ? Number(pvp) : null;
-  const marNum = precio ? Number(precio) : null;
-  const ganancia = pvpNum != null && marNum != null ? pvpNum - marNum : null;
 
   return (
     <div className="bg-navy border border-lavanda/10 rounded-xl overflow-hidden flex flex-col">
@@ -94,9 +90,9 @@ function ItemCard({
           placeholder="SKU / código"
         />
 
-        {/* PVP */}
+        {/* PVP (precio de lista) — el descuento mayorista se aplica por tramos */}
         <label className="block">
-          <span className="text-[10px] text-lavanda/50 uppercase tracking-wide">PVP (venta público)</span>
+          <span className="text-[10px] text-lavanda/50 uppercase tracking-wide">PVP (precio de lista)</span>
           <div className="relative">
             <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-lavanda/40 pointer-events-none">$</span>
             <input
@@ -109,29 +105,9 @@ function ItemCard({
             />
           </div>
         </label>
-
-        {/* Precio mayorista */}
-        <label className="block">
-          <span className="text-[10px] text-ambar/70 uppercase tracking-wide">Precio mayorista</span>
-          <div className="relative">
-            <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-ambar/50 pointer-events-none">$</span>
-            <input
-              value={precio}
-              onChange={(e) => setPrecio(e.target.value)}
-              onBlur={() => saveField("precio_ars", precio ? Number(precio) : null)}
-              type="number"
-              className="w-full bg-navy-deep text-xs text-ambar font-medium rounded pl-5 pr-2 py-1 focus:outline-none border border-lavanda/10 focus:border-purpura"
-              placeholder="Mayorista"
-            />
-          </div>
-        </label>
-
-        {/* Ganancia calculada */}
-        {ganancia != null && ganancia > 0 && (
-          <p className="text-[11px] text-emerald-400 text-center">
-            Ganás {formatPrice(ganancia)} / u
-          </p>
-        )}
+        <p className="text-[10px] text-lavanda/40 leading-tight">
+          El descuento mayorista se calcula con los tramos por cantidad de la lista.
+        </p>
 
         <button
           onClick={handleDelete}

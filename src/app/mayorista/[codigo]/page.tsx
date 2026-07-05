@@ -151,7 +151,7 @@ export default async function MayoristaPublicPage({
 
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
                 {items.map((item: MayoristaItem) => (
-                  <MayoristaItemCard key={item.id} item={item} />
+                  <MayoristaItemCard key={item.id} item={item} tramos={tramos} />
                 ))}
               </div>
             </section>
