@@ -121,21 +121,20 @@ export default function MayoristaItemCard({
           <div className="mt-auto pt-2">
             {pvp != null ? (
               <>
-                {/* PVP sugerido (a cuánto lo revende el comercio) */}
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-[#B8B3D1]">PVP sugerido</span>
-                  <span className="text-base font-bold text-[#E8E6F0]">{formatPrice(pvp)}</span>
+                {/* Precio de lista */}
+                <div className="flex items-center justify-end">
+                  <span className="text-lg font-bold text-[#E8E6F0]">{formatPrice(pvp)}</span>
                 </div>
 
-                {/* Tu precio según cantidad */}
+                {/* Precio mayorista según cantidad */}
                 {preciosPorTramo.length > 0 && (
                   <div className="mt-2 pt-2 border-t border-[#8B85B2]/10 space-y-1">
-                    <p className="text-[10px] uppercase tracking-wide text-[#8B85B2]/50">Tu precio</p>
+                    <p className="text-[10px] uppercase tracking-wide text-[#8B85B2]/50">Precio mayorista:</p>
                     {preciosPorTramo.map((t) => (
                       <div key={t.min} className="flex items-center justify-between text-xs">
                         <span className="text-[#8B85B2]">Desde {t.min}u</span>
                         <span className="text-[#D4A853] font-medium">
-                          {formatPrice(t.precio)}{" "}
+                          {formatPrice(t.precio)} c/u{" "}
                           <span className="text-[#D4A853]/60">(-{t.pct}%)</span>
                         </span>
                       </div>
