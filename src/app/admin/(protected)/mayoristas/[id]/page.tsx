@@ -20,6 +20,13 @@ export default async function MayoristaEditorPage({
           *,
           imagenes:mayorista_imagenes(*)
         )
+      ),
+      kits:mayorista_kits(
+        *,
+        items:mayorista_kit_items(
+          *,
+          item:mayorista_items(*, imagenes:mayorista_imagenes(*))
+        )
       )
     `)
     .eq("id", id)

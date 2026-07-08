@@ -4,11 +4,13 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { formatPrice } from "@/lib/utils";
+import { calcularKit, precioUnitario } from "@/lib/mayorista";
 import type {
   MayoristaLista,
   MayoristaSeccion,
   MayoristaItem,
   MayoristaTramo,
+  MayoristaKit,
 } from "@/types";
 
 type ItemValue = string | number | boolean | null;
@@ -562,6 +564,29 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
         {addingSeccion ? "Agregando..." : "+ Agregar sección"}
       </button>
 
+      {/* Kits / combos */}
+      <KitsSection
+        kits={lista.kits ?? []}
+        listaId={lista.id}
+        tramos={lista.descuento_tramos ?? []}
+        allItems={secciones.flatMap((s) => s.items ?? [])}
+        onCreated={(kit) =>
+          setLista((p) => ({ ...p, kits: [...(p.kits ?? []), kit] }))
+        }
+        onSaved={(kit) =>
+          setLista((p) => ({
+            ...p,
+            kits: (p.kits ?? []).map((k) => (k.id === kit.id ? kit : k)),
+          }))
+        }
+        onDeleted={(kitId) =>
+          setLista((p) => ({
+            ...p,
+            kits: (p.kits ?? []).filter((k) => k.id !== kitId),
+          }))
+        }
+      />
+
       {/* Modal catálogo */}
       {catalogoModal && (
         <CatalogoModal
@@ -571,6 +596,301 @@ export default function MayoristaEditor({ lista: initialLista }: { lista: Mayori
           }}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Kits / Combos ────────────────────────────────────────────────────────────
+
+function KitsSection({
+  kits,
+  listaId,
+  tramos,
+  allItems,
+  onCreated,
+  onSaved,
+  onDeleted,
+}: {
+  kits: MayoristaKit[];
+  listaId: string;
+  tramos: MayoristaTramo[];
+  allItems: MayoristaItem[];
+  onCreated: (kit: MayoristaKit) => void;
+  onSaved: (kit: MayoristaKit) => void;
+  onDeleted: (kitId: string) => void;
+}) {
+  const [creating, setCreating] = useState(false);
+
+  async function crearKit() {
+    setCreating(true);
+    const res = await fetch(`/api/admin/mayoristas/${listaId}/kits`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre: "Nuevo kit", items: [] }),
+    });
+    setCreating(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error ?? "Error al crear el kit");
+      return;
+    }
+    onCreated(await res.json());
+  }
+
+  return (
+    <div className="space-y-3 pt-2">
+      <div className="flex items-center gap-3">
+        <div className="h-px flex-1 bg-ambar/20" />
+        <h2 className="text-sm font-semibold text-ambar uppercase tracking-wider">
+          Kits / Combos
+        </h2>
+        <div className="h-px flex-1 bg-ambar/20" />
+      </div>
+
+      {kits.map((kit) => (
+        <KitCard
+          key={kit.id}
+          kit={kit}
+          listaId={listaId}
+          tramos={tramos}
+          allItems={allItems}
+          onSaved={onSaved}
+          onDeleted={onDeleted}
+        />
+      ))}
+
+      <button
+        onClick={crearKit}
+        disabled={creating || allItems.length === 0}
+        title={allItems.length === 0 ? "Agregá productos a la lista primero" : undefined}
+        className="w-full py-3 border-2 border-dashed border-ambar/25 rounded-xl text-sm text-ambar/60 hover:text-ambar hover:border-ambar/50 transition-colors disabled:opacity-40"
+      >
+        {creating ? "Creando..." : "+ Nuevo kit"}
+      </button>
+    </div>
+  );
+}
+
+function KitCard({
+  kit,
+  listaId,
+  tramos,
+  allItems,
+  onSaved,
+  onDeleted,
+}: {
+  kit: MayoristaKit;
+  listaId: string;
+  tramos: MayoristaTramo[];
+  allItems: MayoristaItem[];
+  onSaved: (kit: MayoristaKit) => void;
+  onDeleted: (kitId: string) => void;
+}) {
+  const [nombre, setNombre] = useState(kit.nombre);
+  const [descripcion, setDescripcion] = useState(kit.descripcion ?? "");
+  const [pct, setPct] = useState(String(Number(kit.descuento_extra_pct) || 0));
+  const [kitItems, setKitItems] = useState<{ item_id: string; cantidad: number }[]>(
+    (kit.items ?? []).map((ki) => ({ item_id: ki.item_id, cantidad: ki.cantidad }))
+  );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  // Kit sintético con items completos para el preview de precio
+  const preview = calcularKit(
+    {
+      ...kit,
+      descuento_extra_pct: Number(pct) || 0,
+      items: kitItems
+        .map((ki) => {
+          const item = allItems.find((i) => i.id === ki.item_id);
+          return item
+            ? { id: ki.item_id, kit_id: kit.id, item_id: ki.item_id, cantidad: ki.cantidad, item }
+            : null;
+        })
+        .filter((x): x is NonNullable<typeof x> => x !== null),
+    },
+    tramos
+  );
+
+  const disponibles = allItems.filter(
+    (i) => !kitItems.some((ki) => ki.item_id === i.id)
+  );
+
+  async function guardar() {
+    setSaving(true);
+    const res = await fetch(`/api/admin/mayoristas/${listaId}/kits/${kit.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre: nombre.trim() || "Kit",
+        descripcion: descripcion.trim() || null,
+        descuento_extra_pct: Number(pct) || 0,
+        items: kitItems,
+      }),
+    });
+    setSaving(false);
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      alert(err.error ?? "Error al guardar el kit");
+      return;
+    }
+    onSaved(await res.json());
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }
+
+  async function eliminar() {
+    if (!confirm(`¿Eliminar el kit "${nombre}"?`)) return;
+    await fetch(`/api/admin/mayoristas/${listaId}/kits/${kit.id}`, { method: "DELETE" });
+    onDeleted(kit.id);
+  }
+
+  return (
+    <div className="bg-navy border border-ambar/15 rounded-xl p-4 space-y-3">
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="flex-1 min-w-48 space-y-2">
+          <input
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            placeholder="Nombre del kit"
+            className="w-full bg-transparent text-base font-semibold text-niebla focus:outline-none border-b border-transparent focus:border-lavanda/30 pb-0.5 transition-colors"
+          />
+          <input
+            value={descripcion}
+            onChange={(e) => setDescripcion(e.target.value)}
+            placeholder="Descripción (opcional)"
+            className="w-full bg-transparent text-xs text-lavanda-light focus:outline-none border-b border-transparent focus:border-lavanda/30 pb-0.5 transition-colors placeholder-lavanda/30"
+          />
+        </div>
+        <label className="shrink-0">
+          <span className="block text-[10px] text-ambar/70 uppercase tracking-wide mb-0.5">
+            Desc. extra kit
+          </span>
+          <div className="relative">
+            <input
+              type="number"
+              min={0}
+              max={100}
+              value={pct}
+              onChange={(e) => setPct(e.target.value)}
+              className="w-20 bg-navy-deep border border-lavanda/20 rounded-lg pl-2 pr-6 py-1.5 text-sm text-ambar focus:outline-none focus:border-purpura"
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-ambar/60 pointer-events-none">%</span>
+          </div>
+        </label>
+      </div>
+
+      {/* Items del kit */}
+      <div className="space-y-1.5">
+        {kitItems.map((ki) => {
+          const item = allItems.find((i) => i.id === ki.item_id);
+          const linea =
+            item?.precio_pvp != null
+              ? precioUnitario(item.precio_pvp, tramos, ki.cantidad)
+              : null;
+          return (
+            <div key={ki.item_id} className="flex items-center gap-2 bg-navy-deep rounded-lg px-2.5 py-1.5">
+              <input
+                type="number"
+                min={1}
+                value={ki.cantidad}
+                onChange={(e) =>
+                  setKitItems((prev) =>
+                    prev.map((k) =>
+                      k.item_id === ki.item_id
+                        ? { ...k, cantidad: Math.max(1, Number(e.target.value) || 1) }
+                        : k
+                    )
+                  )
+                }
+                className="w-14 bg-navy border border-lavanda/20 rounded px-1.5 py-0.5 text-sm text-niebla text-center focus:outline-none focus:border-purpura"
+              />
+              <span className="text-xs text-lavanda/50">×</span>
+              <span className="flex-1 min-w-0 text-sm text-lavanda-light truncate">
+                {item?.titulo ?? "Producto (fuera de la lista)"}
+              </span>
+              {linea != null && (
+                <span className="text-xs text-ambar whitespace-nowrap">
+                  {formatPrice(linea.precio)} c/u
+                  {linea.pct > 0 && <span className="text-ambar/50"> (-{linea.pct}%)</span>}
+                </span>
+              )}
+              <button
+                onClick={() =>
+                  setKitItems((prev) => prev.filter((k) => k.item_id !== ki.item_id))
+                }
+                className="text-red-400/60 hover:text-red-400 text-sm px-1"
+                aria-label="Quitar del kit"
+              >
+                ×
+              </button>
+            </div>
+          );
+        })}
+
+        {disponibles.length > 0 && (
+          <select
+            value=""
+            onChange={(e) => {
+              if (!e.target.value) return;
+              setKitItems((prev) => [...prev, { item_id: e.target.value, cantidad: 1 }]);
+            }}
+            className="w-full bg-navy-deep border border-dashed border-lavanda/20 rounded-lg px-2.5 py-1.5 text-sm text-lavanda/60 focus:outline-none focus:border-purpura cursor-pointer"
+          >
+            <option value="">+ Agregar producto al kit...</option>
+            {disponibles.map((i) => (
+              <option key={i.id} value={i.id}>
+                {i.titulo}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      {/* Preview del precio */}
+      {kitItems.length > 0 && (
+        <div className="bg-navy-deep rounded-lg p-3 text-sm space-y-1">
+          <div className="flex justify-between text-lavanda/60 text-xs">
+            <span>Todo a PVP ({preview.totalUnidades}u)</span>
+            <span className="line-through">{formatPrice(preview.subtotalPvp)}</span>
+          </div>
+          <div className="flex justify-between text-lavanda-light text-xs">
+            <span>Con descuento por cantidad</span>
+            <span>{formatPrice(preview.subtotalConTramos)}</span>
+          </div>
+          {preview.descuentoExtraPct > 0 && (
+            <div className="flex justify-between text-emerald-400 text-xs">
+              <span>Descuento kit (−{preview.descuentoExtraPct}%)</span>
+              <span>−{formatPrice(preview.descuentoExtraMonto)}</span>
+            </div>
+          )}
+          <div className="flex justify-between font-semibold text-niebla pt-1 border-t border-lavanda/10">
+            <span>Total del kit</span>
+            <span className="text-ambar">{formatPrice(preview.total)}</span>
+          </div>
+          {!preview.completo && (
+            <p className="text-[11px] text-amber-400/80 pt-1">
+              ⚠ Hay productos sin PVP cargado — no suman al total.
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={guardar}
+          disabled={saving}
+          className="px-4 py-1.5 bg-purpura hover:bg-purpura/80 text-niebla text-sm font-medium rounded-lg transition-colors disabled:opacity-50"
+        >
+          {saving ? "Guardando..." : saved ? "✓ Guardado" : "Guardar kit"}
+        </button>
+        <button
+          onClick={eliminar}
+          className="text-xs text-red-400/60 hover:text-red-400 transition-colors"
+        >
+          Eliminar kit
+        </button>
+      </div>
     </div>
   );
 }

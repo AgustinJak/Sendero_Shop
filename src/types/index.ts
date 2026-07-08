@@ -310,6 +310,7 @@ export interface MayoristaLista {
   descuento_tramos: MayoristaTramo[];
   created_at: string;
   secciones?: MayoristaSeccion[];
+  kits?: MayoristaKit[];
 }
 
 export interface MayoristaSeccion {
@@ -341,6 +342,25 @@ export interface MayoristaImagen {
   storage_path: string | null;
   tipo: "imagen" | "video";
   orden: number;
+}
+
+/** Kit (combo) dentro de una lista mayorista. */
+export interface MayoristaKit {
+  id: string;
+  lista_id: string;
+  nombre: string;
+  descripcion: string | null;
+  descuento_extra_pct: number; // % extra sobre el subtotal del kit
+  orden: number;
+  items?: MayoristaKitItem[];
+}
+
+export interface MayoristaKitItem {
+  id: string;
+  kit_id: string;
+  item_id: string;
+  cantidad: number;
+  item?: MayoristaItem; // join con el item de la lista
 }
 
 // --- Colecciones ---

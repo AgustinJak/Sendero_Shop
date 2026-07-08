@@ -1,8 +1,10 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { MayoristaLista, MayoristaSeccion, MayoristaItem, MayoristaTramo } from "@/types";
+import type { MayoristaLista, MayoristaSeccion, MayoristaItem, MayoristaTramo, MayoristaKit } from "@/types";
 import { getWhatsapp } from "@/lib/site-config";
+import { calcularKit } from "@/lib/mayorista";
+import { formatPrice } from "@/lib/utils";
 import MayoristaItemCard from "@/components/mayorista/MayoristaItemCard";
 
 export async function generateMetadata({
@@ -47,6 +49,13 @@ export default async function MayoristaPublicPage({
           *,
           imagenes:mayorista_imagenes(*)
         )
+      ),
+      kits:mayorista_kits(
+        *,
+        items:mayorista_kit_items(
+          *,
+          item:mayorista_items(*, imagenes:mayorista_imagenes(*))
+        )
       )
     `)
     .eq("codigo", codigo)
@@ -67,6 +76,10 @@ export default async function MayoristaPublicPage({
   const tramos: MayoristaTramo[] = (lista.descuento_tramos ?? [])
     .filter((t) => t.min > 0 && t.pct > 0)
     .sort((a, b) => a.min - b.min);
+
+  const kits: MayoristaKit[] = ((lista.kits ?? []) as MayoristaKit[])
+    .filter((k) => (k.items ?? []).length > 0)
+    .sort((a, b) => a.orden - b.orden);
 
   const waHref = `https://wa.me/${whatsapp}?text=${encodeURIComponent(
     `Hola! Quiero un presupuesto mayorista de la lista "${lista.nombre}".`
@@ -157,6 +170,109 @@ export default async function MayoristaPublicPage({
             </section>
           );
         })}
+
+        {/* Kits / combos */}
+        {kits.length > 0 && (
+          <section>
+            <div className="flex items-center gap-4 mb-6">
+              <div className="h-px flex-1 bg-[#D4A853]/25" />
+              <h2 className="text-[#D4A853] text-xs uppercase tracking-widest font-semibold px-2">
+                🎁 Kits — armados para revender
+              </h2>
+              <div className="h-px flex-1 bg-[#D4A853]/25" />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {kits.map((kit) => {
+                const calc = calcularKit(kit, tramos);
+                const kitWa = `https://wa.me/${whatsapp}?text=${encodeURIComponent(
+                  `Hola! Quiero el kit "${kit.nombre}" de la lista "${lista.nombre}".`
+                )}`;
+                return (
+                  <div
+                    key={kit.id}
+                    className="rounded-2xl bg-[#0F1729] border border-[#D4A853]/25 p-5 flex flex-col gap-4"
+                  >
+                    <div>
+                      <h3 className="text-[#E8E6F0] text-lg font-bold" style={{ fontFamily: "var(--font-cinzel, serif)" }}>
+                        {kit.nombre}
+                      </h3>
+                      {kit.descripcion && (
+                        <p className="text-sm text-[#8B85B2] mt-0.5">{kit.descripcion}</p>
+                      )}
+                    </div>
+
+                    {/* Contenido del kit */}
+                    <div className="space-y-1.5">
+                      {calc.lineas.map((l, i) => (
+                        <div key={i} className="flex items-center gap-2.5 text-sm">
+                          {l.imagenUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={l.imagenUrl}
+                              alt={l.titulo}
+                              className="w-9 h-9 rounded-lg object-cover shrink-0"
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded-lg bg-[#1C2541] shrink-0" />
+                          )}
+                          <span className="text-[#D4A853] font-semibold whitespace-nowrap">
+                            {l.cantidad}×
+                          </span>
+                          <span className="flex-1 min-w-0 text-[#B8B3D1] truncate">{l.titulo}</span>
+                          {l.unitario != null ? (
+                            <span className="text-xs text-[#8B85B2] whitespace-nowrap">
+                              {formatPrice(l.unitario)} c/u
+                              {l.pct > 0 && <span className="text-[#D4A853]/60"> (-{l.pct}%)</span>}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-[#8B85B2]/50">a consultar</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Precio */}
+                    <div className="mt-auto pt-3 border-t border-[#8B85B2]/10 space-y-1 text-sm">
+                      <div className="flex justify-between text-xs text-[#8B85B2]/70">
+                        <span>Todo a precio de lista ({calc.totalUnidades}u)</span>
+                        <span className="line-through">{formatPrice(calc.subtotalPvp)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-[#B8B3D1]">
+                        <span>Con descuento por cantidad</span>
+                        <span>{formatPrice(calc.subtotalConTramos)}</span>
+                      </div>
+                      {calc.descuentoExtraPct > 0 && (
+                        <div className="flex justify-between text-xs text-emerald-400">
+                          <span>Descuento extra kit (−{calc.descuentoExtraPct}%)</span>
+                          <span>−{formatPrice(calc.descuentoExtraMonto)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between items-baseline pt-1.5">
+                        <span className="text-[#E8E6F0] font-semibold">Total del kit</span>
+                        <span className="text-xl font-bold text-[#D4A853]">{formatPrice(calc.total)}</span>
+                      </div>
+                      {calc.ahorroTotal > 0 && (
+                        <p className="text-right text-xs text-emerald-400">
+                          Ahorrás {formatPrice(calc.ahorroTotal)}
+                        </p>
+                      )}
+                    </div>
+
+                    <a
+                      href={kitWa}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#D4A853] hover:bg-[#E0B968] text-[#1C2541] text-sm font-semibold rounded-lg transition-colors"
+                    >
+                      Quiero este kit
+                    </a>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* CTA fuerte */}
         <div className="rounded-2xl bg-gradient-to-br from-[#D4A853]/15 to-[#0F1729] border border-[#D4A853]/25 p-6 sm:p-8 text-center">
