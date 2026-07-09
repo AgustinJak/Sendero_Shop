@@ -213,6 +213,30 @@ export async function getProductosRelacionados(
   return Array.from(collected.values()).slice(0, limit);
 }
 
+/**
+ * Devuelve la lista mayorista ACTIVA que contiene a un producto (o null).
+ * El vínculo es mayorista_items.producto_id → sección → lista.
+ * La RLS pública de mayorista_listas ya filtra solo las activas.
+ */
+export async function getListaMayoristaDeProducto(
+  productoId: string
+): Promise<{ codigo: string; nombre: string } | null> {
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase
+    .from("mayorista_items")
+    .select("seccion:mayorista_secciones(lista:mayorista_listas(codigo, nombre, activa))")
+    .eq("producto_id", productoId);
+
+  for (const row of data ?? []) {
+    const seccion = row.seccion as unknown as {
+      lista?: { codigo: string; nombre: string; activa: boolean };
+    } | null;
+    const lista = seccion?.lista;
+    if (lista?.activa) return { codigo: lista.codigo, nombre: lista.nombre };
+  }
+  return null;
+}
+
 // --- Categorías ---
 
 export async function getCategorias(): Promise<Categoria[]> {
