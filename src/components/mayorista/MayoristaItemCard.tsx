@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { MayoristaItem, MayoristaImagen, MayoristaTramo } from "@/types";
 import { extractYouTubeId, getYouTubeThumbnail, isYouTubeUrl } from "@/lib/youtube";
 
@@ -29,10 +30,13 @@ function PlayBadge({ small = false }: { small?: boolean }) {
 export default function MayoristaItemCard({
   item,
   tramos,
+  index = 0,
 }: {
   item: MayoristaItem;
   tramos: MayoristaTramo[];
+  index?: number;
 }) {
+  const reduce = useReducedMotion();
   const media = (item.imagenes ?? [])
     .slice()
     .sort((a: MayoristaImagen, b: MayoristaImagen) => a.orden - b.orden);
@@ -102,7 +106,13 @@ export default function MayoristaItemCard({
 
   return (
     <>
-      <div className="bg-[#0F1729] rounded-2xl overflow-hidden border border-[#8B85B2]/10 flex flex-col">
+      <motion.div
+        className="bg-[#0F1729] rounded-2xl overflow-hidden border border-[#8B85B2]/10 flex flex-col transition-[border-color,box-shadow] duration-200 [@media(hover:hover)]:hover:border-[#D4A853]/30 [@media(hover:hover)]:hover:shadow-lg [@media(hover:hover)]:hover:shadow-[#D4A853]/5"
+        initial={reduce ? false : { opacity: 0, y: 12 }}
+        whileInView={reduce ? undefined : { opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-40px" }}
+        transition={{ duration: 0.35, delay: Math.min(index, 6) * 0.045, ease: [0.23, 1, 0.32, 1] }}
+      >
         {/* Media principal */}
         <div className="relative group">
           <button
@@ -220,12 +230,12 @@ export default function MayoristaItemCard({
             )}
           </div>
         </div>
-      </div>
+      </motion.div>
 
       {/* Lightbox — zoom sobre la página con fondo blureado (no pantalla completa) */}
       {lightboxOpen && activo && (
         <div
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#0F1729]/70 backdrop-blur-md transition-opacity duration-200 ${
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#0F1729]/70 backdrop-blur-md transition-opacity duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${
             entered ? "opacity-100" : "opacity-0"
           }`}
           onClick={() => setLightboxOpen(false)}
@@ -277,7 +287,7 @@ export default function MayoristaItemCard({
 
           {/* Contenido (zoom sutil de entrada) */}
           <div
-            className={`flex items-center justify-center transition-transform duration-200 ${
+            className={`flex items-center justify-center transition-transform duration-200 ease-[cubic-bezier(0.23,1,0.32,1)] ${
               entered ? "scale-100" : "scale-95"
             }`}
             onClick={(e) => e.stopPropagation()}

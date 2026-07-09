@@ -7,7 +7,7 @@ export default function KitsScrollButton() {
       onClick={() =>
         document.getElementById("kits")?.scrollIntoView({ behavior: "smooth", block: "start" })
       }
-      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#D4A853] hover:bg-[#E0B968] text-[#1C2541] text-sm font-semibold transition-colors"
+      className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[#D4A853] hover:bg-[#E0B968] text-[#1C2541] text-sm font-semibold transition-[background-color,transform] duration-150 ease-out active:scale-[0.97]"
     >
       🎁 Ver kits pre armados
       <span aria-hidden="true">↓</span>
