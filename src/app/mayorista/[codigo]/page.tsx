@@ -162,7 +162,7 @@ export default async function MayoristaPublicPage({
                 <div className="h-px flex-1 bg-[#8B85B2]/15" />
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 items-start">
                 {items.map((item: MayoristaItem) => (
                   <MayoristaItemCard key={item.id} item={item} tramos={tramos} />
                 ))}

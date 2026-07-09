@@ -40,6 +40,7 @@ export default function MayoristaItemCard({
   const [current, setCurrent] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [ytPlaying, setYtPlaying] = useState(false);
+  const [entered, setEntered] = useState(false); // animación de entrada del lightbox
 
   const hasMedia = media.length > 0;
   const hasMultiple = media.length > 1;
@@ -50,9 +51,13 @@ export default function MayoristaItemCard({
     setCurrent((c) => (c + dir + media.length) % media.length);
   }
 
-  // Lightbox: teclado + bloqueo de scroll
+  // Lightbox: teclado + bloqueo de scroll + animación de entrada
   useEffect(() => {
-    if (!lightboxOpen) return;
+    if (!lightboxOpen) {
+      setEntered(false);
+      return;
+    }
+    const raf = requestAnimationFrame(() => setEntered(true));
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") setLightboxOpen(false);
       if (e.key === "ArrowRight") go(1);
@@ -62,6 +67,7 @@ export default function MayoristaItemCard({
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
@@ -164,7 +170,7 @@ export default function MayoristaItemCard({
 
         {/* Thumbnails */}
         {hasMultiple && (
-          <div className="flex gap-1 p-1.5 overflow-x-auto">
+          <div className="flex gap-1 p-1.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {media.map((m, i) => (
               <button
                 key={m.id}
@@ -186,12 +192,6 @@ export default function MayoristaItemCard({
         {/* Info */}
         <div className="p-3 flex flex-col gap-1.5 flex-1">
           <h3 className="text-[#E8E6F0] text-sm font-medium leading-snug">{item.titulo}</h3>
-
-          {item.codigo_ref && (
-            <span className="text-[10px] font-mono text-[#8B85B2]/60 self-start bg-[#1C2541] px-2 py-0.5 rounded">
-              {item.codigo_ref}
-            </span>
-          )}
 
           {/* Pricing B2B */}
           <div className="mt-auto pt-2">
@@ -222,10 +222,12 @@ export default function MayoristaItemCard({
         </div>
       </div>
 
-      {/* Lightbox */}
+      {/* Lightbox — zoom sobre la página con fondo blureado (no pantalla completa) */}
       {lightboxOpen && activo && (
         <div
-          className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4 sm:p-8"
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-4 sm:p-8 bg-[#0F1729]/70 backdrop-blur-md transition-opacity duration-200 ${
+            entered ? "opacity-100" : "opacity-0"
+          }`}
           onClick={() => setLightboxOpen(false)}
           role="dialog"
           aria-modal="true"
@@ -235,7 +237,7 @@ export default function MayoristaItemCard({
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setLightboxOpen(false); }}
-            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors z-10"
+            className="absolute top-4 right-4 w-10 h-10 rounded-full bg-black/40 hover:bg-black/60 text-white text-2xl flex items-center justify-center transition-colors z-10"
             aria-label="Cerrar"
           >
             ×
@@ -244,11 +246,11 @@ export default function MayoristaItemCard({
           {/* Contador + título */}
           <div className="absolute top-4 left-4 flex items-center gap-3 max-w-[calc(100%-4rem)]">
             {hasMultiple && (
-              <span className="px-3 py-1 bg-white/10 text-white text-sm rounded-full whitespace-nowrap">
+              <span className="px-3 py-1 bg-black/40 text-white text-sm rounded-full whitespace-nowrap">
                 {current + 1} / {media.length}
               </span>
             )}
-            <span className="text-white/70 text-sm truncate">{item.titulo}</span>
+            <span className="text-white/80 text-sm truncate">{item.titulo}</span>
           </div>
 
           {/* Anterior / Siguiente */}
@@ -257,7 +259,7 @@ export default function MayoristaItemCard({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(-1); }}
-                className="absolute left-4 sm:left-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors z-10"
+                className="absolute left-3 sm:left-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/45 hover:bg-black/70 text-white text-3xl flex items-center justify-center transition-colors z-10 shadow-lg"
                 aria-label="Imagen anterior"
               >
                 ‹
@@ -265,7 +267,7 @@ export default function MayoristaItemCard({
               <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); go(1); }}
-                className="absolute right-4 sm:right-8 w-12 h-12 rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl flex items-center justify-center transition-colors z-10"
+                className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-black/45 hover:bg-black/70 text-white text-3xl flex items-center justify-center transition-colors z-10 shadow-lg"
                 aria-label="Imagen siguiente"
               >
                 ›
@@ -273,8 +275,13 @@ export default function MayoristaItemCard({
             </>
           )}
 
-          {/* Contenido */}
-          <div className="max-w-full max-h-full flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+          {/* Contenido (zoom sutil de entrada) */}
+          <div
+            className={`flex items-center justify-center transition-transform duration-200 ${
+              entered ? "scale-100" : "scale-95"
+            }`}
+            onClick={(e) => e.stopPropagation()}
+          >
             {isYT(activo) ? (
               ytPlaying ? (
                 <iframe
@@ -282,26 +289,56 @@ export default function MayoristaItemCard({
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   title={item.titulo}
-                  className="w-[90vw] max-w-[1000px] aspect-video rounded-lg"
+                  className="w-[88vw] max-w-[900px] aspect-video rounded-xl shadow-2xl"
                 />
               ) : (
-                <button type="button" onClick={() => setYtPlaying(true)} className="relative w-[90vw] max-w-[1000px] aspect-video">
+                <button type="button" onClick={() => setYtPlaying(true)} className="relative w-[88vw] max-w-[900px] aspect-video">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={thumbFor(activo)} alt={item.titulo} className="w-full h-full object-contain rounded-lg" />
+                  <img src={thumbFor(activo)} alt={item.titulo} className="w-full h-full object-contain rounded-xl shadow-2xl" />
                   <PlayBadge />
                 </button>
               )
             ) : isVid(activo) ? (
-              <video src={activo.url} controls autoPlay playsInline className="max-w-full max-h-[85vh] rounded-lg bg-black" />
+              <video
+                src={activo.url}
+                controls
+                autoPlay
+                playsInline
+                className="max-w-[88vw] max-h-[78vh] rounded-xl bg-black shadow-2xl ring-1 ring-white/10"
+              />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={activo.url}
                 alt={item.titulo}
-                className="max-w-full max-h-[85vh] object-contain rounded-lg"
+                className="max-w-[88vw] max-h-[78vh] object-contain rounded-xl shadow-2xl ring-1 ring-white/10"
               />
             )}
           </div>
+
+          {/* Tira de thumbnails (indica que hay más y permite navegar) */}
+          {hasMultiple && (
+            <div
+              className="mt-4 flex gap-1.5 max-w-[92vw] overflow-x-auto px-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {media.map((m, i) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => { setYtPlaying(false); setCurrent(i); }}
+                  className={`relative w-12 h-12 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                    i === current ? "border-[#D4A853] opacity-100" : "border-transparent opacity-50 hover:opacity-80"
+                  }`}
+                  aria-label={`Ver ${i + 1}`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={thumbFor(m)} alt="" className="w-full h-full object-cover" />
+                  {isVid(m) && <PlayBadge small />}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </>
