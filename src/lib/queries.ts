@@ -237,19 +237,6 @@ export async function getListaMayoristaDeProducto(
   return null;
 }
 
-/** Listas mayoristas activas (para el menú del header). */
-export async function getListasMayoristasActivas(): Promise<
-  { codigo: string; nombre: string }[]
-> {
-  const supabase = await createServerSupabaseClient();
-  const { data } = await supabase
-    .from("mayorista_listas")
-    .select("codigo, nombre")
-    .eq("activa", true)
-    .order("created_at", { ascending: false });
-  return (data as { codigo: string; nombre: string }[]) ?? [];
-}
-
 // --- Categorías ---
 
 export async function getCategorias(): Promise<Categoria[]> {

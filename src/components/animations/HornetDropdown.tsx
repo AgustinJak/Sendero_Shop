@@ -14,10 +14,6 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleClick = () => {
-    setIsOpen((prev) => !prev);
-  };
-
   // Cerrar con Escape
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
@@ -27,31 +23,19 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
     return () => document.removeEventListener("keydown", handleKey);
   }, [isOpen]);
 
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(e.target as Node)
-      ) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [isOpen]);
-
   return (
     <div
       ref={containerRef}
       className="relative"
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
     >
-      {/* Trigger */}
-      <button
-        onClick={handleClick}
+      {/* Trigger: hover abre la lista, click lleva al catálogo */}
+      <Link
+        href="/catalogo"
         className="text-lavanda-light hover:text-niebla transition-colors flex items-center gap-1"
       >
-        Categorías
+        Catálogo
         <motion.svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
@@ -66,7 +50,7 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
             clipRule="evenodd"
           />
         </motion.svg>
-      </button>
+      </Link>
 
       {/* Dropdown — Hornet debajo del menú, como arrastrándolo */}
       <AnimatePresence>
