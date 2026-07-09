@@ -6,6 +6,7 @@ import { getWhatsapp } from "@/lib/site-config";
 import { calcularKit } from "@/lib/mayorista";
 import { formatPrice } from "@/lib/utils";
 import MayoristaItemCard from "@/components/mayorista/MayoristaItemCard";
+import KitsScrollButton from "@/components/mayorista/KitsScrollButton";
 
 export async function generateMetadata({
   params,
@@ -127,6 +128,8 @@ export default async function MayoristaPublicPage({
             </div>
           )}
 
+          {kits.length > 0 && <KitsScrollButton />}
+
           <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
             {lista.moq != null && (
               <span className="text-[#B8B3D1]">
@@ -173,7 +176,7 @@ export default async function MayoristaPublicPage({
 
         {/* Kits / combos */}
         {kits.length > 0 && (
-          <section>
+          <section id="kits" className="scroll-mt-6">
             <div className="flex items-center gap-4 mb-6">
               <div className="h-px flex-1 bg-[#D4A853]/25" />
               <h2 className="text-[#D4A853] text-xs uppercase tracking-widest font-semibold px-2">
