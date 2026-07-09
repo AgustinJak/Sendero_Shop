@@ -10,14 +10,20 @@ import type { Categoria } from "@/types";
 
 interface HeaderClientProps {
   categorias: Categoria[];
+  listasMayoristas?: { codigo: string; nombre: string }[];
   children?: React.ReactNode;
 }
 
-export default function HeaderClient({ categorias, children }: HeaderClientProps) {
+export default function HeaderClient({
+  categorias,
+  listasMayoristas = [],
+  children,
+}: HeaderClientProps) {
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [mayoristaOpen, setMayoristaOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -52,6 +58,49 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
             {/* Categorías con Hornet */}
             <HornetDropdown categorias={categorias} />
 
+            {/* Precios mayoristas con dropdown (hover) */}
+            {listasMayoristas.length > 0 && (
+              <div
+                className="relative"
+                onMouseEnter={() => setMayoristaOpen(true)}
+                onMouseLeave={() => setMayoristaOpen(false)}
+              >
+                <button className="flex items-center gap-1 text-lavanda-light hover:text-niebla transition-colors">
+                  Precios mayoristas
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+                <AnimatePresence>
+                  {mayoristaOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                      transition={{ duration: 0.15, ease: [0.23, 1, 0.32, 1] }}
+                      style={{ transformOrigin: "top" }}
+                      className="absolute left-1/2 -translate-x-1/2 top-full pt-3 min-w-56"
+                    >
+                      <div className="bg-navy border border-ambar/25 rounded-xl shadow-xl shadow-black/30 p-1.5">
+                        <p className="px-3 py-1.5 text-[10px] uppercase tracking-widest text-ambar/70">
+                          Listas de precios
+                        </p>
+                        {listasMayoristas.map((l) => (
+                          <Link
+                            key={l.codigo}
+                            href={`/mayorista/${l.codigo}`}
+                            className="block px-3 py-2 rounded-lg text-sm text-lavanda-light hover:bg-ambar/10 hover:text-niebla transition-colors"
+                          >
+                            {l.nombre}
+                          </Link>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+
             <Link
               href="/nosotros"
               className="text-lavanda-light hover:text-niebla transition-colors"
@@ -64,6 +113,13 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
               className="text-lavanda-light hover:text-niebla transition-colors"
             >
               Contacto
+            </Link>
+
+            <Link
+              href="/mi-pedido"
+              className="text-lavanda-light hover:text-niebla transition-colors"
+            >
+              Mi pedido
             </Link>
           </div>
 
@@ -172,6 +228,25 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                   </div>
                 ))}
 
+                {/* Precios mayoristas en mobile */}
+                {listasMayoristas.length > 0 && (
+                  <div>
+                    <p className="text-ambar text-sm font-semibold">Precios mayoristas</p>
+                    <div className="ml-4 mt-1 flex flex-col gap-1">
+                      {listasMayoristas.map((l) => (
+                        <Link
+                          key={l.codigo}
+                          href={`/mayorista/${l.codigo}`}
+                          className="text-sm text-lavanda/75 hover:text-niebla transition-colors"
+                          onClick={() => setMenuOpen(false)}
+                        >
+                          {l.nombre}
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <Link
                   href="/nosotros"
                   className="text-lavanda-light hover:text-niebla transition-colors"
@@ -185,6 +260,13 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                   onClick={() => setMenuOpen(false)}
                 >
                   Contacto
+                </Link>
+                <Link
+                  href="/mi-pedido"
+                  className="text-lavanda-light hover:text-niebla transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Mi pedido
                 </Link>
               </div>
             </motion.div>

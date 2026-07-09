@@ -1,11 +1,14 @@
 import Link from "next/link";
-import { getCategoriasTree } from "@/lib/queries";
+import { getCategoriasTree, getListasMayoristasActivas } from "@/lib/queries";
 import HeaderClient from "./HeaderClient";
 
 export default async function Header() {
-  const categorias = await getCategoriasTree();
+  const [categorias, listasMayoristas] = await Promise.all([
+    getCategoriasTree(),
+    getListasMayoristasActivas(),
+  ]);
   return (
-    <HeaderClient categorias={categorias}>
+    <HeaderClient categorias={categorias} listasMayoristas={listasMayoristas}>
       <Link href="/" className="flex items-center gap-2 shrink-0">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img

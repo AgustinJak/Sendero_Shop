@@ -1,5 +1,6 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
 import type { MayoristaLista, MayoristaSeccion, MayoristaItem, MayoristaTramo, MayoristaKit } from "@/types";
 import { getWhatsapp } from "@/lib/site-config";
@@ -89,17 +90,29 @@ export default async function MayoristaPublicPage({
 
   return (
     <div className="min-h-screen bg-[#1C2541]">
+      {/* Barra de volver a la tienda */}
+      <div className="bg-[#0F1729] border-b border-[#8B85B2]/10">
+        <div className="max-w-5xl mx-auto px-4 py-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-1.5 text-xs text-[#8B85B2] hover:text-[#E8E6F0] transition-colors"
+          >
+            <span aria-hidden="true">←</span> Volver a la tienda
+          </Link>
+        </div>
+      </div>
+
       {/* Header */}
       <header className="bg-[#0F1729] border-b border-[#8B85B2]/10">
         <div className="max-w-5xl mx-auto px-4 py-5 flex items-center justify-between gap-4">
-          <div className="min-w-0">
+          <Link href="/" className="min-w-0 group">
             <p className="text-[10px] uppercase tracking-widest text-[#8B85B2]/50 mb-1">
               Lista de Precios Mayorista
             </p>
-            <h1 className="text-[#E8E6F0] text-xl font-bold truncate" style={{ fontFamily: "var(--font-cinzel, serif)" }}>
+            <h1 className="text-[#E8E6F0] text-xl font-bold truncate group-hover:text-white transition-colors" style={{ fontFamily: "var(--font-cinzel, serif)" }}>
               Sendero 3D
             </h1>
-          </div>
+          </Link>
           <div className="text-right text-xs text-[#8B85B2]/40 space-y-0.5 shrink-0">
             <p>{totalItems} productos</p>
             {lista.validez_hasta && <p>Válida hasta {formatFecha(lista.validez_hasta)}</p>}
