@@ -13,6 +13,27 @@ interface HornetDropdownProps {
 export default function HornetDropdown({ categorias = [] }: HornetDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const closeTimer = useRef<number | null>(null);
+
+  // Abrir cancelando cualquier cierre pendiente; cerrar con un pequeño
+  // delay (grace period) para que mover el mouse hacia el menú no parpadee.
+  const open = () => {
+    if (closeTimer.current !== null) {
+      clearTimeout(closeTimer.current);
+      closeTimer.current = null;
+    }
+    setIsOpen(true);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setIsOpen(false), 120);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeTimer.current !== null) clearTimeout(closeTimer.current);
+    };
+  }, []);
 
   // Cerrar con Escape
   useEffect(() => {
@@ -27,8 +48,8 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
     <div
       ref={containerRef}
       className="relative"
-      onMouseEnter={() => setIsOpen(true)}
-      onMouseLeave={() => setIsOpen(false)}
+      onMouseEnter={open}
+      onMouseLeave={scheduleClose}
     >
       {/* Trigger: hover abre la lista, click lleva al catálogo */}
       <Link
@@ -57,6 +78,10 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
         {isOpen && (
           <motion.div
             className="absolute top-full left-1/2 -translate-x-1/2 pt-2"
+            // Durante la animación de salida el menú sube hacia la barra; si
+            // siguiera recibiendo eventos de mouse re-dispararía el hover del
+            // contenedor y parpadearía. Lo anulamos mientras se cierra.
+            style={{ pointerEvents: isOpen ? "auto" : "none" }}
             initial={{ y: -30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -30, opacity: 0 }}
@@ -138,9 +163,10 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
                 </div>
               </motion.div>
 
-              {/* Hornet — agarrada de la esquina inferior izquierda del menú */}
+              {/* Hornet — agarrada de la esquina inferior izquierda del menú.
+                  pointer-events-none: es decorativa, no debe agrandar el área de hover. */}
               <motion.div
-                className="absolute -bottom-42 -left-34 z-10"
+                className="absolute -bottom-42 -left-34 z-10 pointer-events-none"
                 initial={{ opacity: 0, y: -20 }}
                 animate={{
                   opacity: 1,
