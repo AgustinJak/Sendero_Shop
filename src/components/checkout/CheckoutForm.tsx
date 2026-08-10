@@ -631,20 +631,29 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
                 {cotizacion && !cotizandoEnvio && (
                   <div className="bg-navy/50 border border-lavanda/10 rounded-lg p-3 space-y-1">
+                    {/* Con envío gratis no mostramos importes: no se cobran. */}
                     {cotizacion.domicilio && (
                       <div className="flex justify-between text-sm">
                         <span className="text-lavanda-light">A domicilio ({cotizacion.domicilio.producto})</span>
-                        <span className={`font-semibold ${tipoEnvio === "domicilio" ? "text-ambar" : "text-lavanda/75"}`}>
-                          {formatPrice(cotizacion.domicilio.precio)}
-                        </span>
+                        {calificaEnvioGratis ? (
+                          <span className="font-semibold text-emerald-400">GRATIS</span>
+                        ) : (
+                          <span className={`font-semibold ${tipoEnvio === "domicilio" ? "text-ambar" : "text-lavanda/75"}`}>
+                            {formatPrice(cotizacion.domicilio.precio)}
+                          </span>
+                        )}
                       </div>
                     )}
                     {cotizacion.sucursal && (
                       <div className="flex justify-between text-sm">
                         <span className="text-lavanda-light">A sucursal ({cotizacion.sucursal.producto})</span>
-                        <span className={`font-semibold ${tipoEnvio === "sucursal" ? "text-ambar" : "text-lavanda/75"}`}>
-                          {formatPrice(cotizacion.sucursal.precio)}
-                        </span>
+                        {calificaEnvioGratis ? (
+                          <span className="font-semibold text-emerald-400">GRATIS</span>
+                        ) : (
+                          <span className={`font-semibold ${tipoEnvio === "sucursal" ? "text-ambar" : "text-lavanda/75"}`}>
+                            {formatPrice(cotizacion.sucursal.precio)}
+                          </span>
+                        )}
                       </div>
                     )}
                     {(cotizacion.domicilio?.tiempoMin || cotizacion.domicilio?.tiempoMax) && (
