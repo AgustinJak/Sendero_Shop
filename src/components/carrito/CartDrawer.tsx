@@ -18,6 +18,12 @@ export default function CartDrawer() {
     tramos,
   } = useCartContext();
 
+  // Total ahorrado en el pedido por los descuentos por cantidad.
+  const ahorroTotal = cart.items.reduce((acc, i) => {
+    const lista = i.precio_lista ?? i.precio_unitario;
+    return acc + Math.max(0, lista - i.precio_unitario) * i.cantidad;
+  }, 0);
+
   return (
     <AnimatePresence>
       {isDrawerOpen && (
@@ -153,10 +159,8 @@ export default function CartDrawer() {
                               </p>
                               {conDescuento && (
                                 <p className="text-xs text-emerald-400">
-                                  Ahorrás{" "}
-                                  {formatPrice(
-                                    (lista - item.precio_unitario) * item.cantidad
-                                  )}
+                                  Ahorrás {formatPrice(lista - item.precio_unitario)} por
+                                  unidad
                                 </p>
                               )}
                               {!conDescuento && !item.mayorista?.esKit && (() => {
@@ -215,11 +219,19 @@ export default function CartDrawer() {
             {/* Footer */}
             {cart.items.length > 0 && (
               <div className="border-t border-lavanda/10 px-6 py-4 space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-lavanda-light">Subtotal</span>
-                  <span className="text-lg font-bold text-niebla">
-                    {formatPrice(cart.subtotal)}
-                  </span>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-lavanda-light">Subtotal</span>
+                    <span className="text-lg font-bold text-niebla">
+                      {formatPrice(cart.subtotal)}
+                    </span>
+                  </div>
+                  {ahorroTotal > 0 && (
+                    <div className="flex items-center justify-between text-sm text-emerald-400">
+                      <span>Ahorro por cantidad</span>
+                      <span className="font-semibold">−{formatPrice(ahorroTotal)}</span>
+                    </div>
+                  )}
                 </div>
                 <p className="text-xs text-lavanda/60">
                   Envío calculado en el checkout

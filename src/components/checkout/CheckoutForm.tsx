@@ -211,6 +211,12 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
   const recargoPct = Number(configuracion.recargo_mp_porcentaje) || MP_RECARGO_DEFAULT_PCT;
   // Envío gratis por monto: si el subtotal alcanza el umbral, el envío es 0.
   const calificaEnvioGratis = envioGratisDesde > 0 && cart.subtotal >= envioGratisDesde;
+
+  // Total ahorrado por los descuentos por cantidad.
+  const ahorroTotal = cart.items.reduce((acc, i) => {
+    const lista = i.precio_lista ?? i.precio_unitario;
+    return acc + Math.max(0, lista - i.precio_unitario) * i.cantidad;
+  }, 0);
   const costoEnvio = calificaEnvioGratis ? 0 : getCostoEnvio();
   const recargoMP = metodoPago === "mercadopago" ? calcularRecargoMP(cart.subtotal + costoEnvio, recargoPct) : 0;
   const total = cart.subtotal + costoEnvio + recargoMP;
@@ -841,7 +847,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                     return (
                       <p className="text-xs text-emerald-400">
                         −{pct}% por cantidad · {formatPrice(item.precio_unitario)} c/u
-                        {" · "}ahorrás {formatPrice((lista - item.precio_unitario) * item.cantidad)}
+                        {" · "}ahorrás {formatPrice(lista - item.precio_unitario)} por unidad
                       </p>
                     );
                   })()}
@@ -856,6 +862,12 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
               <span className="text-lavanda/75">Subtotal</span>
               <span className="text-lavanda-light">{formatPrice(cart.subtotal)}</span>
             </div>
+            {ahorroTotal > 0 && (
+              <div className="flex justify-between text-sm text-emerald-400">
+                <span>Ahorro por cantidad</span>
+                <span className="font-semibold">−{formatPrice(ahorroTotal)}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm">
               <span className="text-lavanda/75">
                 Envío
