@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { MayoristaLista, MayoristaSeccion, MayoristaItem, MayoristaTramo, MayoristaKit } from "@/types";
-import { getWhatsapp } from "@/lib/site-config";
+import { getSiteConfig } from "@/lib/site-config";
 import { calcularKit } from "@/lib/mayorista";
 import { formatPrice } from "@/lib/utils";
 import MayoristaItemCard from "@/components/mayorista/MayoristaItemCard";
@@ -39,10 +39,11 @@ export default async function MayoristaPublicPage({
   params: Promise<{ codigo: string }>;
 }) {
   const { codigo } = await params;
-  const [db, whatsapp] = await Promise.all([
+  const [db, siteConfig] = await Promise.all([
     createServiceRoleClient(),
-    getWhatsapp(),
+    getSiteConfig(),
   ]);
+  const { whatsapp, envio_gratis_desde: envioGratisDesde } = siteConfig;
 
   const { data: listaRaw } = await db
     .from("mayorista_listas")
@@ -91,7 +92,7 @@ export default async function MayoristaPublicPage({
   )}`;
 
   return (
-    <MayoristaCartShell tramos={tramos}>
+    <MayoristaCartShell tramos={tramos} envioGratisDesde={envioGratisDesde}>
     <div className="min-h-screen bg-[#1C2541]">
       {/* Barra de volver a la tienda */}
       <div className="bg-[#0F1729] border-b border-[#8B85B2]/10">

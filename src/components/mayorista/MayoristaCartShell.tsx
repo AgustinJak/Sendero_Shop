@@ -50,12 +50,14 @@ function CartFab() {
 export default function MayoristaCartShell({
   children,
   tramos = [],
+  envioGratisDesde = 0,
 }: {
   children: React.ReactNode;
   tramos?: MayoristaTramo[];
+  envioGratisDesde?: number;
 }) {
   return (
-    <CartProvider tramos={tramos}>
+    <CartProvider tramos={tramos} envioGratisDesde={envioGratisDesde}>
       {children}
       <CartDrawer />
       <CartFab />

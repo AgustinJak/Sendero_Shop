@@ -16,7 +16,12 @@ export default function CartDrawer() {
     updateQuantity,
     itemCount,
     tramos,
+    envioGratisDesde,
   } = useCartContext();
+
+  const calificaEnvioGratis =
+    envioGratisDesde > 0 && cart.subtotal >= envioGratisDesde;
+  const faltaParaEnvioGratis = envioGratisDesde - cart.subtotal;
 
   // Total ahorrado en el pedido por los descuentos por cantidad.
   const ahorroTotal = cart.items.reduce((acc, i) => {
@@ -233,9 +238,26 @@ export default function CartDrawer() {
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-lavanda/60">
-                  Envío calculado en el checkout
-                </p>
+                {calificaEnvioGratis ? (
+                  <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-3 py-2 text-sm text-emerald-400">
+                    <span aria-hidden="true">🎉</span>
+                    <span>
+                      ¡Tenés <strong className="font-semibold">envío gratis</strong>!
+                    </span>
+                  </div>
+                ) : envioGratisDesde > 0 ? (
+                  <p className="text-xs text-lavanda/60">
+                    Te faltan{" "}
+                    <span className="font-semibold text-ambar">
+                      {formatPrice(faltaParaEnvioGratis)}
+                    </span>{" "}
+                    para el envío gratis
+                  </p>
+                ) : (
+                  <p className="text-xs text-lavanda/60">
+                    Envío calculado en el checkout
+                  </p>
+                )}
                 <Link
                   href="/checkout"
                   onClick={closeDrawer}

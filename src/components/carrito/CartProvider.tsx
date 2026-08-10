@@ -7,6 +7,7 @@ import type { CartItem, Cart, VarianteSeleccion, MayoristaTramo } from "@/types"
 
 interface CartContextType {
   tramos: MayoristaTramo[];
+  envioGratisDesde: number;
   cart: Cart;
   isLoaded: boolean;
   addItem: (item: Omit<CartItem, "subtotal">) => void;
@@ -24,10 +25,13 @@ const CartContext = createContext<CartContextType | null>(null);
 export function CartProvider({
   children,
   tramos = [],
+  envioGratisDesde = 0,
 }: {
   children: React.ReactNode;
   /** Tramos de descuento por cantidad, aplicados por línea del carrito. */
   tramos?: MayoristaTramo[];
+  /** Subtotal a partir del cual el envío es gratis (0 = desactivado). */
+  envioGratisDesde?: number;
 }) {
   const cartHook = useCart(tramos);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -74,6 +78,7 @@ export function CartProvider({
         openDrawer,
         closeDrawer,
         tramos,
+        envioGratisDesde,
       }}
     >
       {children}

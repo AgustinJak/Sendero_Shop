@@ -25,7 +25,11 @@ export default async function StorefrontLayout({
     getBanners("popup"),
     getSiteConfig(),
   ]);
-  const { whatsapp, descuento_tramos: tramos } = siteConfig;
+  const {
+    whatsapp,
+    descuento_tramos: tramos,
+    envio_gratis_desde: envioGratisDesde,
+  } = siteConfig;
 
   const organizationLd = {
     "@context": "https://schema.org",
@@ -42,7 +46,7 @@ export default async function StorefrontLayout({
   };
 
   return (
-    <CartProvider tramos={tramos}>
+    <CartProvider tramos={tramos} envioGratisDesde={envioGratisDesde}>
       <Header />
       <main className="flex-1">{children}</main>
       <Footer whatsapp={whatsapp} />
