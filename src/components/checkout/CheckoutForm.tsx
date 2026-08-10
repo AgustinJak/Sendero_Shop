@@ -212,11 +212,14 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
   // Envío gratis por monto: si el subtotal alcanza el umbral, el envío es 0.
   const calificaEnvioGratis = envioGratisDesde > 0 && cart.subtotal >= envioGratisDesde;
 
-  // Total ahorrado por los descuentos por cantidad.
-  const ahorroTotal = cart.items.reduce((acc, i) => {
-    const lista = i.precio_lista ?? i.precio_unitario;
-    return acc + Math.max(0, lista - i.precio_unitario) * i.cantidad;
-  }, 0);
+  // Precio de lista (sin descuentos) y cuánto se ahorra en total.
+  const totalLista = cart.items.reduce(
+    (acc, i) => acc + (i.precio_lista ?? i.precio_unitario) * i.cantidad,
+    0
+  );
+  const ahorroTotal = Math.max(0, totalLista - cart.subtotal);
+  const ahorroPct =
+    totalLista > 0 ? Math.round((ahorroTotal / totalLista) * 100) : 0;
   const costoEnvio = calificaEnvioGratis ? 0 : getCostoEnvio();
   const recargoMP = metodoPago === "mercadopago" ? calcularRecargoMP(cart.subtotal + costoEnvio, recargoPct) : 0;
   const total = cart.subtotal + costoEnvio + recargoMP;
@@ -845,10 +848,17 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                     if (item.precio_unitario >= lista) return null;
                     const pct = Math.round((1 - item.precio_unitario / lista) * 100);
                     return (
-                      <p className="text-xs text-emerald-400">
-                        −{pct}% por cantidad · {formatPrice(item.precio_unitario)} c/u
-                        {" · "}ahorrás {formatPrice(lista - item.precio_unitario)} por unidad
-                      </p>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+                        <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold leading-none text-emerald-400">
+                          −{pct}%
+                        </span>
+                        <span className="text-xs text-lavanda-light">
+                          {formatPrice(item.precio_unitario)} c/u
+                        </span>
+                        <span className="text-xs text-lavanda/40 line-through">
+                          {formatPrice(lista)}
+                        </span>
+                      </div>
                     );
                   })()}
                 </div>
@@ -858,14 +868,28 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
           </div>
 
           <div className="border-t border-lavanda/10 pt-3 space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-lavanda/75">Subtotal</span>
-              <span className="text-lavanda-light">{formatPrice(cart.subtotal)}</span>
-            </div>
+            {/* Con descuento arrancamos del precio de lista para que la cuenta
+                cierre: lista − descuento = subtotal. */}
             {ahorroTotal > 0 && (
-              <div className="flex justify-between text-sm text-emerald-400">
-                <span>Ahorro por cantidad</span>
-                <span className="font-semibold">−{formatPrice(ahorroTotal)}</span>
+              <>
+                <div className="flex justify-between text-sm">
+                  <span className="text-lavanda/75">Precio de lista</span>
+                  <span className="text-lavanda/60 line-through">
+                    {formatPrice(totalLista)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm text-emerald-400">
+                  <span>Descuento por cantidad ({ahorroPct}%)</span>
+                  <span className="font-semibold">−{formatPrice(ahorroTotal)}</span>
+                </div>
+              </>
+            )}
+            {/* Si no hay envío ni recargo, subtotal == total: mostrar los dos
+                sería repetir el mismo número. */}
+            {cart.subtotal !== total && (
+              <div className="flex justify-between text-sm">
+                <span className="text-lavanda/75">Subtotal</span>
+                <span className="text-lavanda-light">{formatPrice(cart.subtotal)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">

@@ -27,11 +27,14 @@ export default function CartDrawer() {
       ? Math.min(100, (cart.subtotal / envioGratisDesde) * 100)
       : 0;
 
-  // Total ahorrado en el pedido por los descuentos por cantidad.
-  const ahorroTotal = cart.items.reduce((acc, i) => {
-    const lista = i.precio_lista ?? i.precio_unitario;
-    return acc + Math.max(0, lista - i.precio_unitario) * i.cantidad;
-  }, 0);
+  // Precio de lista (sin descuentos) y cuánto se ahorra en total.
+  const totalLista = cart.items.reduce(
+    (acc, i) => acc + (i.precio_lista ?? i.precio_unitario) * i.cantidad,
+    0
+  );
+  const ahorroTotal = Math.max(0, totalLista - cart.subtotal);
+  const ahorroPct =
+    totalLista > 0 ? Math.round((ahorroTotal / totalLista) * 100) : 0;
 
   return (
     <AnimatePresence>
@@ -229,18 +232,28 @@ export default function CartDrawer() {
             {cart.items.length > 0 && (
               <div className="border-t border-lavanda/10 px-6 py-4 space-y-4">
                 <div className="space-y-1">
-                  <div className="flex items-center justify-between">
+                  {/* Con descuento arrancamos del precio de lista para que la
+                      cuenta cierre: lista − descuento = subtotal. */}
+                  {ahorroTotal > 0 && (
+                    <>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-lavanda/75">Precio de lista</span>
+                        <span className="text-lavanda/60 line-through">
+                          {formatPrice(totalLista)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-emerald-400">
+                        <span>Descuento por cantidad ({ahorroPct}%)</span>
+                        <span className="font-semibold">−{formatPrice(ahorroTotal)}</span>
+                      </div>
+                    </>
+                  )}
+                  <div className="flex items-center justify-between pt-0.5">
                     <span className="text-lavanda-light">Subtotal</span>
                     <span className="text-lg font-bold text-niebla">
                       {formatPrice(cart.subtotal)}
                     </span>
                   </div>
-                  {ahorroTotal > 0 && (
-                    <div className="flex items-center justify-between text-sm text-emerald-400">
-                      <span>Ahorro por cantidad</span>
-                      <span className="font-semibold">−{formatPrice(ahorroTotal)}</span>
-                    </div>
-                  )}
                 </div>
                 {calificaEnvioGratis ? (
                   <div className="flex items-center justify-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-3 py-2 text-sm text-emerald-400">
