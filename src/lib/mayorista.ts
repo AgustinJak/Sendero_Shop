@@ -23,12 +23,17 @@ export const TRAMOS_DEFAULT: MayoristaTramo[] = [
 
 /**
  * Parsea los tramos desde el string de configuración: "5:10, 10:20, 20:30"
- * (cantidad mínima : % de descuento). String vacío = sin descuentos.
+ * (cantidad mínima : % de descuento).
+ *
+ * Vacío o ausente = los tramos por defecto. Para desactivar los descuentos hay
+ * que poner "0" explícitamente: el form de admin guarda todas las claves de una
+ * sola vez, así que un campo que nunca se completó no puede significar "apagar".
  */
 export function parseTramos(raw: string | null | undefined): MayoristaTramo[] {
   if (raw == null) return TRAMOS_DEFAULT;
   const texto = raw.trim();
-  if (texto === "") return []; // vacío = desactivado
+  if (texto === "") return TRAMOS_DEFAULT;
+  if (texto === "0") return []; // desactivado explícito
   const tramos = texto
     .split(",")
     .map((par) => {

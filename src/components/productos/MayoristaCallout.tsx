@@ -42,31 +42,43 @@ export default function MayoristaCallout({
       <h3 className="font-[family-name:var(--font-cinzel)] text-base font-bold text-niebla flex items-center gap-2">
         <span aria-hidden="true">🛍️</span> ¿Buscás precios por mayor?
       </h3>
-      <p className="mt-1 text-sm text-lavanda-light">Llevando más, pagás menos:</p>
+      {/* Sin tramos configurados no hay descuento automático: se cotiza a mano. */}
+      {ordenados.length > 0 ? (
+        <>
+          <p className="mt-1 text-sm text-lavanda-light">
+            Llevando más, pagás menos:
+          </p>
 
-      {/* Tiers de descuento */}
-      <ul className="mt-3 space-y-1.5">
-        {ordenados.map((t) => (
-          <li
-            key={t.min}
-            className="flex items-center justify-between gap-3 text-sm rounded-lg bg-navy-deep/60 px-3 py-2"
-          >
-            <span className="text-lavanda-light">Desde {t.min} unidades</span>
-            <span className="text-ambar font-semibold whitespace-nowrap">
-              {t.pct}% OFF
-            </span>
-          </li>
-        ))}
-      </ul>
+          {/* Tiers de descuento */}
+          <ul className="mt-3 space-y-1.5">
+            {ordenados.map((t) => (
+              <li
+                key={t.min}
+                className="flex items-center justify-between gap-3 text-sm rounded-lg bg-navy-deep/60 px-3 py-2"
+              >
+                <span className="text-lavanda-light">Desde {t.min} unidades</span>
+                <span className="text-ambar font-semibold whitespace-nowrap">
+                  {t.pct}% OFF
+                </span>
+              </li>
+            ))}
+          </ul>
 
-      <p className="mt-3 text-sm text-lavanda-light leading-relaxed">
-        Ideal para revendedores. Sumá unidades al carrito y{" "}
-        <strong className="font-semibold text-niebla">
-          el descuento se aplica solo en el checkout
-        </strong>
-        : el porcentaje sale de la cantidad de cada modelo, así que podés
-        combinar varios y cada uno lleva su descuento 💜
-      </p>
+          <p className="mt-3 text-sm text-lavanda-light leading-relaxed">
+            Ideal para revendedores. Sumá unidades al carrito y{" "}
+            <strong className="font-semibold text-niebla">
+              el descuento se aplica solo en el checkout
+            </strong>
+            : el porcentaje sale de la cantidad de cada modelo, así que podés
+            combinar varios y cada uno lleva su descuento 💜
+          </p>
+        </>
+      ) : (
+        <p className="mt-2 text-sm text-lavanda-light leading-relaxed">
+          Ideal para revendedores. Escribinos con el producto y la cantidad, y te
+          armamos tu presupuesto mayorista 💜
+        </p>
+      )}
 
       {listaCodigo ? (
         <>
