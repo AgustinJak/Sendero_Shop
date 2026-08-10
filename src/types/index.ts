@@ -98,22 +98,41 @@ export interface VarianteSeleccion {
 }
 
 // --- Carrito ---
+
+/**
+ * Metadata mayorista de una línea del carrito.
+ * - Ítem suelto: `tramos` define el descuento por cantidad; el precio unitario
+ *   se recalcula según la cantidad de esa línea (cada línea es independiente).
+ * - Kit (combo): `esKit` true; el precio ya viene armado (incluye el descuento
+ *   extra del kit) y es fijo — la cantidad multiplica el kit entero.
+ */
+export interface MayoristaCartMeta {
+  listaCodigo: string;
+  tramos: MayoristaTramo[];
+  esKit?: boolean;
+  descuentoExtraPct?: number; // solo kit — informativo (ya incluido en el precio)
+}
+
 export interface CartItem {
-  producto_id: string;
+  producto_id: string; // clave de carrito; para mayorista es el id del ítem/kit
   nombre: string;
   slug: string;
   imagen_url: string;
-  precio_base: number;
+  precio_base: number; // retail: base. mayorista suelto: PVP. kit: total armado.
   opciones: VarianteSeleccion[];
   cantidad: number;
   // Calculado
-  precio_unitario: number; // base + sum(adicionales)
+  precio_unitario: number; // base + sum(adicionales) — mayorista suelto: recalculado por cantidad
   subtotal: number; // unitario * cantidad
   // Físico (para cotización de envío)
   peso_gr: number | null;
   alto_cm: number | null;
   ancho_cm: number | null;
   largo_cm: number | null;
+  // Mayorista (opcional)
+  precio_lista?: number; // precio "sin descuento" de referencia, para mostrar el ahorro
+  catalogo_producto_id?: string | null; // producto_id real de catálogo para el FK del pedido
+  mayorista?: MayoristaCartMeta;
 }
 
 export interface Cart {

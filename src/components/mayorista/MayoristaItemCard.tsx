@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { MayoristaItem, MayoristaImagen, MayoristaTramo } from "@/types";
 import { extractYouTubeId, getYouTubeThumbnail, isYouTubeUrl } from "@/lib/youtube";
+import ComprarItemMayorista from "./ComprarItemMayorista";
 
 function formatPrice(n: number) {
   return new Intl.NumberFormat("es-AR", {
@@ -30,10 +31,12 @@ function PlayBadge({ small = false }: { small?: boolean }) {
 export default function MayoristaItemCard({
   item,
   tramos,
+  listaCodigo,
   index = 0,
 }: {
   item: MayoristaItem;
   tramos: MayoristaTramo[];
+  listaCodigo: string;
   index?: number;
 }) {
   const reduce = useReducedMotion();
@@ -229,6 +232,9 @@ export default function MayoristaItemCard({
               <p className="text-xs text-[#8B85B2]/60">Precio a consultar</p>
             )}
           </div>
+
+          {/* Comprar */}
+          <ComprarItemMayorista item={item} tramos={tramos} listaCodigo={listaCodigo} />
         </div>
       </motion.div>
 

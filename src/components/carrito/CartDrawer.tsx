@@ -101,13 +101,24 @@ export default function CartDrawer() {
 
                       {/* Info */}
                       <div className="flex-1 min-w-0">
-                        <Link
-                          href={`/producto/${item.slug}`}
-                          onClick={closeDrawer}
-                          className="text-sm font-medium text-niebla hover:text-ambar-light transition-colors line-clamp-1"
-                        >
-                          {item.nombre}
-                        </Link>
+                        {item.slug ? (
+                          <Link
+                            href={`/producto/${item.slug}`}
+                            onClick={closeDrawer}
+                            className="text-sm font-medium text-niebla hover:text-ambar-light transition-colors line-clamp-1"
+                          >
+                            {item.nombre}
+                          </Link>
+                        ) : (
+                          <p className="text-sm font-medium text-niebla line-clamp-1">
+                            {item.nombre}
+                            {item.mayorista?.esKit && (
+                              <span className="ml-1.5 text-[10px] font-bold uppercase tracking-wide text-ambar">
+                                kit
+                              </span>
+                            )}
+                          </p>
+                        )}
 
                         {/* Opciones seleccionadas */}
                         {item.opciones.length > 0 && (
@@ -116,9 +127,53 @@ export default function CartDrawer() {
                           </p>
                         )}
 
-                        <p className="text-sm font-semibold text-ambar mt-1">
-                          {formatPrice(item.precio_unitario)}
-                        </p>
+                        {/* Precio — con descuento mayorista si aplica */}
+                        {(() => {
+                          const lista = item.precio_lista ?? item.precio_base;
+                          const conDescuento =
+                            !!item.mayorista && item.precio_unitario < lista;
+                          const pct = conDescuento
+                            ? Math.round((1 - item.precio_unitario / lista) * 100)
+                            : 0;
+                          return (
+                            <>
+                              <p className="text-sm font-semibold text-ambar mt-1">
+                                {formatPrice(item.precio_unitario)}
+                                {conDescuento && (
+                                  <>
+                                    {" "}
+                                    <span className="text-xs font-normal text-lavanda/50 line-through">
+                                      {formatPrice(lista)}
+                                    </span>{" "}
+                                    <span className="text-xs font-semibold text-emerald-400">
+                                      −{pct}%
+                                    </span>
+                                  </>
+                                )}
+                              </p>
+                              {conDescuento && (
+                                <p className="text-xs text-emerald-400">
+                                  Ahorrás{" "}
+                                  {formatPrice(
+                                    (lista - item.precio_unitario) * item.cantidad
+                                  )}
+                                </p>
+                              )}
+                              {item.mayorista && !conDescuento &&
+                                item.mayorista.tramos.length > 0 && (
+                                  <p className="text-xs text-lavanda/60">
+                                    Desde{" "}
+                                    {
+                                      item.mayorista.tramos
+                                        .slice()
+                                        .sort((a, b) => a.min - b.min)[0].min
+                                    }
+                                    u aplica descuento mayorista
+                                  </p>
+                                )}
+                            </>
+                          );
+                        })()}
 
                         {/* Cantidad */}
                         <div className="flex items-center gap-2 mt-2">

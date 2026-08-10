@@ -2,8 +2,26 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { CartItem, Cart, VarianteSeleccion } from "@/types";
+import { precioUnitario } from "@/lib/mayorista";
 
 const CART_KEY = "sendero-cart";
+
+/**
+ * Precio unitario efectivo de una línea.
+ * Para ítems mayoristas sueltos, el descuento por cantidad se aplica según la
+ * cantidad de esa línea (independiente del resto). Retail y kits usan el precio
+ * unitario fijo ya calculado.
+ */
+function unitarioEfectivo(
+  item: Pick<CartItem, "precio_base" | "precio_unitario" | "mayorista">,
+  cantidad: number
+): number {
+  const m = item.mayorista;
+  if (m && !m.esKit && m.tramos.length > 0) {
+    return precioUnitario(item.precio_base, m.tramos, cantidad).precio;
+  }
+  return item.precio_unitario;
+}
 
 function getStoredCart(): Cart {
   if (typeof window === "undefined") return { items: [], subtotal: 0 };
@@ -63,18 +81,22 @@ export function useCart() {
           newItems = prev.items.map((i, idx) => {
             if (idx === existingIndex) {
               const newCantidad = i.cantidad + item.cantidad;
+              const unit = unitarioEfectivo(i, newCantidad);
               return {
                 ...i,
                 cantidad: newCantidad,
-                subtotal: i.precio_unitario * newCantidad,
+                precio_unitario: unit,
+                subtotal: unit * newCantidad,
               };
             }
             return i;
           });
         } else {
+          const unit = unitarioEfectivo(item, item.cantidad);
           const newItem: CartItem = {
             ...item,
-            subtotal: item.precio_unitario * item.cantidad,
+            precio_unitario: unit,
+            subtotal: unit * item.cantidad,
           };
           newItems = [...prev.items, newItem];
         }
@@ -112,10 +134,12 @@ export function useCart() {
         const key = itemKey(producto_id, opciones);
         const newItems = prev.items.map((i) => {
           if (itemKey(i.producto_id, i.opciones) === key) {
+            const unit = unitarioEfectivo(i, cantidad);
             return {
               ...i,
               cantidad,
-              subtotal: i.precio_unitario * cantidad,
+              precio_unitario: unit,
+              subtotal: unit * cantidad,
             };
           }
           return i;

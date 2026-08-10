@@ -58,8 +58,12 @@ export default function MayoristaCallout({
       </ul>
 
       <p className="mt-3 text-sm text-lavanda-light leading-relaxed">
-        Ideal para revendedores. Escribinos por WhatsApp con el producto y la
-        cantidad, y te armamos tu presupuesto mayorista 💜
+        Ideal para revendedores. Sumá unidades al carrito y{" "}
+        <strong className="font-semibold text-niebla">
+          el descuento se aplica solo en el checkout
+        </strong>
+        : el porcentaje sale de la cantidad de cada modelo, así que podés
+        combinar varios y cada uno lleva su descuento 💜
       </p>
 
       {listaCodigo ? (

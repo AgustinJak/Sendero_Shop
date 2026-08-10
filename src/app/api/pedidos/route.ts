@@ -129,15 +129,23 @@ export async function POST(req: NextRequest) {
     // Crear items del pedido
     const pedidoItems = items.map((item: {
       producto_id: string;
+      catalogo_producto_id?: string | null;
       nombre: string;
       cantidad: number;
       precio_unitario: number;
       opciones: Array<{ grupo_id: string; grupo_nombre: string; opcion_id: string; opcion_valor: string; precio_adicional: number }>;
       subtotal: number;
+      mayorista?: { esKit?: boolean };
     }) => ({
       pedido_id: pedido.id,
-      producto_id: item.producto_id,
-      nombre_producto: item.nombre,
+      // En líneas mayoristas `producto_id` es el id del ítem/kit de la lista,
+      // no un producto del catálogo: se guarda el vínculo real (o null).
+      producto_id: item.mayorista
+        ? item.catalogo_producto_id ?? null
+        : item.producto_id,
+      nombre_producto: item.mayorista?.esKit
+        ? `Kit: ${item.nombre}`
+        : item.nombre,
       cantidad: item.cantidad,
       precio_unitario: item.precio_unitario,
       opciones_seleccionadas: item.opciones,
