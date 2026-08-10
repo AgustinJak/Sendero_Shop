@@ -174,7 +174,9 @@ export default function EnvioProducto({
             {result.sucursal && (
               <div className="flex items-center justify-between text-sm">
                 <div>
-                  <span className="text-lavanda-light">Retiro en sucursal</span>
+                  <span className="text-lavanda-light">
+                    Retiro en sucursal de Correo Argentino
+                  </span>
                   {(result.sucursal.tiempoMin || result.sucursal.tiempoMax) && (
                     <span className="block text-xs text-lavanda/50">
                       Llega en {result.sucursal.tiempoMin ?? ""}
