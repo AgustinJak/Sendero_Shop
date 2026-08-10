@@ -36,11 +36,12 @@ interface SucursalCA {
 interface CheckoutFormProps {
   zonas: EnvioZona[];
   configuracion: Record<string, string>;
+  envioGratisDesde?: number;
 }
 
 type Step = "datos" | "envio" | "pago" | "resumen";
 
-export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps) {
+export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 0 }: CheckoutFormProps) {
   const router = useRouter();
   const { cart, clearCart, itemCount } = useCartContext();
   const [step, setStep] = useState<Step>("datos");
@@ -208,7 +209,9 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
   }
 
   const recargoPct = Number(configuracion.recargo_mp_porcentaje) || MP_RECARGO_DEFAULT_PCT;
-  const costoEnvio = getCostoEnvio();
+  // Envío gratis por monto: si el subtotal alcanza el umbral, el envío es 0.
+  const calificaEnvioGratis = envioGratisDesde > 0 && cart.subtotal >= envioGratisDesde;
+  const costoEnvio = calificaEnvioGratis ? 0 : getCostoEnvio();
   const recargoMP = metodoPago === "mercadopago" ? calcularRecargoMP(cart.subtotal + costoEnvio, recargoPct) : 0;
   const total = cart.subtotal + costoEnvio + recargoMP;
 
@@ -596,6 +599,14 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                   </div>
                 </div>
 
+                {/* Aviso de envío gratis por monto */}
+                {calificaEnvioGratis && (
+                  <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-3 py-2 text-sm text-emerald-400">
+                    <span aria-hidden="true">🎉</span>
+                    ¡Tu compra tiene <strong className="font-semibold">envío gratis</strong>!
+                  </div>
+                )}
+
                 {/* Cotización en vivo */}
                 {cotizandoEnvio && (
                   <div className="flex items-center gap-2 text-sm text-lavanda/75">
@@ -838,8 +849,16 @@ export default function CheckoutForm({ zonas, configuracion }: CheckoutFormProps
                 Envío
                 {cotizandoEnvio && <span className="text-xs ml-1 text-lavanda/50">(cotizando...)</span>}
               </span>
-              <span className="text-lavanda-light">
-                {metodoEnvio === "retiro" ? "Gratis" : cotizandoEnvio ? "..." : costoEnvio > 0 ? formatPrice(costoEnvio) : "Ingresá CP"}
+              <span className={calificaEnvioGratis && metodoEnvio !== "retiro" ? "text-emerald-400 font-semibold" : "text-lavanda-light"}>
+                {metodoEnvio === "retiro"
+                  ? "Gratis"
+                  : calificaEnvioGratis
+                  ? "GRATIS 🎉"
+                  : cotizandoEnvio
+                  ? "..."
+                  : getCostoEnvio() > 0
+                  ? formatPrice(getCostoEnvio())
+                  : "Ingresá CP"}
               </span>
             </div>
             {recargoMP > 0 && (

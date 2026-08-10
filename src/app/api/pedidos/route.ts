@@ -75,15 +75,20 @@ export async function POST(req: NextRequest) {
 
     const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
 
-    // Recargo MP autoritativo: lo recalcula el server desde la config
-    // (configuracion.recargo_mp_porcentaje), sin confiar en lo que mande el
-    // cliente. Base = subtotal + envío.
-    const { recargo_mp_porcentaje: recargoPct } = await getSiteConfig();
+    // Config autoritativa desde el server (no confiar en el cliente).
+    const { recargo_mp_porcentaje: recargoPct, envio_gratis_desde: envioGratisDesde } =
+      await getSiteConfig();
+
+    // Envío gratis: si el subtotal alcanza el umbral, el envío pasa a 0.
+    const aplicaEnvioGratis =
+      envioGratisDesde > 0 && Number(subtotal) >= envioGratisDesde;
+    const costoEnvioFinal = aplicaEnvioGratis ? 0 : Number(costoEnvio);
+
     const recargoMP =
       metodo_pago === "mercadopago"
-        ? Math.round((Number(subtotal) + Number(costoEnvio)) * recargoPct / 100)
+        ? Math.round((Number(subtotal) + costoEnvioFinal) * recargoPct / 100)
         : 0;
-    const total = Number(subtotal) + Number(costoEnvio) + recargoMP;
+    const total = Number(subtotal) + costoEnvioFinal + recargoMP;
 
     // En efectivo no hay pago online que esperar — el dinero se cobra al
     // retiro/entrega. El pedido nace directamente "confirmado" (estado
@@ -105,7 +110,7 @@ export async function POST(req: NextRequest) {
         direccion_envio: direccion_envio,
         metodo_envio: metodo_envio,
         tipo_envio: tipo_envio || null,
-        costo_envio: costoEnvio,
+        costo_envio: costoEnvioFinal,
         metodo_pago: metodo_pago,
         recargo_mp: recargoMP,
         subtotal: subtotal,

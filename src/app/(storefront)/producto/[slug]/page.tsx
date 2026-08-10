@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { cache } from "react";
 import { getProductoBySlug, getProductosRelacionados, getListaMayoristaDeProducto } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
-import { getWhatsapp } from "@/lib/site-config";
+import { getSiteConfig } from "@/lib/site-config";
 import ProductDetail from "@/components/productos/ProductDetail";
 import ProductGrid from "@/components/productos/ProductGrid";
 import ReviewList from "@/components/reviews/ReviewList";
@@ -62,7 +62,7 @@ export default async function ProductoPage({ params }: Props) {
     notFound();
   }
 
-  const whatsapp = await getWhatsapp();
+  const { whatsapp, envio_gratis_desde: envioGratisDesde } = await getSiteConfig();
   const relacionados = await getProductosRelacionados(producto, 4);
   const listaMayorista = await getListaMayoristaDeProducto(producto.id);
 
@@ -167,6 +167,7 @@ export default async function ProductoPage({ params }: Props) {
         reviewCount={reviewCount}
         avgRating={avgRating}
         listaMayoristaCodigo={listaMayorista?.codigo ?? null}
+        envioGratisDesde={envioGratisDesde}
       />
 
       {/* Reviews */}

@@ -53,7 +53,7 @@ export function whatsappLink(phone: string, message?: string): string {
 }
 
 /**
- * Formatea "5491128290007" → "+54 9 11 2829-0007" para mostrar al usuario.
+ * Formatea "5491124677639" → "+54 9 11 2467-7639" para mostrar al usuario.
  * Si el número no matchea el patrón esperado, devuelve "+<phone>" tal cual.
  */
 export function formatWhatsappDisplay(phone: string): string {

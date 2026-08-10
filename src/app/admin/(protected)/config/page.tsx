@@ -3,11 +3,12 @@ import ConfigForm from "@/components/admin/ConfigForm";
 import OptimizarBucketButton from "@/components/admin/OptimizarBucketButton";
 
 const CONFIG_KEYS = [
-  { key: "whatsapp", label: "WhatsApp (con código país)", placeholder: "5491128290007" },
+  { key: "whatsapp", label: "WhatsApp (con código país)", placeholder: "5491124677639" },
   { key: "cbu", label: "CBU para transferencias", placeholder: "0000003100..." },
   { key: "alias", label: "Alias bancario", placeholder: "sendero.shop" },
   { key: "titular_cuenta", label: "Titular de la cuenta", placeholder: "Nombre Apellido" },
   { key: "recargo_mp_porcentaje", label: "Recargo MercadoPago (%)", placeholder: "13" },
+  { key: "envio_gratis_desde", label: "Envío gratis desde ($) — 0 para desactivar", placeholder: "250000" },
   { key: "email_notificaciones", label: "Email para notificaciones", placeholder: "ventas@sendero3d.com" },
   { key: "tiempo_produccion_default", label: "Tiempo producción default (días)", placeholder: "7" },
 ];

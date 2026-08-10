@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { getSiteConfig } from "@/lib/site-config";
 import CheckoutForm from "@/components/checkout/CheckoutForm";
 import type { EnvioZona } from "@/types";
 
@@ -11,9 +12,10 @@ export const metadata: Metadata = {
 export default async function CheckoutPage() {
   const supabase = await createServerSupabaseClient();
 
-  const [{ data: zonas }, { data: config }] = await Promise.all([
+  const [{ data: zonas }, { data: config }, siteConfig] = await Promise.all([
     supabase.from("envio_zonas").select("*").eq("activo", true),
     supabase.from("configuracion").select("*"),
+    getSiteConfig(),
   ]);
 
   const configuracion: Record<string, string> = {};
@@ -29,6 +31,7 @@ export default async function CheckoutPage() {
       <CheckoutForm
         zonas={(zonas as EnvioZona[]) || []}
         configuracion={configuracion}
+        envioGratisDesde={siteConfig.envio_gratis_desde}
       />
     </div>
   );

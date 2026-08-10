@@ -8,6 +8,7 @@ import ProductGallery from "./ProductGallery";
 import VariantSelector from "./VariantSelector";
 import AddToCartButton from "./AddToCartButton";
 import MayoristaCallout from "./MayoristaCallout";
+import EnvioProducto from "./EnvioProducto";
 import { StarRating, TrustBadges } from "./TrustSignals";
 
 interface ProductDetailProps {
@@ -16,6 +17,7 @@ interface ProductDetailProps {
   reviewCount: number;
   avgRating: number;
   listaMayoristaCodigo?: string | null;
+  envioGratisDesde: number;
 }
 
 export default function ProductDetail({
@@ -24,6 +26,7 @@ export default function ProductDetail({
   reviewCount,
   avgRating,
   listaMayoristaCodigo,
+  envioGratisDesde,
 }: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
 
@@ -142,6 +145,18 @@ export default function ProductDetail({
 
         {/* Señales de confianza cerca del CTA de compra */}
         <TrustBadges />
+
+        {/* Envío gratis + calculadora de costo de envío */}
+        <EnvioProducto
+          envioGratisDesde={envioGratisDesde}
+          precio={precioFinal}
+          paquete={{
+            weight: producto.peso_gr ?? undefined,
+            height: producto.alto_cm ?? undefined,
+            width: producto.ancho_cm ?? undefined,
+            length: producto.largo_cm ?? undefined,
+          }}
+        />
 
         {/* WhatsApp */}
         <a
