@@ -22,6 +22,10 @@ export default function CartDrawer() {
   const calificaEnvioGratis =
     envioGratisDesde > 0 && cart.subtotal >= envioGratisDesde;
   const faltaParaEnvioGratis = envioGratisDesde - cart.subtotal;
+  const progresoEnvioGratis =
+    envioGratisDesde > 0
+      ? Math.min(100, (cart.subtotal / envioGratisDesde) * 100)
+      : 0;
 
   // Total ahorrado en el pedido por los descuentos por cantidad.
   const ahorroTotal = cart.items.reduce((acc, i) => {
@@ -246,13 +250,28 @@ export default function CartDrawer() {
                     </span>
                   </div>
                 ) : envioGratisDesde > 0 ? (
-                  <p className="text-xs text-lavanda/60">
-                    Te faltan{" "}
-                    <span className="font-semibold text-ambar">
-                      {formatPrice(faltaParaEnvioGratis)}
-                    </span>{" "}
-                    para el envío gratis
-                  </p>
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-lavanda/60">
+                      Te faltan{" "}
+                      <span className="font-semibold text-ambar">
+                        {formatPrice(faltaParaEnvioGratis)}
+                      </span>{" "}
+                      para el envío gratis
+                    </p>
+                    <div
+                      className="h-1.5 w-full overflow-hidden rounded-full bg-lavanda/10"
+                      role="progressbar"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={Math.round(progresoEnvioGratis)}
+                      aria-label="Progreso hacia el envío gratis"
+                    >
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-ambar/70 to-ambar transition-[width] duration-500 ease-out"
+                        style={{ width: `${progresoEnvioGratis}%` }}
+                      />
+                    </div>
+                  </div>
                 ) : (
                   <p className="text-xs text-lavanda/60">
                     Envío calculado en el checkout
