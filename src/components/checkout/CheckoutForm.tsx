@@ -833,14 +833,14 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                       {item.opciones.map(o => o.opcion_valor).join(", ")}
                     </p>
                   )}
-                  {/* Descuento mayorista aplicado a esta línea */}
+                  {/* Descuento por cantidad aplicado a esta línea */}
                   {(() => {
-                    const lista = item.precio_lista ?? item.precio_base;
-                    if (!item.mayorista || item.precio_unitario >= lista) return null;
+                    const lista = item.precio_lista ?? item.precio_unitario;
+                    if (item.precio_unitario >= lista) return null;
                     const pct = Math.round((1 - item.precio_unitario / lista) * 100);
                     return (
                       <p className="text-xs text-emerald-400">
-                        Mayorista −{pct}% · {formatPrice(item.precio_unitario)} c/u
+                        −{pct}% por cantidad · {formatPrice(item.precio_unitario)} c/u
                         {" · "}ahorrás {formatPrice((lista - item.precio_unitario) * item.cantidad)}
                       </p>
                     );

@@ -62,7 +62,11 @@ export default async function ProductoPage({ params }: Props) {
     notFound();
   }
 
-  const { whatsapp, envio_gratis_desde: envioGratisDesde } = await getSiteConfig();
+  const {
+    whatsapp,
+    envio_gratis_desde: envioGratisDesde,
+    descuento_tramos: tramos,
+  } = await getSiteConfig();
   const relacionados = await getProductosRelacionados(producto, 4);
   const listaMayorista = await getListaMayoristaDeProducto(producto.id);
 
@@ -168,6 +172,7 @@ export default async function ProductoPage({ params }: Props) {
         avgRating={avgRating}
         listaMayoristaCodigo={listaMayorista?.codigo ?? null}
         envioGratisDesde={envioGratisDesde}
+        tramos={tramos}
       />
 
       {/* Reviews */}

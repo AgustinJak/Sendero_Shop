@@ -7,7 +7,7 @@ import { CartProvider } from "@/components/carrito/CartProvider";
 import CartDrawer from "@/components/carrito/CartDrawer";
 import PopupBanner from "@/components/home/PopupBanner";
 import { getBanners } from "@/lib/queries";
-import { getWhatsapp } from "@/lib/site-config";
+import { getSiteConfig } from "@/lib/site-config";
 
 const websiteLd = {
   "@context": "https://schema.org",
@@ -21,10 +21,11 @@ export default async function StorefrontLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [popupBanners, whatsapp] = await Promise.all([
+  const [popupBanners, siteConfig] = await Promise.all([
     getBanners("popup"),
-    getWhatsapp(),
+    getSiteConfig(),
   ]);
+  const { whatsapp, descuento_tramos: tramos } = siteConfig;
 
   const organizationLd = {
     "@context": "https://schema.org",
@@ -41,7 +42,7 @@ export default async function StorefrontLayout({
   };
 
   return (
-    <CartProvider>
+    <CartProvider tramos={tramos}>
       <Header />
       <main className="flex-1">{children}</main>
       <Footer whatsapp={whatsapp} />

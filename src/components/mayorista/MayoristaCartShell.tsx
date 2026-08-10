@@ -2,6 +2,7 @@
 
 import { CartProvider, useCartContext } from "@/components/carrito/CartProvider";
 import CartDrawer from "@/components/carrito/CartDrawer";
+import type { MayoristaTramo } from "@/types";
 
 /**
  * Botón flotante de carrito para la página mayorista (que vive fuera del
@@ -48,11 +49,13 @@ function CartFab() {
  */
 export default function MayoristaCartShell({
   children,
+  tramos = [],
 }: {
   children: React.ReactNode;
+  tramos?: MayoristaTramo[];
 }) {
   return (
-    <CartProvider>
+    <CartProvider tramos={tramos}>
       {children}
       <CartDrawer />
       <CartFab />

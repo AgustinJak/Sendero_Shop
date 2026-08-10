@@ -1,26 +1,41 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { CartItem, Cart, VarianteSeleccion } from "@/types";
+import type { CartItem, Cart, VarianteSeleccion, MayoristaTramo } from "@/types";
 import { precioUnitario } from "@/lib/mayorista";
 
 const CART_KEY = "sendero-cart";
 
+type PrecioFields = Pick<
+  CartItem,
+  "precio_base" | "precio_unitario" | "precio_lista" | "mayorista"
+>;
+
+/** Precio de referencia (sin descuento) de una línea. */
+function precioLista(item: PrecioFields): number {
+  return item.precio_lista ?? item.precio_unitario;
+}
+
 /**
- * Precio unitario efectivo de una línea.
- * Para ítems mayoristas sueltos, el descuento por cantidad se aplica según la
- * cantidad de esa línea (independiente del resto). Retail y kits usan el precio
- * unitario fijo ya calculado.
+ * Precio unitario efectivo de una línea, con el descuento por cantidad que le
+ * corresponda a *esa* línea (cada modelo/variante cuenta por separado).
+ *
+ * Aplica tanto a productos del catálogo como a ítems mayoristas sueltos. Los
+ * kits quedan afuera: su precio ya viene armado e incluye su descuento.
  */
 function unitarioEfectivo(
-  item: Pick<CartItem, "precio_base" | "precio_unitario" | "mayorista">,
-  cantidad: number
+  item: PrecioFields,
+  cantidad: number,
+  tramosGlobales: MayoristaTramo[]
 ): number {
-  const m = item.mayorista;
-  if (m && !m.esKit && m.tramos.length > 0) {
-    return precioUnitario(item.precio_base, m.tramos, cantidad).precio;
-  }
-  return item.precio_unitario;
+  if (item.mayorista?.esKit) return item.precio_unitario;
+
+  const tramos = item.mayorista?.tramos?.length
+    ? item.mayorista.tramos
+    : tramosGlobales;
+  if (!tramos.length) return precioLista(item);
+
+  return precioUnitario(precioLista(item), tramos, cantidad).precio;
 }
 
 function getStoredCart(): Cart {
@@ -51,7 +66,7 @@ function itemKey(producto_id: string, opciones: VarianteSeleccion[]): string {
   return `${producto_id}__${opcionesKey}`;
 }
 
-export function useCart() {
+export function useCart(tramos: MayoristaTramo[] = []) {
   const [cart, setCart] = useState<Cart>({ items: [], subtotal: 0 });
   const [isLoaded, setIsLoaded] = useState(false);
 
@@ -81,10 +96,11 @@ export function useCart() {
           newItems = prev.items.map((i, idx) => {
             if (idx === existingIndex) {
               const newCantidad = i.cantidad + item.cantidad;
-              const unit = unitarioEfectivo(i, newCantidad);
+              const unit = unitarioEfectivo(i, newCantidad, tramos);
               return {
                 ...i,
                 cantidad: newCantidad,
+                precio_lista: precioLista(i),
                 precio_unitario: unit,
                 subtotal: unit * newCantidad,
               };
@@ -92,11 +108,14 @@ export function useCart() {
             return i;
           });
         } else {
-          const unit = unitarioEfectivo(item, item.cantidad);
+          // `precio_lista` se fija al agregar: es la referencia sin descuento,
+          // así el tramo nunca se aplica sobre un precio ya descontado.
+          const base = { ...item, precio_lista: precioLista(item) };
+          const unit = unitarioEfectivo(base, base.cantidad, tramos);
           const newItem: CartItem = {
-            ...item,
+            ...base,
             precio_unitario: unit,
-            subtotal: unit * item.cantidad,
+            subtotal: unit * base.cantidad,
           };
           newItems = [...prev.items, newItem];
         }
@@ -104,7 +123,7 @@ export function useCart() {
         return { items: newItems, subtotal: calcularSubtotal(newItems) };
       });
     },
-    []
+    [tramos]
   );
 
   const removeItem = useCallback(
@@ -134,10 +153,11 @@ export function useCart() {
         const key = itemKey(producto_id, opciones);
         const newItems = prev.items.map((i) => {
           if (itemKey(i.producto_id, i.opciones) === key) {
-            const unit = unitarioEfectivo(i, cantidad);
+            const unit = unitarioEfectivo(i, cantidad, tramos);
             return {
               ...i,
               cantidad,
+              precio_lista: precioLista(i),
               precio_unitario: unit,
               subtotal: unit * cantidad,
             };
@@ -147,7 +167,7 @@ export function useCart() {
         return { items: newItems, subtotal: calcularSubtotal(newItems) };
       });
     },
-    [removeItem]
+    [removeItem, tramos]
   );
 
   const clearCart = useCallback(() => {

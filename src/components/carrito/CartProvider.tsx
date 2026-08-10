@@ -3,9 +3,10 @@
 import { createContext, useContext, useState } from "react";
 import { useCart } from "@/hooks/useCart";
 import { trackAddToCart, trackRemoveFromCart } from "@/lib/analytics";
-import type { CartItem, Cart, VarianteSeleccion } from "@/types";
+import type { CartItem, Cart, VarianteSeleccion, MayoristaTramo } from "@/types";
 
 interface CartContextType {
+  tramos: MayoristaTramo[];
   cart: Cart;
   isLoaded: boolean;
   addItem: (item: Omit<CartItem, "subtotal">) => void;
@@ -20,8 +21,15 @@ interface CartContextType {
 
 const CartContext = createContext<CartContextType | null>(null);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
-  const cartHook = useCart();
+export function CartProvider({
+  children,
+  tramos = [],
+}: {
+  children: React.ReactNode;
+  /** Tramos de descuento por cantidad, aplicados por línea del carrito. */
+  tramos?: MayoristaTramo[];
+}) {
+  const cartHook = useCart(tramos);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const openDrawer = () => setIsDrawerOpen(true);
@@ -65,6 +73,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         isDrawerOpen,
         openDrawer,
         closeDrawer,
+        tramos,
       }}
     >
       {children}

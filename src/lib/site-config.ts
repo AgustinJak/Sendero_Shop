@@ -12,6 +12,8 @@
 import "server-only";
 import { cache } from "react";
 import { createServiceRoleClient } from "@/lib/supabase-server";
+import { parseTramos, TRAMOS_DEFAULT } from "@/lib/mayorista";
+import type { MayoristaTramo } from "@/types";
 
 // Fallbacks razonables si la tabla está vacía o un valor no fue seteado.
 const DEFAULTS = {
@@ -23,6 +25,9 @@ const DEFAULTS = {
   email_notificaciones: "",
   tiempo_produccion_default: 7,
   envio_gratis_desde: 250000, // subtotal (ARS) a partir del cual el envío es gratis (0 = desactivado)
+  // Descuento por cantidad: se aplica por línea del carrito según las unidades
+  // de ese modelo/variante. Formato en la config: "5:10, 10:20, 20:30".
+  descuento_tramos: TRAMOS_DEFAULT as MayoristaTramo[],
 };
 
 export type SiteConfig = typeof DEFAULTS;
@@ -52,6 +57,8 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
       !isNaN(Number(map.envio_gratis_desde))
         ? Number(map.envio_gratis_desde)
         : DEFAULTS.envio_gratis_desde,
+    // Respeta "" (desactivado); solo cae al default si la clave no existe.
+    descuento_tramos: parseTramos(map.descuento_tramos),
   };
 });
 

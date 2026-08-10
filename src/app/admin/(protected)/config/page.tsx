@@ -9,6 +9,7 @@ const CONFIG_KEYS = [
   { key: "titular_cuenta", label: "Titular de la cuenta", placeholder: "Nombre Apellido" },
   { key: "recargo_mp_porcentaje", label: "Recargo MercadoPago (%)", placeholder: "13" },
   { key: "envio_gratis_desde", label: "Envío gratis desde ($) — 0 para desactivar", placeholder: "250000" },
+  { key: "descuento_tramos", label: "Descuento por cantidad (cantidad:% — vacío para desactivar)", placeholder: "5:10, 10:20, 20:30" },
   { key: "email_notificaciones", label: "Email para notificaciones", placeholder: "ventas@sendero3d.com" },
   { key: "tiempo_produccion_default", label: "Tiempo producción default (días)", placeholder: "7" },
 ];

@@ -14,6 +14,32 @@ import type {
   CartItem,
 } from "@/types";
 
+/** Tramos por defecto si no hay nada configurado. */
+export const TRAMOS_DEFAULT: MayoristaTramo[] = [
+  { min: 5, pct: 10 },
+  { min: 10, pct: 20 },
+  { min: 20, pct: 30 },
+];
+
+/**
+ * Parsea los tramos desde el string de configuración: "5:10, 10:20, 20:30"
+ * (cantidad mínima : % de descuento). String vacío = sin descuentos.
+ */
+export function parseTramos(raw: string | null | undefined): MayoristaTramo[] {
+  if (raw == null) return TRAMOS_DEFAULT;
+  const texto = raw.trim();
+  if (texto === "") return []; // vacío = desactivado
+  const tramos = texto
+    .split(",")
+    .map((par) => {
+      const [min, pct] = par.split(":").map((n) => Number(n.trim()));
+      return { min, pct };
+    })
+    .filter((t) => Number.isFinite(t.min) && Number.isFinite(t.pct) && t.min > 0 && t.pct > 0)
+    .sort((a, b) => a.min - b.min);
+  return tramos.length > 0 ? tramos : TRAMOS_DEFAULT;
+}
+
 /** Tramo que corresponde a una cantidad (el de mayor `min` que la cantidad alcance). */
 export function tramoParaCantidad(
   tramos: MayoristaTramo[],

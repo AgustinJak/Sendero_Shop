@@ -15,6 +15,7 @@ export default function CartDrawer() {
     removeItem,
     updateQuantity,
     itemCount,
+    tramos,
   } = useCartContext();
 
   return (
@@ -129,9 +130,8 @@ export default function CartDrawer() {
 
                         {/* Precio — con descuento mayorista si aplica */}
                         {(() => {
-                          const lista = item.precio_lista ?? item.precio_base;
-                          const conDescuento =
-                            !!item.mayorista && item.precio_unitario < lista;
+                          const lista = item.precio_lista ?? item.precio_unitario;
+                          const conDescuento = item.precio_unitario < lista;
                           const pct = conDescuento
                             ? Math.round((1 - item.precio_unitario / lista) * 100)
                             : 0;
@@ -159,18 +159,20 @@ export default function CartDrawer() {
                                   )}
                                 </p>
                               )}
-                              {item.mayorista && !conDescuento &&
-                                item.mayorista.tramos.length > 0 && (
+                              {!conDescuento && !item.mayorista?.esKit && (() => {
+                                const t = item.mayorista?.tramos?.length
+                                  ? item.mayorista.tramos
+                                  : tramos;
+                                if (!t.length) return null;
+                                const primero = t
+                                  .slice()
+                                  .sort((a, b) => a.min - b.min)[0];
+                                return (
                                   <p className="text-xs text-lavanda/60">
-                                    Desde{" "}
-                                    {
-                                      item.mayorista.tramos
-                                        .slice()
-                                        .sort((a, b) => a.min - b.min)[0].min
-                                    }
-                                    u aplica descuento mayorista
+                                    Desde {primero.min}u: {primero.pct}% OFF
                                   </p>
-                                )}
+                                );
+                              })()}
                             </>
                           );
                         })()}

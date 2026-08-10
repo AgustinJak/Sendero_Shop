@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { whatsappLink } from "@/lib/utils";
-
-const TIERS = [
-  { cantidad: "Desde 5 unidades", off: "10% OFF" },
-  { cantidad: "Desde 10 unidades", off: "20% OFF" },
-  { cantidad: "Desde 20 unidades", off: "30% OFF ¡o más!" },
-];
+import type { MayoristaTramo } from "@/types";
 
 function WhatsappIcon() {
   return (
@@ -27,15 +22,20 @@ export default function MayoristaCallout({
   whatsapp,
   nombreProducto,
   listaCodigo,
+  tramos = [],
 }: {
   whatsapp: string;
   nombreProducto: string;
   listaCodigo?: string | null;
+  /** Tramos reales que aplica el carrito — misma fuente que el precio cobrado. */
+  tramos?: MayoristaTramo[];
 }) {
   const waHref = whatsappLink(
     whatsapp,
     `Hola! Quiero consultar precios mayoristas (vi: ${nombreProducto})`
   );
+
+  const ordenados = tramos.slice().sort((a, b) => a.min - b.min);
 
   return (
     <div className="rounded-2xl border border-ambar/25 bg-gradient-to-br from-ambar/10 to-navy-deep p-5 sm:p-6">
@@ -46,13 +46,15 @@ export default function MayoristaCallout({
 
       {/* Tiers de descuento */}
       <ul className="mt-3 space-y-1.5">
-        {TIERS.map((t) => (
+        {ordenados.map((t) => (
           <li
-            key={t.cantidad}
+            key={t.min}
             className="flex items-center justify-between gap-3 text-sm rounded-lg bg-navy-deep/60 px-3 py-2"
           >
-            <span className="text-lavanda-light">{t.cantidad}</span>
-            <span className="text-ambar font-semibold whitespace-nowrap">{t.off}</span>
+            <span className="text-lavanda-light">Desde {t.min} unidades</span>
+            <span className="text-ambar font-semibold whitespace-nowrap">
+              {t.pct}% OFF
+            </span>
           </li>
         ))}
       </ul>

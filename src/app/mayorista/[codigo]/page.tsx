@@ -91,7 +91,7 @@ export default async function MayoristaPublicPage({
   )}`;
 
   return (
-    <MayoristaCartShell>
+    <MayoristaCartShell tramos={tramos}>
     <div className="min-h-screen bg-[#1C2541]">
       {/* Barra de volver a la tienda */}
       <div className="bg-[#0F1729] border-b border-[#8B85B2]/10">

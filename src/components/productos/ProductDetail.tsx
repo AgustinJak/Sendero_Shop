@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import type { Producto, VarianteSeleccion } from "@/types";
+import type { Producto, VarianteSeleccion, MayoristaTramo } from "@/types";
 import { formatPrice, whatsappLink, PROSE_CLASSES } from "@/lib/utils";
 import { trackViewItem } from "@/lib/analytics";
 import ProductGallery from "./ProductGallery";
@@ -18,6 +18,7 @@ interface ProductDetailProps {
   avgRating: number;
   listaMayoristaCodigo?: string | null;
   envioGratisDesde: number;
+  tramos?: MayoristaTramo[];
 }
 
 export default function ProductDetail({
@@ -27,6 +28,7 @@ export default function ProductDetail({
   avgRating,
   listaMayoristaCodigo,
   envioGratisDesde,
+  tramos = [],
 }: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
 
@@ -66,6 +68,7 @@ export default function ProductDetail({
             whatsapp={whatsapp}
             nombreProducto={producto.nombre}
             listaCodigo={listaMayoristaCodigo}
+            tramos={tramos}
           />
         </div>
       </div>
@@ -177,6 +180,7 @@ export default function ProductDetail({
             whatsapp={whatsapp}
             nombreProducto={producto.nombre}
             listaCodigo={listaMayoristaCodigo}
+            tramos={tramos}
           />
         </div>
 
