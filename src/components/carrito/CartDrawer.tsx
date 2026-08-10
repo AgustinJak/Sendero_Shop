@@ -33,8 +33,6 @@ export default function CartDrawer() {
     0
   );
   const ahorroTotal = Math.max(0, totalLista - cart.subtotal);
-  const ahorroPct =
-    totalLista > 0 ? Math.round((ahorroTotal / totalLista) * 100) : 0;
 
   return (
     <AnimatePresence>
@@ -243,7 +241,7 @@ export default function CartDrawer() {
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-sm text-emerald-400">
-                        <span>Descuento por cantidad ({ahorroPct}%)</span>
+                        <span>Descuento por cantidad</span>
                         <span className="font-semibold">−{formatPrice(ahorroTotal)}</span>
                       </div>
                     </>
