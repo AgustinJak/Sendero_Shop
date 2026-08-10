@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
 import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
 import { rateLimitByIp } from "@/lib/rate-limit";
+import { resolverPrecios } from "@/lib/precios-server";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +22,6 @@ export async function POST(req: NextRequest) {
       metodo_pago,
       items,
       costoEnvio,
-      subtotal,
       captchaToken,
       sucursal_correo_id,
       sucursal_correo_nombre,
@@ -58,6 +58,18 @@ export async function POST(req: NextRequest) {
 
     const supabase = await createServiceRoleClient();
 
+    // Precios autoritativos: se recalculan contra la base, ignorando los que
+    // vinieron en el body. El cliente solo aporta ids y cantidades.
+    // Va antes de reservar el número para que un pedido inválido no lo consuma.
+    let preciados;
+    try {
+      preciados = await resolverPrecios(items);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Error al validar el pedido";
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
+    const subtotal = preciados.subtotal;
+
     // Generar número de pedido usando contador persistente en configuracion
     // Esto garantiza que los números nunca se repiten aunque se eliminen pedidos
     const { data: counterRow } = await supabase
@@ -79,16 +91,25 @@ export async function POST(req: NextRequest) {
     const { recargo_mp_porcentaje: recargoPct, envio_gratis_desde: envioGratisDesde } =
       await getSiteConfig();
 
+    // El costo de envío es una cotización viva de Correo Argentino, así que se
+    // toma del cliente; se acota a un valor sano para que no reste del total.
+    const envioCliente = Number(costoEnvio);
+    const costoEnvioBase =
+      Number.isFinite(envioCliente) && envioCliente > 0
+        ? Math.min(envioCliente, 1_000_000)
+        : 0;
+
     // Envío gratis: si el subtotal alcanza el umbral, el envío pasa a 0.
     const aplicaEnvioGratis =
-      envioGratisDesde > 0 && Number(subtotal) >= envioGratisDesde;
-    const costoEnvioFinal = aplicaEnvioGratis ? 0 : Number(costoEnvio);
+      envioGratisDesde > 0 && subtotal >= envioGratisDesde;
+    const costoEnvioFinal =
+      metodo_envio === "retiro" || aplicaEnvioGratis ? 0 : costoEnvioBase;
 
     const recargoMP =
       metodo_pago === "mercadopago"
-        ? Math.round((Number(subtotal) + costoEnvioFinal) * recargoPct / 100)
+        ? Math.round((subtotal + costoEnvioFinal) * recargoPct / 100)
         : 0;
-    const total = Number(subtotal) + costoEnvioFinal + recargoMP;
+    const total = subtotal + costoEnvioFinal + recargoMP;
 
     // En efectivo no hay pago online que esperar — el dinero se cobra al
     // retiro/entrega. El pedido nace directamente "confirmado" (estado
@@ -126,29 +147,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Error al crear el pedido" }, { status: 500 });
     }
 
-    // Crear items del pedido
-    const pedidoItems = items.map((item: {
-      producto_id: string;
-      catalogo_producto_id?: string | null;
-      nombre: string;
-      cantidad: number;
-      precio_unitario: number;
-      opciones: Array<{ grupo_id: string; grupo_nombre: string; opcion_id: string; opcion_valor: string; precio_adicional: number }>;
-      subtotal: number;
-      mayorista?: { esKit?: boolean };
-    }) => ({
+    // Crear items del pedido — con los precios ya resueltos por el servidor.
+    // `producto_id` es el vínculo real al catálogo (null en kits y en ítems
+    // mayoristas sin producto asociado).
+    const pedidoItems = preciados.items.map((item) => ({
       pedido_id: pedido.id,
-      // En líneas mayoristas `producto_id` es el id del ítem/kit de la lista,
-      // no un producto del catálogo: se guarda el vínculo real (o null).
-      producto_id: item.mayorista
-        ? item.catalogo_producto_id ?? null
-        : item.producto_id,
-      nombre_producto: item.mayorista?.esKit
-        ? `Kit: ${item.nombre}`
-        : item.nombre,
+      producto_id: item.producto_id,
+      nombre_producto: item.nombre_producto,
       cantidad: item.cantidad,
       precio_unitario: item.precio_unitario,
-      opciones_seleccionadas: item.opciones,
+      opciones_seleccionadas: item.opciones_seleccionadas,
       subtotal: item.subtotal,
     }));
 
@@ -176,7 +184,7 @@ export async function POST(req: NextRequest) {
       direccion_envio,
       metodo_envio,
       tipo_envio: tipo_envio || null,
-      costo_envio: costoEnvio,
+      costo_envio: costoEnvioFinal,
       metodo_pago,
       recargo_mp: recargoMP,
       subtotal,
@@ -189,10 +197,9 @@ export async function POST(req: NextRequest) {
       cancelado_at: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      items: pedidoItems.map((pi: Record<string, unknown>, i: number) => ({
+      items: pedidoItems.map((pi, i: number) => ({
         ...pi,
         id: `temp-${i}`,
-        opciones_seleccionadas: items[i].opciones,
       })),
     };
 
