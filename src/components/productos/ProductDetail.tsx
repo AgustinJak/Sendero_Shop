@@ -13,6 +13,7 @@ import EnvioProducto from "./EnvioProducto";
 import { StarRating, TrustBadges } from "./TrustSignals";
 import { useCartContext } from "@/components/carrito/CartProvider";
 import { itemKey } from "@/hooks/useCart";
+import { buildCartItem, faltanVariantes } from "@/lib/cart-item";
 
 interface ProductDetailProps {
   producto: Producto;
@@ -33,7 +34,7 @@ export default function ProductDetail({
 }: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
   const [cantidad, setCantidad] = useState(1);
-  const { cart } = useCartContext();
+  const { cart, addItem } = useCartContext();
 
   // Unidades de esta misma combinación producto+variante ya en el carrito: el
   // tramo se calcula sobre el total que va a quedar en la línea.
@@ -66,6 +67,21 @@ export default function ProductDetail({
   const tieneOferta =
     producto.precio_oferta && producto.precio_oferta < producto.precio;
 
+  /**
+   * Atajo desde la tarjeta de descuentos: llevar la línea hasta `min` unidades.
+   * Si faltan variantes por elegir no se puede armar el ítem, así que se deja
+   * la cantidad cargada en el selector para que el usuario complete y agregue.
+   */
+  function elegirTramo(min: number) {
+    const aAgregar = Math.max(1, min - cantidadEnCarrito);
+    if (faltanVariantes(producto, selecciones)) {
+      setCantidad(aAgregar);
+      return;
+    }
+    addItem(buildCartItem(producto, selecciones, precioFinal, aAgregar));
+    setCantidad(1);
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
       {/* Galería + callout mayorista debajo de las fotos */}
@@ -77,7 +93,11 @@ export default function ProductDetail({
         />
         {/* Desktop: debajo de las fotos */}
         <div className="hidden md:block">
-          <MayoristaCallout tramos={tramos} cantidadActual={cantidadEnCarrito + cantidad} />
+          <MayoristaCallout
+            tramos={tramos}
+            cantidadEnCarrito={cantidadEnCarrito}
+            onElegirTramo={elegirTramo}
+          />
         </div>
       </div>
 
@@ -189,7 +209,11 @@ export default function ProductDetail({
 
         {/* Mobile: callout mayorista después del CTA de compra */}
         <div className="md:hidden">
-          <MayoristaCallout tramos={tramos} cantidadActual={cantidadEnCarrito + cantidad} />
+          <MayoristaCallout
+            tramos={tramos}
+            cantidadEnCarrito={cantidadEnCarrito}
+            onElegirTramo={elegirTramo}
+          />
         </div>
 
         {/* Info adicional */}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useCartContext } from "@/components/carrito/CartProvider";
+import { buildCartItem, faltanVariantes as faltanVariantesDe } from "@/lib/cart-item";
 import type { Producto, VarianteSeleccion } from "@/types";
 
 interface AddToCartButtonProps {
@@ -24,29 +25,10 @@ export default function AddToCartButton({
   const { addItem } = useCartContext();
   const [added, setAdded] = useState(false);
 
-  // Verificar que todas las variantes requeridas estén seleccionadas
-  const gruposRequeridos = producto.variante_grupos?.length || 0;
-  const gruposSeleccionados = selecciones.length;
-  const faltanVariantes = gruposRequeridos > 0 && gruposSeleccionados < gruposRequeridos;
+  const faltanVariantes = faltanVariantesDe(producto, selecciones);
 
   function handleAdd() {
-    const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
-
-    addItem({
-      producto_id: producto.id,
-      nombre: producto.nombre,
-      slug: producto.slug,
-      imagen_url: imagen?.url || "",
-      precio_base: producto.precio,
-      opciones: selecciones,
-      cantidad,
-      precio_unitario: precioFinal,
-      peso_gr: producto.peso_gr,
-      alto_cm: producto.alto_cm,
-      ancho_cm: producto.ancho_cm,
-      largo_cm: producto.largo_cm,
-    });
-
+    addItem(buildCartItem(producto, selecciones, precioFinal, cantidad));
     onAdded?.();
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);

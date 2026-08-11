@@ -22,26 +22,33 @@ function TagIcon() {
 /**
  * Tarjeta de descuentos por cantidad, presente en todos los productos.
  *
- * Refleja la situación real de este producto: marca el tramo alcanzado y
- * cuántas unidades faltan para el siguiente, contando lo que ya hay en el
- * carrito más lo que está por agregarse. Sin tramos configurados no hay nada
- * que comunicar y no se renderiza.
+ * Refleja la situación real de este producto: marca el tramo alcanzado según
+ * lo que ya hay en el carrito, cuántas unidades faltan para el siguiente, y
+ * permite saltar a cualquier tramo de un toque. Sin tramos configurados no hay
+ * nada que comunicar y no se renderiza.
  */
 export default function MayoristaCallout({
   tramos = [],
-  cantidadActual = 0,
+  cantidadEnCarrito = 0,
+  onElegirTramo,
 }: {
   /** Tramos reales que aplica el carrito — misma fuente que el precio cobrado. */
   tramos?: MayoristaTramo[];
-  /** Unidades de este producto: las del carrito + las que se van a agregar. */
-  cantidadActual?: number;
+  /**
+   * Unidades de este producto que ya están en el carrito. Toda la tarjeta se
+   * apoya en este número — incluir además lo que marca el selector haría que
+   * el "+N" de cada fila y el "sumá N más" del pie no coincidieran.
+   */
+  cantidadEnCarrito?: number;
+  /** Atajo: llevar la línea hasta `min` unidades. */
+  onElegirTramo?: (min: number) => void;
 }) {
   const ordenados = tramos.slice().sort((a, b) => a.min - b.min);
   if (ordenados.length === 0) return null;
 
-  const alcanzado = tramoParaCantidad(ordenados, cantidadActual);
-  const siguiente = ordenados.find((t) => t.min > cantidadActual) ?? null;
-  const faltan = siguiente ? siguiente.min - cantidadActual : 0;
+  const alcanzado = tramoParaCantidad(ordenados, cantidadEnCarrito);
+  const siguiente = ordenados.find((t) => t.min > cantidadEnCarrito) ?? null;
+  const faltan = siguiente ? siguiente.min - cantidadEnCarrito : 0;
 
   return (
     <div className="rounded-2xl border border-ambar/25 bg-gradient-to-br from-ambar/10 to-navy-deep p-5 sm:p-6">
@@ -54,16 +61,14 @@ export default function MayoristaCallout({
       <ul className="mt-3 space-y-1.5">
         {ordenados.map((t) => {
           const activo = alcanzado?.min === t.min;
-          const superado = cantidadActual >= t.min && !activo;
-          return (
-            <li
-              key={t.min}
-              className={`flex items-center justify-between gap-3 text-sm rounded-lg px-3 py-2 transition-colors ${
-                activo
-                  ? "bg-ambar/15 ring-1 ring-ambar/40"
-                  : "bg-navy-deep/60"
-              }`}
-            >
+          const superado = cantidadEnCarrito >= t.min && !activo;
+          // Ya cubierto por el carrito: no hay nada que sumar.
+          const yaEnCarrito = cantidadEnCarrito >= t.min;
+          const faltanParaEste = t.min - cantidadEnCarrito;
+          const accionable = !!onElegirTramo && !yaEnCarrito;
+
+          const contenido = (
+            <>
               <span
                 className={
                   activo
@@ -75,13 +80,56 @@ export default function MayoristaCallout({
               >
                 Desde {t.min} unidades
               </span>
-              <span
-                className={`font-semibold whitespace-nowrap ${
-                  activo ? "text-ambar" : superado ? "text-ambar/40" : "text-ambar"
-                }`}
-              >
-                {t.pct}% OFF
+              <span className="flex items-center gap-2 whitespace-nowrap">
+                <span
+                  className={`font-semibold ${
+                    superado ? "text-ambar/40" : "text-ambar"
+                  }`}
+                >
+                  {t.pct}% OFF
+                </span>
+                {accionable ? (
+                  <span className="text-xs text-lavanda/60 group-hover:text-niebla transition-colors">
+                    +{faltanParaEste}
+                  </span>
+                ) : (
+                  yaEnCarrito && (
+                    <svg
+                      className="w-4 h-4 text-emerald-400"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                      aria-hidden="true"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )
+                )}
               </span>
+            </>
+          );
+
+          const estilo = `flex w-full items-center justify-between gap-3 text-sm rounded-lg px-3 py-2 transition-colors ${
+            activo ? "bg-ambar/15 ring-1 ring-ambar/40" : "bg-navy-deep/60"
+          }`;
+
+          return (
+            <li key={t.min}>
+              {accionable ? (
+                <button
+                  type="button"
+                  onClick={() => onElegirTramo(t.min)}
+                  className={`group ${estilo} text-left hover:bg-ambar/10 hover:ring-1 hover:ring-ambar/30 cursor-pointer`}
+                  aria-label={`Agregar ${faltanParaEste} unidades para llegar al ${t.pct}% de descuento`}
+                >
+                  {contenido}
+                </button>
+              ) : (
+                <div className={estilo}>{contenido}</div>
+              )}
             </li>
           );
         })}
@@ -90,7 +138,7 @@ export default function MayoristaCallout({
       {/* Empujón concreto según lo que ya lleva */}
       {alcanzado ? (
         <p className="mt-3 text-sm leading-relaxed text-emerald-400">
-          Con {cantidadActual} unidades{" "}
+          Con {cantidadEnCarrito} unidades{" "}
           <strong className="font-semibold">
             te llevás {alcanzado.pct}% OFF
           </strong>
@@ -102,9 +150,9 @@ export default function MayoristaCallout({
             </span>
           )}
         </p>
-      ) : siguiente && cantidadActual > 0 ? (
+      ) : siguiente && cantidadEnCarrito > 0 ? (
         <p className="mt-3 text-sm leading-relaxed text-lavanda-light">
-          Llevás {cantidadActual}:{" "}
+          Llevás {cantidadEnCarrito}:{" "}
           <strong className="font-semibold text-niebla">
             sumá {faltan} más y te llevás {siguiente.pct}% OFF
           </strong>
