@@ -23,6 +23,7 @@ export default function ProductGallery({
   );
   const [selected, setSelected] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxEntered, setLightboxEntered] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [youtubeActive, setYoutubeActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -31,18 +32,15 @@ export default function ProductGallery({
   // Reset YouTube player when switching slides
   useEffect(() => { setYoutubeActive(false); }, [selected]);
 
-  if (sorted.length === 0) {
-    return (
-      <div className="aspect-square bg-navy-deep rounded-xl border border-lavanda/10 flex items-center justify-center">
-        <span className="text-lavanda/50">Sin imagen</span>
-      </div>
-    );
-  }
-
-  const current = sorted[selected];
-  const isVideo = current.tipo === "video";
-  const isYT = isVideo && isYouTubeUrl(current.url);
-  const ytId = isYT ? extractYouTubeId(current.url) : null;
+  // Fade de entrada del lightbox (se pinta en opacity 0 y sube en el frame siguiente).
+  useEffect(() => {
+    if (!lightboxOpen) {
+      setLightboxEntered(false);
+      return;
+    }
+    const raf = requestAnimationFrame(() => setLightboxEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, [lightboxOpen]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -69,6 +67,23 @@ export default function ProductGallery({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seleccionKey]);
 
+  // El early return va después de todos los hooks: si `imagenes` pasa de vacío
+  // a tener contenido, React vería distinta cantidad de hooks entre renders.
+  if (sorted.length === 0) {
+    return (
+      <div className="aspect-square bg-navy-deep rounded-xl border border-lavanda/10 flex items-center justify-center">
+        <span className="text-lavanda/50">Sin imagen</span>
+      </div>
+    );
+  }
+
+  // Si la lista se achica, `selected` puede quedar fuera de rango.
+  const indice = Math.min(selected, sorted.length - 1);
+  const current = sorted[indice];
+  const isVideo = current.tipo === "video";
+  const isYT = isVideo && isYouTubeUrl(current.url);
+  const ytId = isYT ? extractYouTubeId(current.url) : null;
+
   return (
     <div className="space-y-4">
       {/* Main display */}
@@ -81,7 +96,7 @@ export default function ProductGallery({
       >
         <AnimatePresence mode="wait">
           <motion.div
-            key={selected}
+            key={indice}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
@@ -147,7 +162,7 @@ export default function ProductGallery({
               key={media.id}
               onClick={() => setSelected(i)}
               className={`relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
-                i === selected
+                i === indice
                   ? "border-purpura"
                   : "border-lavanda/10 hover:border-lavanda/30"
               }`}
@@ -191,22 +206,24 @@ export default function ProductGallery({
           ))}
         </div>
       )}
-      {/* Lightbox */}
-      <AnimatePresence>
-        {lightboxOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-black/95 flex items-center justify-center"
+      {/* Lightbox
+          Sin AnimatePresence a propósito: no sacaba el nodo al terminar el
+          exit y quedaba una capa invisible a pantalla completa que se comía
+          todos los clicks de la página. El fade se hace con CSS, igual que en
+          el lightbox de las listas mayoristas. */}
+      {lightboxOpen && (
+          <div
+            className={`fixed inset-0 z-[80] bg-black/95 flex items-center justify-center transition-opacity duration-200 ${
+              lightboxEntered ? "opacity-100" : "opacity-0"
+            }`}
             onClick={() => { setLightboxOpen(false); setZoomed(false); }}
             onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
             onTouchEnd={(e) => {
               if (touchStartX.current === null) return;
               const diff = e.changedTouches[0].clientX - touchStartX.current;
               if (Math.abs(diff) > 50) {
-                if (diff < 0 && selected < sorted.length - 1) { setSelected(s => s + 1); setZoomed(false); }
-                if (diff > 0 && selected > 0) { setSelected(s => s - 1); setZoomed(false); }
+                if (diff < 0 && indice < sorted.length - 1) { setSelected(s => s + 1); setZoomed(false); }
+                if (diff > 0 && indice > 0) { setSelected(s => s - 1); setZoomed(false); }
               }
               touchStartX.current = null;
             }}
@@ -222,7 +239,7 @@ export default function ProductGallery({
             </button>
 
             {/* Navigation arrows */}
-            {selected > 0 && (
+            {indice > 0 && (
               <button
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                 onClick={(e) => { e.stopPropagation(); setSelected(s => s - 1); setZoomed(false); }}
@@ -232,7 +249,7 @@ export default function ProductGallery({
                 </svg>
               </button>
             )}
-            {selected < sorted.length - 1 && (
+            {indice < sorted.length - 1 && (
               <button
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-white/50 hover:text-white p-2 z-10"
                 onClick={(e) => { e.stopPropagation(); setSelected(s => s + 1); setZoomed(false); }}
@@ -246,7 +263,7 @@ export default function ProductGallery({
             {/* Content */}
             {isYT ? (
               <motion.div
-                key={selected}
+                key={indice}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="w-[90vw] max-w-[1000px] aspect-video"
@@ -262,7 +279,7 @@ export default function ProductGallery({
               </motion.div>
             ) : !isVideo ? (
               <motion.div
-                key={selected}
+                key={indice}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className={`relative ${zoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
@@ -281,11 +298,10 @@ export default function ProductGallery({
 
             {/* Counter */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white/50 text-sm">
-              {selected + 1} / {sorted.length}
+              {indice + 1} / {sorted.length}
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }
