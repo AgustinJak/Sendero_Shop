@@ -34,36 +34,23 @@ export default function CartDrawer() {
   );
   const ahorroTotal = Math.max(0, totalLista - cart.subtotal);
 
-  // Animación de entrada por CSS. No se usa AnimatePresence: no sacaba los
-  // nodos al terminar el exit y el overlay quedaba invisible pero tapando toda
-  // la página, dejando el sitio sin poder clickearse.
-  const [entered, setEntered] = useState(false);
-  useEffect(() => {
-    if (!isDrawerOpen) return;
-    const raf = requestAnimationFrame(() => setEntered(true));
-    return () => {
-      cancelAnimationFrame(raf);
-      setEntered(false);
-    };
-  }, [isDrawerOpen]);
-
   return (
     <>
       {isDrawerOpen && (
         <>
-          {/* Overlay */}
+          {/* Overlay.
+              Sin AnimatePresence: no sacaba los nodos al terminar el exit y el
+              overlay quedaba invisible pero tapando toda la página, dejando el
+              sitio sin poder clickearse. La entrada es una animación CSS cuyo
+              reposo es el estado visible. */}
           <div
-            className={`fixed inset-0 bg-black/60 z-[60] transition-opacity duration-300 ${
-              entered ? "opacity-100" : "opacity-0"
-            }`}
+            className="fixed inset-0 bg-black/60 z-[60] animate-fade-in"
             onClick={closeDrawer}
           />
 
           {/* Drawer */}
           <div
-            className={`fixed right-0 top-0 bottom-0 w-full max-w-md bg-navy-deep border-l border-lavanda/10 z-[70] flex flex-col transition-transform duration-300 ease-out ${
-              entered ? "translate-x-0" : "translate-x-full"
-            }`}
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-navy-deep border-l border-lavanda/10 z-[70] flex flex-col animate-slide-in-right"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-lavanda/10">

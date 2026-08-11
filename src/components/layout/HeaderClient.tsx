@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
 import HornetDropdown from "@/components/animations/HornetDropdown";
 import CartBadge from "@/components/carrito/CartBadge";
 import type { Categoria } from "@/types";
@@ -23,6 +22,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
   useEffect(() => {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
+
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault();
@@ -126,14 +126,9 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {menuOpen && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+        {/* Mobile Menu — sin AnimatePresence (dejaba el bloque pegado) */}
+        {menuOpen && (
+            <div
               className="md:hidden overflow-hidden border-t border-lavanda/10"
             >
               <div className="flex flex-col gap-4 py-4">
@@ -194,30 +189,22 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                   Mi pedido
                 </Link>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
       </nav>
 
-      {/* Search overlay */}
-      <AnimatePresence>
-        {searchOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[60] bg-navy-deep/95 backdrop-blur-md flex items-start justify-center pt-24 px-4"
+      {/* Search overlay
+          Sin AnimatePresence: dejaba el overlay pegado a pantalla completa,
+          invisible pero tapando todos los clicks del sitio. */}
+      {searchOpen && (
+          <div
+            className="fixed inset-0 z-[60] bg-navy-deep/95 backdrop-blur-md flex items-start justify-center pt-24 px-4 animate-fade-in"
             onClick={() => setSearchOpen(false)}
           >
-            <motion.form
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
+            <form
               onSubmit={handleSearch}
               onClick={(e) => e.stopPropagation()}
-              className="w-full max-w-lg"
+              className="w-full max-w-lg animate-drop-in"
             >
               <div className="relative">
                 <svg
@@ -254,10 +241,9 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
               <p className="text-center text-xs text-lavanda/60 mt-3">
                 Presioná Enter para buscar
               </p>
-            </motion.form>
-          </motion.div>
+            </form>
+          </div>
         )}
-      </AnimatePresence>
     </header>
   );
 }

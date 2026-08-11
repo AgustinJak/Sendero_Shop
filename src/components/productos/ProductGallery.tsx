@@ -23,7 +23,6 @@ export default function ProductGallery({
   );
   const [selected, setSelected] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxEntered, setLightboxEntered] = useState(false);
   const [zoomed, setZoomed] = useState(false);
   const [youtubeActive, setYoutubeActive] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -32,15 +31,6 @@ export default function ProductGallery({
   // Reset YouTube player when switching slides
   useEffect(() => { setYoutubeActive(false); }, [selected]);
 
-  // Fade de entrada del lightbox (se pinta en opacity 0 y sube en el frame siguiente).
-  useEffect(() => {
-    if (!lightboxOpen) {
-      setLightboxEntered(false);
-      return;
-    }
-    const raf = requestAnimationFrame(() => setLightboxEntered(true));
-    return () => cancelAnimationFrame(raf);
-  }, [lightboxOpen]);
 
   useEffect(() => {
     if (!lightboxOpen) return;
@@ -213,9 +203,7 @@ export default function ProductGallery({
           el lightbox de las listas mayoristas. */}
       {lightboxOpen && (
           <div
-            className={`fixed inset-0 z-[80] bg-black/95 flex items-center justify-center transition-opacity duration-200 ${
-              lightboxEntered ? "opacity-100" : "opacity-0"
-            }`}
+            className="fixed inset-0 z-[80] bg-black/95 flex items-center justify-center animate-fade-in"
             onClick={() => { setLightboxOpen(false); setZoomed(false); }}
             onTouchStart={(e) => { touchStartX.current = e.touches[0].clientX; }}
             onTouchEnd={(e) => {

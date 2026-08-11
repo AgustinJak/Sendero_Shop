@@ -17,6 +17,9 @@
 
   /* Animations */
   --animate-slide-up: slide-up 0.3s ease-out;
+  --animate-fade-in: fade-in 0.18s ease-out;
+  --animate-drop-in: drop-in 0.2s ease-out;
+  --animate-slide-in-right: slide-in-right 0.3s ease-out;
 }
 
 @keyframes slide-up {
@@ -25,6 +28,29 @@
   }
   to {
     transform: translateY(0);
+  }
+}
+
+/* Entradas para overlays y paneles.
+   El estado de reposo es el visible: si la animación no llega a correr, el
+   elemento se ve igual. No usar patrones que dejen opacity 0 en reposo — un
+   panel invisible sigue recibiendo clicks. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
   }
 }
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
 import type { Categoria } from "@/types";
@@ -45,6 +45,7 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
     return () => document.removeEventListener("keydown", handleKey);
   }, [isOpen]);
 
+
   // Padre activo (para mostrar sus subcategorías a la derecha). Fallback al primero.
   const active =
     categorias.find((c) => c.slug === activeParent) ?? categorias[0] ?? null;
@@ -78,26 +79,12 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
         </motion.svg>
       </Link>
 
-      {/* Dropdown — Hornet debajo del menú, como arrastrándolo */}
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            className="absolute top-full left-0 pt-2"
-            // Enter: se "arrastra" desde arriba (efecto Hornet). Exit: NO vuelve
-            // hacia la barra — si subiera, reentraría bajo el cursor y el hover
-            // del contenedor volvería a dispararse (parpadeo). Se va hacia abajo
-            // y rápido, alejándose del cursor.
-            initial={{ y: -30, opacity: 0 }}
-            animate={{
-              y: 0,
-              opacity: 1,
-              transition: { type: "spring", stiffness: 300, damping: 24, mass: 0.8 },
-            }}
-            exit={{
-              y: 8,
-              opacity: 0,
-              transition: { duration: 0.12, ease: "easeOut" },
-            }}
+      {/* Dropdown — Hornet debajo del menú, como arrastrándolo.
+          Sin AnimatePresence: dejaba el panel pegado, invisible pero clickeable,
+          y los clicks bajo el header caían en categorías que no se veían. */}
+      {isOpen && (
+          <div
+            className="absolute top-full left-0 pt-2 animate-drop-in"
             style={{ willChange: "transform" }}
           >
             <div className="relative">
@@ -239,9 +226,8 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
                 />
               </motion.div>
             </div>
-          </motion.div>
+          </div>
         )}
-      </AnimatePresence>
     </div>
   );
 }
