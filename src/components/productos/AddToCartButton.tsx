@@ -9,12 +9,17 @@ interface AddToCartButtonProps {
   producto: Producto;
   selecciones: VarianteSeleccion[];
   precioFinal: number;
+  cantidad?: number;
+  /** Se llama después de agregar, para resetear el selector de cantidad. */
+  onAdded?: () => void;
 }
 
 export default function AddToCartButton({
   producto,
   selecciones,
   precioFinal,
+  cantidad = 1,
+  onAdded,
 }: AddToCartButtonProps) {
   const { addItem } = useCartContext();
   const [added, setAdded] = useState(false);
@@ -34,7 +39,7 @@ export default function AddToCartButton({
       imagen_url: imagen?.url || "",
       precio_base: producto.precio,
       opciones: selecciones,
-      cantidad: 1,
+      cantidad,
       precio_unitario: precioFinal,
       peso_gr: producto.peso_gr,
       alto_cm: producto.alto_cm,
@@ -42,6 +47,7 @@ export default function AddToCartButton({
       largo_cm: producto.largo_cm,
     });
 
+    onAdded?.();
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   }

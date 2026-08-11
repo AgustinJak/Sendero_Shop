@@ -7,9 +7,12 @@ import { trackViewItem } from "@/lib/analytics";
 import ProductGallery from "./ProductGallery";
 import VariantSelector from "./VariantSelector";
 import AddToCartButton from "./AddToCartButton";
+import QuantitySelector from "./QuantitySelector";
 import MayoristaCallout from "./MayoristaCallout";
 import EnvioProducto from "./EnvioProducto";
 import { StarRating, TrustBadges } from "./TrustSignals";
+import { useCartContext } from "@/components/carrito/CartProvider";
+import { itemKey } from "@/hooks/useCart";
 
 interface ProductDetailProps {
   producto: Producto;
@@ -29,6 +32,18 @@ export default function ProductDetail({
   tramos = [],
 }: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
+  const [cantidad, setCantidad] = useState(1);
+  const { cart } = useCartContext();
+
+  // Unidades de esta misma combinación producto+variante ya en el carrito: el
+  // tramo se calcula sobre el total que va a quedar en la línea.
+  const cantidadEnCarrito = useMemo(() => {
+    const clave = itemKey(producto.id, selecciones);
+    const linea = cart.items.find(
+      (i) => itemKey(i.producto_id, i.opciones) === clave
+    );
+    return linea?.cantidad ?? 0;
+  }, [cart.items, producto.id, selecciones]);
 
   useEffect(() => {
     trackViewItem({
@@ -62,7 +77,7 @@ export default function ProductDetail({
         />
         {/* Desktop: debajo de las fotos */}
         <div className="hidden md:block">
-          <MayoristaCallout tramos={tramos} />
+          <MayoristaCallout tramos={tramos} cantidadActual={cantidadEnCarrito + cantidad} />
         </div>
       </div>
 
@@ -132,12 +147,17 @@ export default function ProductDetail({
           />
         )}
 
-        {/* Agregar al carrito */}
-        <AddToCartButton
-          producto={producto}
-          selecciones={selecciones}
-          precioFinal={precioFinal}
-        />
+        {/* Cantidad + agregar al carrito */}
+        <div className="space-y-3">
+          <QuantitySelector cantidad={cantidad} onChange={setCantidad} />
+          <AddToCartButton
+            producto={producto}
+            selecciones={selecciones}
+            precioFinal={precioFinal}
+            cantidad={cantidad}
+            onAdded={() => setCantidad(1)}
+          />
+        </div>
 
         {/* Señales de confianza cerca del CTA de compra */}
         <TrustBadges />
@@ -169,7 +189,7 @@ export default function ProductDetail({
 
         {/* Mobile: callout mayorista después del CTA de compra */}
         <div className="md:hidden">
-          <MayoristaCallout tramos={tramos} />
+          <MayoristaCallout tramos={tramos} cantidadActual={cantidadEnCarrito + cantidad} />
         </div>
 
         {/* Info adicional */}

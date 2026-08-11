@@ -58,7 +58,7 @@ function calcularSubtotal(items: CartItem[]): number {
 }
 
 // Genera una key única para cada combinación producto+opciones
-function itemKey(producto_id: string, opciones: VarianteSeleccion[]): string {
+export function itemKey(producto_id: string, opciones: VarianteSeleccion[]): string {
   const opcionesKey = opciones
     .map((o) => `${o.grupo_id}:${o.opcion_id}`)
     .sort()
