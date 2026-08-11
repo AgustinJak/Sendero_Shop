@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { extractYouTubeId, getYouTubeThumbnail, isYouTubeUrl } from "@/lib/youtube";
 import type { ProductoImagen, VarianteSeleccion } from "@/types";
 
@@ -84,15 +84,10 @@ export default function ProductGallery({
           else if (isYT && !youtubeActive) setLightboxOpen(true);
         }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={indice}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute inset-0"
-          >
+        {/* `key` fuerza el remount al cambiar de imagen y la entrada se
+            reproduce sola. Sin AnimatePresence: dejaba la imagen saliente en
+            el DOM. */}
+        <div key={indice} className="absolute inset-0 animate-fade-in">
             {isYT ? (
               youtubeActive ? (
                 <iframe
@@ -140,8 +135,7 @@ export default function ProductGallery({
                 priority
               />
             )}
-          </motion.div>
-        </AnimatePresence>
+        </div>
       </div>
 
       {/* Thumbnails */}

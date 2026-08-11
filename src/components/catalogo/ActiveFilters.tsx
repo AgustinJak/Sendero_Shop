@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+
 
 export default function ActiveFilters() {
   const searchParams = useSearchParams();
@@ -33,23 +33,21 @@ export default function ActiveFilters() {
 
   return (
     <div className="flex flex-wrap items-center gap-2 mb-4">
-      <AnimatePresence>
-        {filters.map((f) => (
-          <motion.button
-            key={f.key}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.8 }}
-            onClick={() => removeFilter(f.key)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purpura/20 border border-purpura/30 text-sm text-lavanda-light rounded-full hover:bg-purpura/30 transition-colors cursor-pointer"
-          >
-            {f.label}
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </motion.button>
-        ))}
-      </AnimatePresence>
+      {/* Sin AnimatePresence: el chip que salía quedaba en el DOM ocupando
+          lugar y, al ser invisible pero clickeable, borraba un filtro si se
+          hacía click en lo que parecía espacio vacío. */}
+      {filters.map((f) => (
+        <button
+          key={f.key}
+          onClick={() => removeFilter(f.key)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purpura/20 border border-purpura/30 text-sm text-lavanda-light rounded-full hover:bg-purpura/30 transition-colors cursor-pointer animate-fade-in"
+        >
+          {f.label}
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      ))}
 
       {filters.length > 1 && (
         <button

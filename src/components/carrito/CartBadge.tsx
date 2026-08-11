@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useCartContext } from "./CartProvider";
 
 export default function CartBadge() {
@@ -44,18 +44,12 @@ export default function CartBadge() {
         </svg>
       </motion.div>
 
-      <AnimatePresence>
-        {itemCount > 0 && (
-          <motion.span
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            exit={{ scale: 0 }}
-            className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-ambar text-navy-deep text-[10px] font-bold rounded-full flex items-center justify-center"
-          >
-            {itemCount > 9 ? "9+" : itemCount}
-          </motion.span>
-        )}
-      </AnimatePresence>
+      {/* Sin AnimatePresence: dejaba el badge viejo pegado sobre el nuevo. */}
+      {itemCount > 0 && (
+        <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-ambar text-navy-deep text-[10px] font-bold rounded-full flex items-center justify-center animate-fade-in">
+          {itemCount > 9 ? "9+" : itemCount}
+        </span>
+      )}
     </button>
   );
 }

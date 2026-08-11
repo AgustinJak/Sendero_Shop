@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import type { Banner } from "@/types";
 
@@ -23,55 +22,39 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
 
   const banner = banners[current];
 
+  // `key` fuerza el remount al cambiar de banner, así la animación de entrada
+  // se reproduce sola. Sin AnimatePresence: no sacaba el slide saliente y se
+  // acumulaban slides invisibles tapando el hero en cada rotación.
   const content = (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={banner.id}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative w-full h-full"
-      >
-        {banner.imagen_url && (
-          <img
-            src={banner.imagen_url}
-            alt={banner.titulo || "Banner"}
-            className="absolute inset-0 w-full h-full object-cover"
-          />
-        )}
-        {/* Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/60 to-navy/30" />
+    <div key={banner.id} className="relative w-full h-full animate-fade-in">
+      {banner.imagen_url && (
+        <img
+          src={banner.imagen_url}
+          alt={banner.titulo || "Banner"}
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+      )}
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/60 to-navy/30" />
 
-        {/* Text */}
-        {(banner.titulo || banner.subtitulo) && (
-          <div className="absolute inset-0 flex items-center justify-center text-center px-4">
-            <div>
-              {banner.titulo && (
-                <motion.h2
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl md:text-5xl font-bold text-niebla mb-4 drop-shadow-lg"
-                >
-                  {banner.titulo}
-                </motion.h2>
-              )}
-              {banner.subtitulo && (
-                <motion.p
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="text-lg sm:text-xl text-lavanda-light max-w-2xl mx-auto drop-shadow"
-                >
-                  {banner.subtitulo}
-                </motion.p>
-              )}
-            </div>
+      {/* Text */}
+      {(banner.titulo || banner.subtitulo) && (
+        <div className="absolute inset-0 flex items-center justify-center text-center px-4">
+          <div>
+            {banner.titulo && (
+              <h2 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl md:text-5xl font-bold text-niebla mb-4 drop-shadow-lg animate-drop-in">
+                {banner.titulo}
+              </h2>
+            )}
+            {banner.subtitulo && (
+              <p className="text-lg sm:text-xl text-lavanda-light max-w-2xl mx-auto drop-shadow animate-drop-in">
+                {banner.subtitulo}
+              </p>
+            )}
           </div>
-        )}
-      </motion.div>
-    </AnimatePresence>
+        </div>
+      )}
+    </div>
   );
 
   return (
