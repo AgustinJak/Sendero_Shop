@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cache } from "react";
 import { getProductoBySlug, getProductosRelacionados } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
@@ -68,8 +69,6 @@ export default async function ProductoPage({ params }: Props) {
     descuento_tramos: tramos,
   } = await getSiteConfig();
   const relacionados = await getProductosRelacionados(producto, 4);
-
-  const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
   // Fetch approved reviews for JSON-LD aggregateRating
   const supabase = await createServiceRoleClient();
@@ -142,22 +141,22 @@ export default async function ProductoPage({ params }: Props) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumbs */}
       <nav className="mb-6 text-sm text-lavanda/75">
-        <a href="/" className="hover:text-niebla transition-colors">
+        <Link href="/" className="hover:text-niebla transition-colors">
           Inicio
-        </a>
+        </Link>
         <span className="mx-2">/</span>
-        <a href="/catalogo" className="hover:text-niebla transition-colors">
+        <Link href="/catalogo" className="hover:text-niebla transition-colors">
           Catálogo
-        </a>
+        </Link>
         {producto.categoria && (
           <>
             <span className="mx-2">/</span>
-            <a
+            <Link
               href={`/catalogo?categoria=${producto.categoria.slug}`}
               className="hover:text-niebla transition-colors"
             >
               {producto.categoria.nombre}
-            </a>
+            </Link>
           </>
         )}
         <span className="mx-2">/</span>

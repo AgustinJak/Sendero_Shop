@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { cache } from "react";
 import { getColeccionBySlug } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
@@ -70,9 +71,9 @@ export default async function ColeccionPage({ params }: Props) {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumbs */}
       <nav className="mb-6 text-sm text-lavanda/75">
-        <a href="/" className="hover:text-niebla transition-colors">
+        <Link href="/" className="hover:text-niebla transition-colors">
           Inicio
-        </a>
+        </Link>
         <span className="mx-2">/</span>
         <span className="text-lavanda-light">{coleccion.nombre}</span>
       </nav>

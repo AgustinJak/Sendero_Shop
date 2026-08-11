@@ -1,4 +1,4 @@
-const CACHE_NAME = "sendero-v2";
+const CACHE_NAME = "sendero-v3";
 const STATIC_ASSETS = [
   "/",
   "/catalogo",
@@ -6,6 +6,30 @@ const STATIC_ASSETS = [
   "/icons/icon-512.png",
   "/assets/loading-knight.gif",
 ];
+
+/**
+ * Rutas que nunca se guardan en caché: tienen datos del cliente (pedido,
+ * dirección, DNI) o del admin, y quedarían en el disco del dispositivo
+ * pudiendo servirse más tarde a quien lo use.
+ */
+const RUTAS_PRIVADAS = [
+  "/checkout",
+  "/pedido",
+  "/mi-pedido",
+  "/admin",
+  "/api/",
+];
+
+function esPrivada(pathname) {
+  return RUTAS_PRIVADAS.some(
+    (p) => pathname === p || pathname.startsWith(p.endsWith("/") ? p : `${p}/`)
+  );
+}
+
+/** Solo vale guardar respuestas propias y exitosas (no 404, 500 ni opacas). */
+function esCacheable(response) {
+  return response && response.ok && response.type === "basic";
+}
 
 // Install: cache static assets
 self.addEventListener("install", (event) => {
@@ -35,8 +59,9 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET and external requests
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
 
-  // API routes and service worker itself: network only
-  if (url.pathname.startsWith("/api/") || url.pathname === "/sw.js") return;
+  // Service worker itself y rutas con datos personales: siempre a la red,
+  // sin escribir ni leer caché.
+  if (url.pathname === "/sw.js" || esPrivada(url.pathname)) return;
 
   // Static assets (images, fonts, CSS, JS): cache-first
   if (
@@ -50,8 +75,12 @@ self.addEventListener("fetch", (event) => {
         (cached) =>
           cached ||
           fetch(request).then((response) => {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+            if (esCacheable(response)) {
+              const clone = response.clone();
+              caches
+                .open(CACHE_NAME)
+                .then((cache) => cache.put(request, clone));
+            }
             return response;
           })
       )
@@ -63,8 +92,10 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(request)
       .then((response) => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        if (esCacheable(response)) {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
+        }
         return response;
       })
       .catch(() => caches.match(request))
