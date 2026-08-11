@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { cache } from "react";
-import { getProductoBySlug, getProductosRelacionados, getListaMayoristaDeProducto } from "@/lib/queries";
+import { getProductoBySlug, getProductosRelacionados } from "@/lib/queries";
 import { formatPrice } from "@/lib/utils";
 import { getSiteConfig } from "@/lib/site-config";
 import ProductDetail from "@/components/productos/ProductDetail";
@@ -68,7 +68,6 @@ export default async function ProductoPage({ params }: Props) {
     descuento_tramos: tramos,
   } = await getSiteConfig();
   const relacionados = await getProductosRelacionados(producto, 4);
-  const listaMayorista = await getListaMayoristaDeProducto(producto.id);
 
   const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
@@ -170,7 +169,6 @@ export default async function ProductoPage({ params }: Props) {
         whatsapp={whatsapp}
         reviewCount={reviewCount}
         avgRating={avgRating}
-        listaMayoristaCodigo={listaMayorista?.codigo ?? null}
         envioGratisDesde={envioGratisDesde}
         tramos={tramos}
       />

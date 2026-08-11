@@ -16,7 +16,6 @@ interface ProductDetailProps {
   whatsapp: string;
   reviewCount: number;
   avgRating: number;
-  listaMayoristaCodigo?: string | null;
   envioGratisDesde: number;
   tramos?: MayoristaTramo[];
 }
@@ -26,7 +25,6 @@ export default function ProductDetail({
   whatsapp,
   reviewCount,
   avgRating,
-  listaMayoristaCodigo,
   envioGratisDesde,
   tramos = [],
 }: ProductDetailProps) {
@@ -64,12 +62,7 @@ export default function ProductDetail({
         />
         {/* Desktop: debajo de las fotos */}
         <div className="hidden md:block">
-          <MayoristaCallout
-            whatsapp={whatsapp}
-            nombreProducto={producto.nombre}
-            listaCodigo={listaMayoristaCodigo}
-            tramos={tramos}
-          />
+          <MayoristaCallout tramos={tramos} />
         </div>
       </div>
 
@@ -176,12 +169,7 @@ export default function ProductDetail({
 
         {/* Mobile: callout mayorista después del CTA de compra */}
         <div className="md:hidden">
-          <MayoristaCallout
-            whatsapp={whatsapp}
-            nombreProducto={producto.nombre}
-            listaCodigo={listaMayoristaCodigo}
-            tramos={tramos}
-          />
+          <MayoristaCallout tramos={tramos} />
         </div>
 
         {/* Info adicional */}
