@@ -4,28 +4,45 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { whatsappLink } from "@/lib/utils";
 
+/**
+ * Valor pseudoaleatorio estable a partir de una semilla.
+ *
+ * Las partículas usaban Math.random() durante el render: el server pintaba
+ * unas posiciones y el cliente otras, y la hidratación no coincidía. Con esto
+ * ambos calculan lo mismo y el resultado se ve igual de disperso.
+ */
+function disperso(semilla: number): number {
+  const x = Math.sin(semilla) * 10000;
+  return x - Math.floor(x);
+}
+
+// Se calcula una sola vez por módulo: no depende de props ni del render.
+const PARTICULAS = Array.from({ length: 20 }, (_, i) => ({
+  left: disperso(i + 1) * 100,
+  top: disperso(i + 21) * 100,
+  duration: 3 + disperso(i + 41) * 4,
+  delay: disperso(i + 61) * 3,
+}));
+
 export default function HomeHero({ whatsapp }: { whatsapp: string }) {
   return (
     <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Partículas flotantes */}
       <div className="absolute inset-0 pointer-events-none">
-        {Array.from({ length: 20 }).map((_, i) => (
+        {PARTICULAS.map((p, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-lavanda/40 rounded-full"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
+            style={{ left: `${p.left}%`, top: `${p.top}%` }}
             animate={{
               y: [0, -30, 0],
               opacity: [0.2, 0.8, 0.2],
               scale: [1, 1.5, 1],
             }}
             transition={{
-              duration: 3 + Math.random() * 4,
+              duration: p.duration,
               repeat: Infinity,
-              delay: Math.random() * 3,
+              delay: p.delay,
               ease: "easeInOut",
             }}
           />

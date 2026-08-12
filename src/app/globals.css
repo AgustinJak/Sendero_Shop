@@ -20,6 +20,7 @@
   --animate-fade-in: fade-in 0.18s ease-out;
   --animate-drop-in: drop-in 0.2s ease-out;
   --animate-slide-in-right: slide-in-right 0.3s ease-out;
+  --animate-pop: pop 0.35s ease-out;
 }
 
 @keyframes slide-up {
@@ -51,6 +52,15 @@
 @keyframes slide-in-right {
   from {
     transform: translateX(100%);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.25);
   }
 }
 

@@ -150,10 +150,15 @@ function CategoryGroup({
 
   const [expanded, setExpanded] = useState(shouldBeOpen);
 
-  // Keep expanded state synced with active filters
-  useEffect(() => {
-    if (shouldBeOpen && !expanded) setExpanded(true);
-  }, [shouldBeOpen, expanded]);
+  // Al pasar a estar activo, se abre. Se ajusta durante el render (patrón de
+  // "estado derivado de props" de React) en vez de con un efecto: el efecto
+  // encadenaba un render extra y, al depender de `expanded`, volvía a abrir la
+  // sección apenas el usuario la cerraba.
+  const [eraVisible, setEraVisible] = useState(shouldBeOpen);
+  if (shouldBeOpen !== eraVisible) {
+    setEraVisible(shouldBeOpen);
+    if (shouldBeOpen) setExpanded(true);
+  }
 
   // Animate children expand/collapse
   useEffect(() => {

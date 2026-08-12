@@ -419,7 +419,9 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
           })),
         });
         clearCart();
-        window.location.href = mpData.init_point;
+        // assign() en vez de asignar location.href: mismo efecto, y no cuenta
+        // como modificar un valor externo al componente.
+        window.location.assign(mpData.init_point);
         return;
       }
 
@@ -1019,11 +1021,11 @@ function AutocompleteInput({
   const debouncedValue = useDebounce(value, 300);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // Cuando la consulta es muy corta no se limpia el estado: se deriva en el
+  // render (ver `sugerenciasVisibles`). Así el efecto no dispara un setState
+  // sincrónico que encadena un render de más en cada tecla.
   const fetchSuggestions = useCallback(async (query: string, prov: string) => {
-    if (query.length < 2 || !prov) {
-      setSuggestions([]);
-      return;
-    }
+    if (query.length < 2 || !prov) return;
     const provGeoref = PROVINCIA_GEOREF[prov];
     if (!provGeoref) return;
 
@@ -1049,6 +1051,11 @@ function AutocompleteInput({
     fetchSuggestions(debouncedValue, provincia);
   }, [debouncedValue, provincia, fetchSuggestions]);
 
+  // Las sugerencias solo valen para la consulta vigente: si el usuario borra
+  // texto, dejan de mostrarse sin necesidad de limpiar el estado.
+  const sugerenciasVisibles =
+    debouncedValue.length >= 2 && provincia ? suggestions : [];
+
   // Close on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -1067,15 +1074,15 @@ function AutocompleteInput({
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        onFocus={() => { setFocused(true); if (suggestions.length > 0) setOpen(true); }}
+        onFocus={() => { setFocused(true); if (sugerenciasVisibles.length > 0) setOpen(true); }}
         onBlur={() => setFocused(false)}
         placeholder={placeholder}
         autoComplete="off"
         className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/50 focus:outline-none focus:border-purpura transition-colors"
       />
-      {open && focused && suggestions.length > 0 && (
+      {open && focused && sugerenciasVisibles.length > 0 && (
         <ul className="absolute z-50 w-full mt-1 bg-navy-deep border border-lavanda/20 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-          {suggestions.map((s) => (
+          {sugerenciasVisibles.map((s) => (
             <li
               key={s}
               onMouseDown={() => {
