@@ -40,6 +40,8 @@ export interface Producto {
   meta_title: string | null;
   meta_description: string | null;
   unidades_vendidas: number;
+  /** Kit/combo: su precio es propio y fijo; los componentes solo describen qué incluye. */
+  es_kit: boolean;
   created_at: string;
   updated_at: string;
   // Relaciones
@@ -47,6 +49,21 @@ export interface Producto {
   variante_grupos?: VarianteGrupo[];
   precio_reglas?: VariantePrecioRegla[];
   categoria?: Categoria;
+  kit_componentes?: KitComponente[];
+}
+
+/**
+ * Producto que integra un kit. `producto` viene del join cuando se necesita
+ * mostrar el contenido (nombre, precio de lista, imagen).
+ */
+export interface KitComponente {
+  id: string;
+  kit_id: string;
+  producto_id: string;
+  cantidad: number;
+  orden: number;
+  // Relaciones
+  producto?: Producto;
 }
 
 export interface ProductoImagen {
