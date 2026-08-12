@@ -1,5 +1,4 @@
 import { createServiceRoleClient } from "@/lib/supabase-server";
-import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
 import type { MayoristaLista, MayoristaSeccion, MayoristaItem, MayoristaTramo, MayoristaKit } from "@/types";
@@ -11,6 +10,49 @@ import KitsScrollButton from "@/components/mayorista/KitsScrollButton";
 import Reveal from "@/components/mayorista/Reveal";
 import MayoristaCartShell from "@/components/mayorista/MayoristaCartShell";
 import ComprarKitMayorista from "@/components/mayorista/ComprarKitMayorista";
+
+/**
+ * Aviso para los links de listas que quedaron dando vueltas por WhatsApp.
+ * El descuento por cantidad ahora vive en cada producto, así que se explica
+ * eso y se manda al catálogo, en vez de dejar un 404 sin contexto.
+ */
+function ListaDadaDeBaja() {
+  return (
+    <div className="min-h-screen bg-[#1C2541] flex items-center justify-center px-4 py-16">
+      <div className="max-w-md w-full text-center">
+        <div className="rounded-2xl bg-[#0F1729] border border-[#8B85B2]/15 p-8 space-y-4">
+          <h1
+            className="text-[#E8E6F0] text-xl font-bold"
+            style={{ fontFamily: "var(--font-cinzel, serif)" }}
+          >
+            Esta lista ya no está disponible
+          </h1>
+          <p className="text-sm text-[#B8B3D1] leading-relaxed">
+            Dejamos de usar las listas mayoristas: ahora{" "}
+            <strong className="text-[#E8E6F0] font-semibold">
+              los precios por cantidad se aplican solos
+            </strong>{" "}
+            en cada producto de la tienda. Sumás unidades al carrito y el
+            descuento se calcula automáticamente en el checkout.
+          </p>
+          <Link
+            href="/catalogo"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-[#D4A853] hover:bg-[#E0B968] text-[#1C2541] text-sm font-semibold rounded-lg transition-colors"
+          >
+            Ir al catálogo
+            <span aria-hidden="true">→</span>
+          </Link>
+        </div>
+        <Link
+          href="/"
+          className="mt-4 inline-block text-xs text-[#8B85B2] hover:text-[#E8E6F0] transition-colors"
+        >
+          ← Volver a la tienda
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -65,10 +107,14 @@ export default async function MayoristaPublicPage({
       )
     `)
     .eq("codigo", codigo)
-    .eq("activa", true)
-    .single();
+    .maybeSingle();
 
-  if (!listaRaw) notFound();
+  // Las listas se dieron de baja: el descuento por cantidad ahora se aplica
+  // solo en cada producto. Se avisa en vez de tirar un 404, porque estos links
+  // circularon por WhatsApp y quien los abra tiene que entender qué pasó.
+  if (!listaRaw || listaRaw.activa === false) {
+    return <ListaDadaDeBaja />;
+  }
   const lista = listaRaw as MayoristaLista;
 
   const secciones: MayoristaSeccion[] = ((lista.secciones ?? []) as MayoristaSeccion[])
