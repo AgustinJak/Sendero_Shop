@@ -17,6 +17,7 @@ export interface ProductoFormData {
   categoria_id: string;
   activo: boolean;
   destacado: boolean;
+  es_kit: boolean;
   stock_tipo: "print-on-demand" | "limitado";
   tiempo_produccion: number;
   linea: string;
@@ -60,6 +61,7 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     categoria_id: producto?.categoria_id || "",
     activo: producto?.activo ?? true,
     destacado: producto?.destacado ?? false,
+    es_kit: producto?.es_kit ?? false,
     stock_tipo: producto?.stock_tipo || "print-on-demand",
     tiempo_produccion: producto?.tiempo_produccion || 7,
     linea: producto?.linea || "",
@@ -453,7 +455,21 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
           />
           <span className="text-sm text-lavanda-light">Destacado</span>
         </label>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={form.es_kit}
+            onChange={(e) => updateField("es_kit", e.target.checked)}
+            className="accent-ambar"
+          />
+          <span className="text-sm text-lavanda-light">Es un kit</span>
+        </label>
       </div>
+      {form.es_kit && !producto?.es_kit && (
+        <p className="text-xs text-lavanda/60">
+          Guardá el producto y después vas a poder cargarle qué incluye el kit.
+        </p>
+      )}
 
       {/* Submit */}
       <div className="flex gap-3 pt-2">
