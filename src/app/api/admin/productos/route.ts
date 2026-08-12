@@ -20,7 +20,6 @@ export async function POST(req: NextRequest) {
       categoria_id: body.categoria_id || null,
       activo: body.activo ?? true,
       destacado: body.destacado ?? false,
-      es_kit: body.es_kit ?? false,
       stock_tipo: body.stock_tipo || "print-on-demand",
       tiempo_produccion: body.tiempo_produccion || 7,
       linea: body.linea || null,

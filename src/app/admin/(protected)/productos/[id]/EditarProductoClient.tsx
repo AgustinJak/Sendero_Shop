@@ -5,20 +5,15 @@ import ProductoForm, { type ProductoFormData } from "@/components/admin/Producto
 import ProductoImagenes from "@/components/admin/ProductoImagenes";
 import ProductoPreview from "@/components/admin/ProductoPreview";
 import VariantesManager from "@/components/admin/VariantesManager";
-import KitComponentesManager, {
-  type ProductoElegible,
-} from "@/components/admin/KitComponentesManager";
 import type { Producto } from "@/types";
 import type { Categoria } from "@/types";
 
 export default function EditarProductoClient({
   producto,
   categorias,
-  candidatosKit = [],
 }: {
   producto: Producto;
   categorias: Categoria[];
-  candidatosKit?: ProductoElegible[];
 }) {
   const [formData, setFormData] = useState<ProductoFormData | null>(null);
 
@@ -45,14 +40,6 @@ export default function EditarProductoClient({
           imagenes={producto.imagenes || []}
           varianteGrupos={producto.variante_grupos || []}
         />
-        {producto.es_kit && (
-          <KitComponentesManager
-            kitId={producto.id}
-            precioKit={producto.precio_oferta || producto.precio}
-            componentes={producto.kit_componentes || []}
-            candidatos={candidatosKit}
-          />
-        )}
         <VariantesManager
           productoId={producto.id}
           grupos={producto.variante_grupos || []}
