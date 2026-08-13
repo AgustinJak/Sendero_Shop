@@ -345,28 +345,47 @@ export async function getColeccionBySlug(
         .filter(Boolean) as unknown as Producto[];
     }
   } else if (col.tipo === "automatica" && col.regla) {
-    // Build query from rules
+    // Cada campo acepta CSV: "Kpop, K4os" incluye productos de cualquiera de
+    // las dos líneas. Antes se usaba ILIKE con el string completo, que solo
+    // matcheaba un producto con la línea literal "Kpop, K4os" (inexistente).
+    const csv = (v: string | undefined) =>
+      (v ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean);
+
     let query = supabase
       .from("productos")
       .select("*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)")
       .eq("activo", true);
 
-    if (col.regla.linea) query = query.ilike("linea", col.regla.linea);
-    if (col.regla.categoria_slug || col.regla.categoria) {
-      const catSlug = col.regla.categoria_slug || col.regla.categoria;
-      const { data: cat } = await supabase
+    const lineas = csv(col.regla.linea);
+    if (lineas.length) query = query.in("linea", lineas);
+
+    const catSlugRaw = col.regla.categoria_slug || col.regla.categoria;
+    const catSlugs = csv(catSlugRaw);
+    let saltarQuery = false;
+    if (catSlugs.length) {
+      const { data: cats } = await supabase
         .from("categorias")
         .select("id")
-        .eq("slug", catSlug)
-        .single();
-      if (cat) query = query.eq("categoria_id", cat.id);
+        .in("slug", catSlugs);
+      const catIds = (cats ?? []).map((c: { id: string }) => c.id);
+      // Sin categorías matcheadas: la regla no aplica a ningún producto.
+      // Saltar la query en vez de correrla sin este filtro (que devolvería
+      // todo el catálogo). La página de la colección se muestra vacía, no 404.
+      if (catIds.length === 0) saltarQuery = true;
+      else query = query.in("categoria_id", catIds);
     }
-    if (col.regla.tamano) query = query.eq("tamano", col.regla.tamano);
 
-    query = query.order("created_at", { ascending: false }).limit(50);
+    const tamanos = csv(col.regla.tamano);
+    if (tamanos.length) query = query.in("tamano", tamanos);
 
-    const { data } = await query;
-    productos = (data as unknown as Producto[]) || [];
+    if (!saltarQuery) {
+      query = query.order("created_at", { ascending: false }).limit(50);
+      const { data } = await query;
+      productos = (data as unknown as Producto[]) || [];
+    }
   }
 
   return { ...col, productos };

@@ -323,7 +323,8 @@ export default function ColeccionesManager({ colecciones, productos }: Props) {
             {form.tipo === "automatica" && (
               <div className="grid grid-cols-2 gap-4 bg-navy/50 rounded-lg p-4 border border-lavanda/10">
                 <p className="col-span-2 text-xs text-lavanda/60">
-                  Reglas — los productos que coincidan se incluyen automáticamente
+                  Reglas — los productos que coincidan se incluyen automáticamente.
+                  Podés poner varios valores separados por coma: <span className="text-lavanda-light">Kpop, K4os</span>.
                 </p>
                 <div>
                   <label className="block text-xs text-lavanda/60 mb-1">Línea</label>
