@@ -38,12 +38,17 @@ export function StarRating({
 }
 
 /**
- * Bloque de señales de confianza que va cerca del botón de compra:
- * MercadoLíder Gold, envíos a todo el país y medios de pago.
+ * Señales de confianza cerca del botón de compra: quién vende y cómo se paga.
+ *
+ * Sin caja a propósito: es información pasiva. La caja se reserva para el
+ * bloque de envío, que sí tiene input y botón. Antes las dos usaban el mismo
+ * contenedor y parecían lo mismo.
+ *
+ * Lo de envío tampoco va acá: lo cubre `EnvioProducto`, justo abajo.
  */
 export function TrustBadges() {
   return (
-    <div className="rounded-xl border border-lavanda/10 bg-navy-deep/40 p-4 space-y-3">
+    <div className="space-y-3">
       {/* MercadoLíder Gold */}
       <a
         href={ML_URL}
@@ -61,27 +66,6 @@ export function TrustBadges() {
           Vendedor con reputación verde en Mercado Libre
         </span>
       </a>
-
-      {/* Envíos a todo el país */}
-      <div className="flex items-center gap-2.5 text-sm text-lavanda-light">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={1.7}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          className="w-5 h-5 text-lavanda shrink-0"
-          aria-hidden="true"
-        >
-          <path d="M10 17h4V5H2v12h3M15 17h6v-5l-3-3h-3v8M5.5 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Zm10.5 0a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z" />
-        </svg>
-        <span>
-          Envíos a <span className="text-niebla font-medium">todo el país</span>
-          <span className="text-lavanda/50"> · Correo Argentino</span>
-        </span>
-      </div>
 
       {/* Medios de pago */}
       <div className="flex items-start gap-2.5 text-sm text-lavanda-light">

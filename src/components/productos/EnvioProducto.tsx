@@ -96,6 +96,16 @@ export default function EnvioProducto({
 
   return (
     <div className="rounded-xl border border-lavanda/10 bg-navy-deep/40 p-4 space-y-3">
+      {/* Encabezado: da contexto de qué resuelve este bloque y absorbe el
+          "a todo el país" que antes duplicaba TrustBadges. */}
+      <div className="flex items-center gap-2.5">
+        <TruckIcon className="h-5 w-5 shrink-0 text-lavanda" />
+        <p className="text-sm text-lavanda-light">
+          Envíos a <span className="font-medium text-niebla">todo el país</span>
+          <span className="text-lavanda/50"> · Correo Argentino</span>
+        </p>
+      </div>
+
       {/* Tarjeta de envío gratis */}
       {envioGratisActivo && (
         <div
@@ -105,11 +115,11 @@ export default function EnvioProducto({
               : "bg-navy/50 border border-lavanda/10 text-lavanda-light"
           }`}
         >
-          <TruckIcon className="h-5 w-5 shrink-0" />
+          {/* Sin camión acá: ya está en el encabezado del bloque. */}
           {productoCalifica ? (
             <span>
               <strong className="font-semibold">
-                ¡Este producto tiene envío gratis!
+                🎉 ¡Este producto tiene envío gratis!
               </strong>
             </span>
           ) : (
