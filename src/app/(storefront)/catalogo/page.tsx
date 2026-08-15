@@ -42,7 +42,11 @@ export default async function CatalogoPage({ searchParams }: Props) {
         orden: params.orden,
         page: params.page ? Number(params.page) : 1,
       }),
-      getAvailableFilters(),
+      getAvailableFilters({
+        categoria: params.categoria,
+        busqueda: params.q,
+        linea: params.linea,
+      }),
       getCategoriasTree(),
       getBanners("catalogo_top"),
     ]);

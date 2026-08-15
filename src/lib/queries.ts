@@ -1,5 +1,53 @@
 import { createServerSupabaseClient, createServiceRoleClient } from "./supabase-server";
+import { slugify } from "./utils";
 import type { Producto, Categoria, Coleccion, Banner } from "@/types";
+
+// --- Resolución de slugs ---
+
+/**
+ * Slug de categoría → IDs de esa categoría y sus hijas.
+ * Devuelve `[]` si el slug no existe (el llamador debe tratarlo como
+ * "ningún producto", no como "sin filtro").
+ */
+async function categoriaIdsPorSlug(slug: string): Promise<string[]> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data: parent } = await supabase
+    .from("categorias")
+    .select("id")
+    .eq("slug", slug)
+    .single();
+
+  if (!parent) return [];
+
+  const { data: children } = await supabase
+    .from("categorias")
+    .select("id")
+    .eq("parent_id", parent.id);
+
+  return [parent.id, ...(children?.map((c) => c.id) || [])];
+}
+
+/**
+ * Slug de línea → el valor real guardado en `productos.linea`.
+ *
+ * No alcanza con des-slugificar el slug (cambiar `-` por espacios): "Re:Zero"
+ * y "Decoración" pierden caracteres al slugificar y nunca vuelven a matchear,
+ * así que el filtro devolvía 0 productos. Se resuelve comparando slug contra
+ * slug sobre las líneas que existen.
+ */
+async function lineaPorSlug(slug: string): Promise<string | null> {
+  const supabase = await createServerSupabaseClient();
+
+  const { data } = await supabase
+    .from("productos")
+    .select("linea")
+    .eq("activo", true)
+    .not("linea", "is", null);
+
+  const match = (data ?? []).find((p) => p.linea && slugify(p.linea) === slug);
+  return match?.linea ?? null;
+}
 
 // --- Productos ---
 
@@ -30,25 +78,21 @@ export async function getProductos(
   const limit = filters.limit || 20;
   const offset = (page - 1) * limit;
 
-  // Si hay filtro de categoría por slug, resolver IDs (incluye hijas)
+  const vacio = { productos: [], total: 0, page, totalPages: 0 };
+
+  // Si hay filtro de categoría por slug, resolver IDs (incluye hijas).
+  // Un slug inexistente significa "no hay nada que mostrar": antes se caía al
+  // caso sin filtro y devolvía el catálogo entero.
   let categoriaIds: string[] = [];
   if (filters.categoria) {
-    // Buscar la categoría padre
-    const { data: parent } = await supabase
-      .from("categorias")
-      .select("id")
-      .eq("slug", filters.categoria)
-      .single();
+    categoriaIds = await categoriaIdsPorSlug(filters.categoria);
+    if (categoriaIds.length === 0) return vacio;
+  }
 
-    if (parent) {
-      // Buscar hijas de esa categoría
-      const { data: children } = await supabase
-        .from("categorias")
-        .select("id")
-        .eq("parent_id", parent.id);
-
-      categoriaIds = [parent.id, ...(children?.map((c) => c.id) || [])];
-    }
+  let linea: string | null = null;
+  if (filters.linea) {
+    linea = await lineaPorSlug(filters.linea);
+    if (!linea) return vacio;
   }
 
   let query = supabase
@@ -63,8 +107,8 @@ export async function getProductos(
   if (categoriaIds.length > 0) {
     query = query.in("categoria_id", categoriaIds);
   }
-  if (filters.linea) {
-    query = query.ilike("linea", filters.linea.replace(/-/g, " "));
+  if (linea) {
+    query = query.eq("linea", linea);
   }
   if (filters.precio_min) {
     query = query.gte("precio", filters.precio_min);
@@ -103,7 +147,7 @@ export async function getProductos(
 
   if (error) {
     console.error("Error fetching productos:", error);
-    return { productos: [], total: 0, page, totalPages: 0 };
+    return vacio;
   }
 
   return {
@@ -269,20 +313,60 @@ export interface AvailableFilters {
   precio_max: number;
 }
 
-export async function getAvailableFilters(): Promise<AvailableFilters> {
+/** Filtros ya aplicados, para acotar las opciones que se ofrecen. */
+export interface FiltrosDeContexto {
+  categoria?: string;
+  busqueda?: string;
+  /** Slug de la línea activa. */
+  linea?: string;
+}
+
+/**
+ * Opciones que tiene sentido ofrecer en el sidebar dado lo ya filtrado.
+ *
+ * Las líneas se acotan al contexto: parado en Armas no se ofrece BTS, porque
+ * no existe ningún producto Armas + BTS y elegirlo dejaría el grid vacío.
+ */
+export async function getAvailableFilters(
+  contexto: FiltrosDeContexto = {}
+): Promise<AvailableFilters> {
   const supabase = await createServerSupabaseClient();
 
   const { data } = await supabase
     .from("productos")
-    .select("linea, precio")
+    .select("nombre, linea, precio, categoria_id")
     .eq("activo", true);
 
   if (!data) {
     return { lineas: [], precio_min: 0, precio_max: 0 };
   }
 
-  const lineas = [...new Set(data.map((p) => p.linea).filter(Boolean))] as string[];
-  const precios = data.map((p) => p.precio).filter(Boolean) as number[];
+  // Slug inexistente → array vacío → ningún producto entra en contexto, igual
+  // que en getProductos().
+  const categoriaIds = contexto.categoria
+    ? await categoriaIdsPorSlug(contexto.categoria)
+    : null;
+  const busqueda = contexto.busqueda?.toLowerCase();
+
+  // El filtro de línea NO se aplica acá a propósito: si se aplicara quedaría
+  // solo la línea elegida y no habría forma de saltar a otra sin limpiarla.
+  const enContexto = data.filter((p) => {
+    if (categoriaIds && !categoriaIds.includes(p.categoria_id as string)) return false;
+    if (busqueda && !(p.nombre as string).toLowerCase().includes(busqueda)) return false;
+    return true;
+  });
+
+  const lineas = [...new Set(enContexto.map((p) => p.linea).filter(Boolean))] as string[];
+
+  // La línea activa se conserva aunque el contexto la deje sin productos, para
+  // poder destildarla desde el sidebar en vez de quedar con el grid vacío y el
+  // filtro desaparecido.
+  if (contexto.linea && !lineas.some((l) => slugify(l) === contexto.linea)) {
+    const activa = data.find((p) => p.linea && slugify(p.linea) === contexto.linea);
+    if (activa?.linea) lineas.push(activa.linea as string);
+  }
+
+  const precios = enContexto.map((p) => p.precio).filter(Boolean) as number[];
 
   return {
     lineas: lineas.sort(),

@@ -148,7 +148,10 @@ function CategoryGroup({
     : false;
   const shouldBeOpen = isParentActive || isChildActive;
 
-  const [expanded, setExpanded] = useState(shouldBeOpen);
+  // Arranca abierto: las subcategorías son el filtro que más se usa y tenerlas
+  // a la vista al entrar evita un click extra por rubro. El usuario puede
+  // contraer lo que no le interese.
+  const [expanded, setExpanded] = useState(true);
 
   // Al pasar a estar activo, se abre. Se ajusta durante el render (patrón de
   // "estado derivado de props" de React) en vez de con un efecto: el efecto
@@ -161,8 +164,15 @@ function CategoryGroup({
   }
 
   // Animate children expand/collapse
+  const primerRender = useRef(true);
   useEffect(() => {
     if (!childrenRef.current || !hasChildren) return;
+    // En el primer render el estilo inline ya deja la sección abierta; animarla
+    // sería desplegar algo que se supone que ya estaba así.
+    if (primerRender.current) {
+      primerRender.current = false;
+      return;
+    }
     if (expanded) {
       gsap.fromTo(
         childrenRef.current,
