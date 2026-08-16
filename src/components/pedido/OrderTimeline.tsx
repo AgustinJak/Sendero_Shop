@@ -130,12 +130,14 @@ export default function OrderTimeline({
                     : ""
                 }`}
               >
+                {/* Solo la etapa previa habla de la seña. La siguiente dice
+                    "Pedido confirmado": dos pasos seguidos nombrando la seña
+                    se leen como si algo se repitiera, y lo que importa ahí ya
+                    no es el anticipo sino que el pedido arranca. */}
                 {step.key === "pendiente_pago" && metodoPago === "efectivo"
                   ? "Seña pendiente"
                   : step.key === "pago_confirmado" && metodoPago === "efectivo"
-                    ? tieneSena
-                      ? "Seña confirmada"
-                      : "Pedido confirmado"
+                    ? "Pedido confirmado"
                     : step.label}
               </p>
             </div>
