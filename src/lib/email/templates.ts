@@ -162,6 +162,12 @@ export function pedidoConfirmadoEmail(
       ? "Transferencia bancaria"
       : "Efectivo";
 
+  // El bloque de efectivo cambia entero cuando hay seña: sin esto decía "tu
+  // pedido ya quedó confirmado" y mostraba el total como monto a pagar al
+  // retirar, contradiciendo al bloque de seña que está justo arriba pidiendo
+  // el anticipo.
+  const tieneSena = pedido.tiene_sena && Number(pedido.monto_sena) > 0;
+
   const content = `
     <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">¡Recibimos tu pedido!</h2>
     <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
@@ -276,12 +282,18 @@ export function pedidoConfirmadoEmail(
     <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:16px;background-color:${COLORS.purpura}22;border:1px solid ${COLORS.purpura}44;border-radius:8px;">
       <tr>
         <td style="padding:16px;">
-          <p style="margin:0 0 8px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Pago en efectivo al retirar</p>
-          <p style="margin:0 0 12px;color:${COLORS.lavanda};font-size:13px;">
-            Tu pedido ya quedó confirmado y arranca producción. <strong style="color:${COLORS.niebla};">El pago lo hacés al retirarlo en persona</strong>, no antes.
-          </p>
+          <p style="margin:0 0 8px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">${
+            tieneSena ? "Saldo al retirar" : "Pago en efectivo al retirar"
+          }</p>
+          <p style="margin:0 0 12px;color:${COLORS.lavanda};font-size:13px;">${
+            tieneSena
+              ? `Una vez acreditada la seña arrancamos la producción. <strong style="color:${COLORS.niebla};">El saldo lo pagás en efectivo al retirar</strong>.`
+              : `Tu pedido ya quedó confirmado y arranca producción. <strong style="color:${COLORS.niebla};">El pago lo hacés al retirarlo en persona</strong>, no antes.`
+          }</p>
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Monto a pagar al retirar</p>
-          <p style="margin:0 0 12px;color:${COLORS.ambar};font-size:18px;font-weight:bold;">${formatPrice(pedido.total)}</p>
+          <p style="margin:0 0 12px;color:${COLORS.ambar};font-size:18px;font-weight:bold;">${formatPrice(
+            tieneSena ? Number(pedido.total) - Number(pedido.monto_sena) : pedido.total
+          )}</p>
           <p style="margin:0 0 12px;color:${COLORS.lavanda};font-size:13px;">
             Te avisamos cuando esté listo para que coordinemos el retiro en Villa Crespo.
           </p>
