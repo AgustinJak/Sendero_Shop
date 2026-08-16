@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useCartContext } from "@/components/carrito/CartProvider";
 import { formatPrice, calcularRecargoMP, validarDNI, MP_RECARGO_DEFAULT_PCT } from "@/lib/utils";
+import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
 import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type {
@@ -37,11 +38,13 @@ interface CheckoutFormProps {
   zonas: EnvioZona[];
   configuracion: Record<string, string>;
   envioGratisDesde?: number;
+  /** % del total que se pide de anticipo en efectivo. 0 = desactivado. */
+  senaEfectivoPct?: number;
 }
 
 type Step = "datos" | "envio" | "pago" | "resumen";
 
-export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 0 }: CheckoutFormProps) {
+export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 0, senaEfectivoPct = 0 }: CheckoutFormProps) {
   const router = useRouter();
   const { cart, clearCart, itemCount } = useCartContext();
   const [step, setStep] = useState<Step>("datos");
@@ -221,6 +224,13 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
   const costoEnvio = calificaEnvioGratis ? 0 : getCostoEnvio();
   const recargoMP = metodoPago === "mercadopago" ? calcularRecargoMP(cart.subtotal + costoEnvio, recargoPct) : 0;
   const total = cart.subtotal + costoEnvio + recargoMP;
+
+  // Seña del efectivo. El cálculo se repite en el servidor (que es el que
+  // manda) con los mismos helpers; acá es solo para mostrarlo antes de
+  // confirmar. Ver lib/sena.ts.
+  const llevaSena = requiereSena(metodoPago, senaEfectivoPct);
+  const montoSena = llevaSena ? calcularSenaEfectivo(total, senaEfectivoPct) : 0;
+  const saldoSena = total - montoSena;
 
   // Validaciones
   const ALLOWED_EMAIL_DOMAINS = [
@@ -763,7 +773,11 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   <input type="radio" name="pago" checked={metodoPago === "efectivo"} onChange={() => setMetodoPago("efectivo")} className="accent-purpura" />
                   <div>
                     <p className="text-sm font-medium text-niebla">Efectivo</p>
-                    <p className="text-xs text-lavanda/70">Pagás al retirar. Sin recargo.</p>
+                    <p className="text-xs text-lavanda/70">
+                      {senaEfectivoPct > 0
+                        ? `Seña del ${senaEfectivoPct}% para reservar. El resto al retirar.`
+                        : "Pagás al retirar. Sin recargo."}
+                    </p>
                   </div>
                 </label>
               )}
@@ -772,6 +786,37 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
             {metodoPago === "mercadopago" && (
               <div className="bg-ambar/10 border border-ambar/20 rounded-lg px-4 py-3 text-sm text-ambar-light">
                 Recargo MercadoPago ({recargoPct}%): {formatPrice(recargoMP)}
+              </div>
+            )}
+
+            {llevaSena && (
+              <div className="bg-purpura/10 border border-purpura/30 rounded-lg p-4 space-y-3">
+                <p className="text-sm font-semibold text-niebla">
+                  Pago en 2 partes
+                </p>
+                <p className="text-xs text-lavanda/75 leading-relaxed">
+                  Como imprimimos cada pieza a pedido, pedimos una seña para
+                  reservar tu lugar en la cola de producción. La pagás por
+                  MercadoPago o transferencia después de confirmar, sin recargo.
+                </p>
+                <div className="space-y-2 pt-1">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-lavanda-light">
+                      Seña ahora ({senaEfectivoPct}%)
+                    </span>
+                    <span className="text-base font-bold text-ambar">
+                      {formatPrice(montoSena)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-sm text-lavanda-light">
+                      Saldo en efectivo al retirar
+                    </span>
+                    <span className="text-base font-medium text-niebla">
+                      {formatPrice(saldoSena)}
+                    </span>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -807,8 +852,16 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
               })()}
               <SummaryRow label="Pago" value={
                 metodoPago === "transferencia" ? "Transferencia" :
-                metodoPago === "mercadopago" ? `MercadoPago (+${recargoPct}%)` : "Efectivo"
+                metodoPago === "mercadopago" ? `MercadoPago (+${recargoPct}%)` :
+                llevaSena ? `Efectivo al retirar, con seña del ${senaEfectivoPct}%` : "Efectivo"
               } />
+              {llevaSena && (
+                <>
+                  <div className="border-t border-lavanda/10 my-2" />
+                  <SummaryRow label="Seña a pagar ahora" value={formatPrice(montoSena)} />
+                  <SummaryRow label="Saldo al retirar" value={formatPrice(saldoSena)} />
+                </>
+              )}
             </div>
 
             {process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
@@ -828,7 +881,11 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
               disabled={loading || (!!process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !captchaToken)}
               className="w-full py-3 bg-ambar hover:bg-ambar-light text-navy-deep font-bold rounded-lg transition-colors disabled:opacity-50"
             >
-              {loading ? "Procesando..." : `Confirmar pedido — ${formatPrice(total)}`}
+              {loading
+                ? "Procesando..."
+                : llevaSena
+                  ? `Confirmar y señar — ${formatPrice(montoSena)}`
+                  : `Confirmar pedido — ${formatPrice(total)}`}
             </button>
           </section>
         )}

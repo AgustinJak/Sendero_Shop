@@ -234,7 +234,7 @@ export function pedidoConfirmadoEmail(
           <p style="margin:0 0 8px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Pago en 2 partes</p>
           <table width="100%" cellpadding="0" cellspacing="0">
             <tr>
-              <td style="padding:6px 0;color:${COLORS.lavanda};font-size:13px;">💰 Seña ${pedido.metodo_pago === "mercadopago" ? "(via MercadoPago)" : "(transferencia)"}</td>
+              <td style="padding:6px 0;color:${COLORS.lavanda};font-size:13px;">💰 Seña ${pedido.metodo_pago === "mercadopago" ? "(via MercadoPago)" : pedido.metodo_pago === "efectivo" ? "(MercadoPago o transferencia)" : "(transferencia)"}</td>
               <td style="padding:6px 0;color:${COLORS.ambar};font-size:14px;font-weight:bold;text-align:right;">${formatPrice(Number(pedido.monto_sena))}</td>
             </tr>
             <tr>
@@ -245,6 +245,25 @@ export function pedidoConfirmadoEmail(
           <p style="margin:8px 0 0;color:${COLORS.lavanda};font-size:12px;">
             Solo abonás <strong style="color:${COLORS.niebla};">${formatPrice(Number(pedido.monto_sena))}</strong> ahora. El saldo lo pagás al momento de recibir o retirar el pedido.
           </p>
+          ${
+            pedido.metodo_pago === "efectivo"
+              ? `
+          <p style="margin:12px 0 0;padding-top:12px;border-top:1px solid ${COLORS.purpura}33;color:${COLORS.lavanda};font-size:12px;">
+            Pagá la seña desde la página de tu pedido con MercadoPago${
+              datosBancarios?.cbu || datosBancarios?.alias
+                ? `, o transferí a ${datosBancarios.alias ? `<strong style="color:${COLORS.niebla};">${datosBancarios.alias}</strong>` : `<strong style="color:${COLORS.niebla};font-family:monospace;">${datosBancarios.cbu}</strong>`} y mandanos el comprobante por WhatsApp`
+                : ""
+            }.
+            Si no se abona en <strong style="color:${COLORS.niebla};">48 horas</strong>, el pedido se cancela automáticamente.
+          </p>
+          <p style="margin:12px 0 0;text-align:center;">
+            <a href="${pedidoLink(pedido.id)}"
+               style="display:inline-block;padding:10px 24px;background-color:${COLORS.ambar};color:${COLORS.navyDeep};text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
+              Pagar la seña
+            </a>
+          </p>`
+              : ""
+          }
         </td>
       </tr>
     </table>`

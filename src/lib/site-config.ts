@@ -28,6 +28,10 @@ const DEFAULTS = {
   // Descuento por cantidad: se aplica por línea del carrito según las unidades
   // de ese modelo/variante. Formato en la config: "5:10, 10:20, 20:30".
   descuento_tramos: TRAMOS_DEFAULT as MayoristaTramo[],
+  // % del total que se pide como anticipo en los pedidos en efectivo (que son
+  // siempre con retiro en persona). 0 = desactivado, vuelven a confirmarse sin
+  // pagar nada. Ver lib/sena.ts.
+  sena_efectivo_porcentaje: 20,
 };
 
 export type SiteConfig = typeof DEFAULTS;
@@ -59,6 +63,13 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
         : DEFAULTS.envio_gratis_desde,
     // Respeta "" (desactivado); solo cae al default si la clave no existe.
     descuento_tramos: parseTramos(map.descuento_tramos),
+    // Respeta 0 (desactivado), igual que envio_gratis_desde.
+    sena_efectivo_porcentaje:
+      map.sena_efectivo_porcentaje != null &&
+      map.sena_efectivo_porcentaje !== "" &&
+      !isNaN(Number(map.sena_efectivo_porcentaje))
+        ? Number(map.sena_efectivo_porcentaje)
+        : DEFAULTS.sena_efectivo_porcentaje,
   };
 });
 

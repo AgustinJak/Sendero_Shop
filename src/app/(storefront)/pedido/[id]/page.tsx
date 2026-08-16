@@ -86,11 +86,14 @@ export default async function PedidoPage({ params }: Props) {
         <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-4">
           Estado del pedido
         </h2>
-        <OrderTimeline estado={p.estado} metodoEnvio={p.metodo_envio} metodoPago={p.metodo_pago} />
+        <OrderTimeline estado={p.estado} metodoEnvio={p.metodo_envio} metodoPago={p.metodo_pago} tieneSena={p.tiene_sena} />
       </div>
 
-      {/* MercadoPago payment block */}
-      {p.metodo_pago === "mercadopago" && p.estado === "pendiente_pago" && (
+      {/* MercadoPago payment block.
+          Se oculta si el pedido tiene seña: en ese caso MP cobra solo el
+          anticipo, no el total, y el CTA vive en el bloque de seña de abajo.
+          Mostrar los dos dejaba dos botones de pago con montos distintos. */}
+      {p.metodo_pago === "mercadopago" && p.estado === "pendiente_pago" && !p.tiene_sena && (
         <div className="bg-[#009ee3]/10 border border-[#009ee3]/20 rounded-xl p-6 space-y-3">
           <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
             Completá tu pago
@@ -106,8 +109,8 @@ export default async function PedidoPage({ params }: Props) {
         </div>
       )}
 
-      {/* Transfer payment block */}
-      {esTransferencia && p.estado === "pendiente_pago" && (
+      {/* Transfer payment block — mismo motivo que arriba para el guard de seña. */}
+      {esTransferencia && p.estado === "pendiente_pago" && !p.tiene_sena && (
         <div className="bg-ambar/10 border border-ambar/20 rounded-xl p-6 space-y-3">
           <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-ambar-light uppercase tracking-wider">
             Datos para transferencia
@@ -331,6 +334,47 @@ export default async function PedidoPage({ params }: Props) {
                 </div>
               </div>
             </div>
+
+            {/* Cómo pagar la seña — se elige acá y no en el checkout, así el
+                cliente puede cambiar de idea sin rehacer el pedido. */}
+            {!senaPagada && p.estado === "pendiente_pago" && (
+              <div className="space-y-3 pt-2 border-t border-lavanda/10">
+                <p className="text-xs text-lavanda/75">
+                  Pagá la seña por MercadoPago o por transferencia. Apenas se
+                  acredite, tu pedido pasa a producción.
+                </p>
+
+                <MercadoPagoButton pedidoId={p.id} />
+
+                {(cfg.cbu || cfg.alias) && (
+                  <div className="bg-navy-deep rounded-lg p-4 space-y-2">
+                    <p className="text-xs text-ambar-light font-semibold uppercase tracking-wider">
+                      O transferí {formatPrice(Number(p.monto_sena))}
+                    </p>
+                    {cfg.cbu && (
+                      <div className="flex justify-between gap-3 text-sm">
+                        <span className="text-lavanda/75">CBU</span>
+                        <span className="text-niebla font-mono break-all">{cfg.cbu}</span>
+                      </div>
+                    )}
+                    {cfg.alias && (
+                      <div className="flex justify-between gap-3 text-sm">
+                        <span className="text-lavanda/75">Alias</span>
+                        <span className="text-niebla font-mono break-all">{cfg.alias}</span>
+                      </div>
+                    )}
+                    <p className="text-xs text-lavanda/60">
+                      Mandanos el comprobante por WhatsApp con tu número de
+                      pedido ({p.numero_pedido}) y lo confirmamos a mano.
+                    </p>
+                  </div>
+                )}
+
+                <p className="text-xs text-lavanda/50">
+                  Si la seña no se paga en 48 horas, el pedido se cancela solo.
+                </p>
+              </div>
+            )}
           </div>
         );
       })()}

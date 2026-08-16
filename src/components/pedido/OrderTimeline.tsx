@@ -37,10 +37,13 @@ export default function OrderTimeline({
   estado,
   metodoEnvio,
   metodoPago,
+  tieneSena = false,
 }: {
   estado: EstadoPedido;
   metodoEnvio?: MetodoEnvio;
   metodoPago?: MetodoPago;
+  /** Si el pedido en efectivo pide anticipo, sí hay etapa previa de pago. */
+  tieneSena?: boolean;
 }) {
   if (estado === "cancelado") {
     return (
@@ -60,18 +63,18 @@ export default function OrderTimeline({
 
   const isRetiro = metodoEnvio === "retiro";
   const baseSteps = isRetiro ? STEPS_RETIRO : STEPS_ENVIO;
-  // En efectivo no hay etapa "pendiente de pago" — se cobra al retirar/entregar.
-  // El pedido nace ya en "pago_confirmado" (que la UI muestra como "Pedido
-  // confirmado"). Si por alguna razón un pedido legacy quedó en pendiente_pago,
-  // lo tratamos como "pago_confirmado" para que el timeline tenga sentido.
-  const STEPS =
-    metodoPago === "efectivo"
-      ? baseSteps.filter((s) => s.key !== "pendiente_pago")
-      : baseSteps;
+
+  // En efectivo SIN seña no hay etapa de pago previa — se cobra todo al
+  // retirar, y el pedido nace en `pago_confirmado`. Con seña sí la hay: el
+  // pedido espera el anticipo, y colapsar el paso mostraría "Pedido
+  // confirmado" mientras la seña sigue impaga.
+  const efectivoSinSena = metodoPago === "efectivo" && !tieneSena;
+
+  const STEPS = efectivoSinSena
+    ? baseSteps.filter((s) => s.key !== "pendiente_pago")
+    : baseSteps;
   const effectiveEstado: EstadoPedido =
-    metodoPago === "efectivo" && estado === "pendiente_pago"
-      ? "pago_confirmado"
-      : estado;
+    efectivoSinSena && estado === "pendiente_pago" ? "pago_confirmado" : estado;
   const STATE_ORDER = getStateOrder(STEPS);
   const currentIndex = STATE_ORDER[effectiveEstado] ?? 0;
 
@@ -127,9 +130,13 @@ export default function OrderTimeline({
                     : ""
                 }`}
               >
-                {step.key === "pago_confirmado" && metodoPago === "efectivo"
-                  ? "Pedido confirmado"
-                  : step.label}
+                {step.key === "pendiente_pago" && metodoPago === "efectivo"
+                  ? "Seña pendiente"
+                  : step.key === "pago_confirmado" && metodoPago === "efectivo"
+                    ? tieneSena
+                      ? "Seña confirmada"
+                      : "Pedido confirmado"
+                    : step.label}
               </p>
             </div>
           </div>

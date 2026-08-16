@@ -27,7 +27,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
     }
 
-    if (pedido.metodo_pago !== "mercadopago") {
+    // Un pedido en efectivo o por transferencia también puede pagar su SEÑA
+    // por MP: el método de pago describe cómo se salda el pedido, no cómo se
+    // abona el anticipo. Lo que no se acepta es cobrar por MP el total de un
+    // pedido que eligió otro medio.
+    const cobraSenaPorMP = pedido.tiene_sena && Number(pedido.monto_sena) > 0;
+    if (pedido.metodo_pago !== "mercadopago" && !cobraSenaPorMP) {
       return NextResponse.json({ error: "El pedido no es de MercadoPago" }, { status: 400 });
     }
 

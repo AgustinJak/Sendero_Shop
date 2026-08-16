@@ -32,6 +32,7 @@ export default async function CheckoutPage() {
         zonas={(zonas as EnvioZona[]) || []}
         configuracion={configuracion}
         envioGratisDesde={siteConfig.envio_gratis_desde}
+        senaEfectivoPct={siteConfig.sena_efectivo_porcentaje}
       />
     </div>
   );

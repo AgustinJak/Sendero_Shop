@@ -51,6 +51,25 @@ export async function PATCH(
     }
 
     const serviceClient = await createServiceRoleClient();
+
+    // Confirmar la seña a mano confirma el pedido.
+    //
+    // Cuando la seña entra por MercadoPago, el webhook ya deja el pedido en
+    // `pago_confirmado`. Si llega por transferencia la marca el admin desde
+    // acá, y sin esto el pedido se quedaba en `pendiente_pago` con la seña
+    // cobrada — visible para el cliente y, peor, elegible para que el cron lo
+    // cancele a las 48 h. Ver lib/sena.ts.
+    if (updates.sena_pagada === true && !("estado" in updates)) {
+      const { data: actual } = await serviceClient
+        .from("pedidos")
+        .select("estado")
+        .eq("id", id)
+        .single();
+
+      if (actual?.estado === "pendiente_pago") {
+        updates.estado = "pago_confirmado";
+      }
+    }
     const { error } = await serviceClient
       .from("pedidos")
       .update(updates)

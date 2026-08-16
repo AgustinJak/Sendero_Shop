@@ -5,6 +5,7 @@ import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templa
 import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { resolverPrecios } from "@/lib/precios-server";
+import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
 
 export async function POST(req: NextRequest) {
   try {
@@ -88,8 +89,11 @@ export async function POST(req: NextRequest) {
     const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
 
     // Config autoritativa desde el server (no confiar en el cliente).
-    const { recargo_mp_porcentaje: recargoPct, envio_gratis_desde: envioGratisDesde } =
-      await getSiteConfig();
+    const {
+      recargo_mp_porcentaje: recargoPct,
+      envio_gratis_desde: envioGratisDesde,
+      sena_efectivo_porcentaje: senaPct,
+    } = await getSiteConfig();
 
     // El costo de envío es una cotización viva de Correo Argentino, así que se
     // toma del cliente; se acota a un valor sano para que no reste del total.
@@ -111,12 +115,18 @@ export async function POST(req: NextRequest) {
         : 0;
     const total = subtotal + costoEnvioFinal + recargoMP;
 
-    // En efectivo no hay pago online que esperar — el dinero se cobra al
-    // retiro/entrega. El pedido nace directamente "confirmado" (estado
-    // pago_confirmado, que la UI muestra como "Pedido confirmado" para
-    // efectivo).
+    // Los pedidos en efectivo (siempre con retiro en persona) piden un
+    // anticipo: el saldo se cobra al retirar, pero la seña asegura que la
+    // impresión no se haga a cuenta de nadie. El pedido nace en
+    // `pendiente_pago` y lo confirma el webhook de MP o el admin a mano si la
+    // seña vino por transferencia. Ver lib/sena.ts.
+    const llevaSena = requiereSena(metodo_pago, senaPct);
+    const montoSena = llevaSena ? calcularSenaEfectivo(total, senaPct) : null;
+
+    // Con la seña desactivada (senaPct = 0) el efectivo vuelve al
+    // comportamiento viejo: se confirma sin pagar nada.
     const estadoInicial: "pendiente_pago" | "pago_confirmado" =
-      metodo_pago === "efectivo" ? "pago_confirmado" : "pendiente_pago";
+      metodo_pago === "efectivo" && !llevaSena ? "pago_confirmado" : "pendiente_pago";
 
     // Crear pedido
     const { data: pedido, error: pedidoError } = await supabase
@@ -138,6 +148,10 @@ export async function POST(req: NextRequest) {
         total: total,
         sucursal_correo_id: sucursal_correo_id || null,
         sucursal_correo_nombre: sucursal_correo_nombre || null,
+        // El constraint `pedidos_sena_consistente` exige que monto_sena sea
+        // null cuando tiene_sena es false, y > 0 cuando es true.
+        tiene_sena: llevaSena,
+        monto_sena: montoSena,
       })
       .select("id, numero_pedido")
       .single();
@@ -195,6 +209,12 @@ export async function POST(req: NextRequest) {
       tracking_url: null,
       notas: null,
       cancelado_at: null,
+      tiene_sena: llevaSena,
+      monto_sena: montoSena,
+      sena_pagada: false,
+      sena_pagada_at: null,
+      saldo_pagado: false,
+      saldo_pagado_at: null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       items: pedidoItems.map((pi, i: number) => ({
@@ -203,9 +223,10 @@ export async function POST(req: NextRequest) {
       })),
     };
 
-    // Fetch bank details for transfer orders
+    // Datos bancarios: para transferencia (el pedido entero) y también para
+    // efectivo con seña, donde el anticipo se puede transferir.
     let datosBancarios: { cbu?: string; alias?: string } | undefined;
-    if (metodo_pago === "transferencia") {
+    if (metodo_pago === "transferencia" || llevaSena) {
       const { data: config } = await supabase.from("configuracion").select("key, value").in("key", ["cbu", "alias"]);
       if (config?.length) {
         datosBancarios = {};
