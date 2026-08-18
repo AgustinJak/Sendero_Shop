@@ -109,7 +109,7 @@ export default function PushNotificationPrompt() {
 
   return (
     <div className="fixed bottom-4 left-4 right-4 sm:left-auto sm:right-4 sm:w-80 z-50 animate-in slide-in-from-bottom-4">
-      <div className="bg-navy border border-lavanda/20 rounded-xl p-4 shadow-2xl shadow-black/50">
+      <div className="bg-navy border border-linea rounded-xl p-4 shadow-2xl shadow-black/50">
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-full bg-purpura/20 flex items-center justify-center shrink-0">
             <svg className="w-5 h-5 text-ambar" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -118,7 +118,7 @@ export default function PushNotificationPrompt() {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-niebla">Activar notificaciones</p>
-            <p className="text-xs text-lavanda/75 mt-0.5">
+            <p className="text-xs text-texto-3 mt-0.5">
               Enterate de ofertas, nuevos productos y el estado de tu pedido.
             </p>
             {error && (
@@ -134,7 +134,7 @@ export default function PushNotificationPrompt() {
               </button>
               <button
                 onClick={handleDismiss}
-                className="px-3 py-1.5 text-xs text-lavanda/75 hover:text-lavanda-light transition-colors"
+                className="px-3 py-1.5 text-xs text-texto-3 hover:text-lavanda-light transition-colors"
               >
                 Ahora no
               </button>

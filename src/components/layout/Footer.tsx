@@ -3,7 +3,7 @@ import { formatWhatsappDisplay } from "@/lib/utils";
 
 export default function Footer({ whatsapp }: { whatsapp: string }) {
   return (
-    <footer className="bg-navy-deep border-t border-lavanda/10 mt-auto">
+    <footer className="bg-navy-deep border-t border-linea mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo y descripción */}
@@ -22,7 +22,7 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
               </span>
             </div>
             <p className="mt-3 text-sm text-lavanda-light">
-              Figuras y accesorios impresos en 3D. Producción a pedido en
+              Figuras y accesorios de colección. Fabricación propia a pedido en
               Argentina.
             </p>
             {/* Redes sociales */}
@@ -54,7 +54,7 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
 
           {/* Links rápidos */}
           <div>
-            <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-4">
+            <h3 className="volanta mb-4">
               Tienda
             </h3>
             <ul className="space-y-2">
@@ -88,7 +88,7 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
 
           {/* Legal */}
           <div>
-            <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-4">
+            <h3 className="volanta mb-4">
               Legal
             </h3>
             <ul className="space-y-2">
@@ -112,7 +112,7 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
 
           {/* Contacto */}
           <div>
-            <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-4">
+            <h3 className="volanta mb-4">
               Contacto
             </h3>
             <ul className="space-y-2">
@@ -134,8 +134,8 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
         </div>
 
         {/* Bottom */}
-        <div className="mt-8 pt-8 border-t border-lavanda/10 text-center">
-          <p className="text-xs text-lavanda/75">
+        <div className="mt-8 pt-8 border-t border-linea text-center">
+          <p className="text-xs text-texto-3">
             © {new Date().getFullYear()} Sendero Shop. Hecho con amor en
             Argentina.
           </p>

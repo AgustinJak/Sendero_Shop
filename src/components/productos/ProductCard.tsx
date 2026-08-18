@@ -24,7 +24,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
     >
       <Link
         href={`/producto/${producto.slug}`}
-        className="group block bg-navy-deep rounded-xl overflow-hidden border border-lavanda/10 hover:border-lavanda/30 transition-all duration-300 hover:shadow-lg hover:shadow-purpura/10 hover:-translate-y-1"
+        className="group block bg-navy-deep rounded-xl overflow-hidden border border-linea hover:border-linea-fuerte transition-all duration-300 hover:shadow-lg hover:shadow-purpura/10 hover:-translate-y-1"
       >
         <div className="aspect-square relative bg-lavanda/5 overflow-hidden">
           {imagen ? (
@@ -37,7 +37,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="text-lavanda/50 text-sm">Sin imagen</span>
+              <span className="text-texto-3 text-sm">Sin imagen</span>
             </div>
           )}
 
@@ -56,7 +56,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
 
         <div className="p-4">
           {producto.linea && (
-            <p className="text-xs text-lavanda/75 mb-1 uppercase tracking-wider">
+            <p className="text-xs text-texto-3 mb-1 uppercase tracking-wider">
               {producto.linea}
             </p>
           )}
@@ -71,7 +71,7 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
                 <span className="text-ambar font-bold">
                   {formatPrice(producto.precio_oferta!)}
                 </span>
-                <span className="text-lavanda/70 text-sm line-through">
+                <span className="text-texto-3 text-sm line-through">
                   {formatPrice(producto.precio)}
                 </span>
               </>

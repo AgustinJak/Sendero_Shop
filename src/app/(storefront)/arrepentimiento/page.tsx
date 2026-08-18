@@ -15,13 +15,13 @@ export default async function ArrepentimientoPage() {
   const msg = "Hola! Quiero ejercer mi derecho de arrepentimiento. Mi número de pedido es: ";
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
-      <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-8 text-center">
+      <h1 className="display display-seccion text-texto mb-8 text-center">
         Botón de Arrepentimiento
       </h1>
 
       <div className="space-y-6 text-lavanda-light text-sm leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-niebla [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-ambar [&_a]:underline [&_strong]:font-bold [&_strong]:text-niebla">
         <div className="bg-ambar/10 border border-ambar/20 rounded-xl p-6">
-          <h2 className="font-[family-name:var(--font-cinzel)] text-base font-bold text-ambar mb-2">
+          <h2 className="text-base font-semibold text-ambar mb-2">
             Derecho de Revocación
           </h2>
           <p>
@@ -34,11 +34,11 @@ export default async function ArrepentimientoPage() {
 
         <Section title="Cómo ejercer tu derecho">
           <p>Para solicitar la devolución podés:</p>
-          <ol className="list-decimal list-inside mt-2 space-y-2 text-lavanda/70">
+          <ol className="list-decimal list-inside mt-2 space-y-2 text-texto-3">
             <li>
               <strong className="text-lavanda-light">Cancelar desde tu pedido:</strong> Si tu pedido aún no
               fue enviado, podés cancelarlo directamente desde la{" "}
-              <Link href="/mi-pedido" className="text-purpura hover:text-purpura/80 underline">
+              <Link href="/mi-pedido" className="text-ambar hover:text-ambar-light underline">
                 página de seguimiento
               </Link>.
             </li>
@@ -48,7 +48,7 @@ export default async function ArrepentimientoPage() {
                 href={whatsappLink(whatsapp, msg)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-purpura hover:text-purpura/80 underline"
+                className="text-ambar hover:text-ambar-light underline"
               >
                 {formatWhatsappDisplay(whatsapp)}
               </a>{" "}
@@ -56,7 +56,7 @@ export default async function ArrepentimientoPage() {
             </li>
             <li>
               <strong className="text-lavanda-light">Enviar un email:</strong> Escribí a{" "}
-              <a href="mailto:ayuda@sendero3d.com" className="text-purpura hover:text-purpura/80 underline">
+              <a href="mailto:ayuda@sendero3d.com" className="text-ambar hover:text-ambar-light underline">
                 ayuda@sendero3d.com
               </a>{" "}
               con el asunto &quot;Arrepentimiento - Pedido #[tu número]&quot;.
@@ -65,7 +65,7 @@ export default async function ArrepentimientoPage() {
         </Section>
 
         <Section title="Condiciones">
-          <ul className="list-disc list-inside space-y-2 text-lavanda/70">
+          <ul className="list-disc list-inside space-y-2 text-texto-3">
             <li>El producto debe estar en las mismas condiciones en que fue recibido.</li>
             <li>
               Por tratarse de productos fabricados a pedido, la devolución podría no aplicar una vez
@@ -86,7 +86,7 @@ export default async function ArrepentimientoPage() {
               href="https://www.argentina.gob.ar/produccion/defensadelconsumidor"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-purpura hover:text-purpura/80 underline"
+              className="text-ambar hover:text-ambar-light underline"
             >
               Dirección Nacional de Defensa del Consumidor
             </a>
@@ -112,7 +112,7 @@ export default async function ArrepentimientoPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="font-[family-name:var(--font-cinzel)] text-base font-bold text-niebla mb-2">
+      <h2 className="text-base font-semibold text-texto mb-2">
         {title}
       </h2>
       {children}

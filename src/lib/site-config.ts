@@ -28,6 +28,12 @@ const DEFAULTS = {
   // Descuento por cantidad: se aplica por línea del carrito según las unidades
   // de ese modelo/variante. Formato en la config: "5:10, 10:20, 20:30".
   descuento_tramos: TRAMOS_DEFAULT as MayoristaTramo[],
+  // Piezas vendidas FUERA de la web (Mercado Libre, ferias, venta directa).
+  // La base del shop solo conoce sus propios pedidos, asi que este numero se
+  // carga a mano y se le suma `unidades_vendidas` de los productos. De esa
+  // forma la prueba social del hero sigue creciendo sola con las ventas web
+  // en vez de quedar congelada en una cifra escrita en el JSX.
+  unidades_vendidas_base: 900,
   // % del total que se pide como anticipo en los pedidos en efectivo (que son
   // siempre con retiro en persona). 0 = desactivado, vuelven a confirmarse sin
   // pagar nada. Ver lib/sena.ts.
@@ -63,6 +69,12 @@ export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
         : DEFAULTS.envio_gratis_desde,
     // Respeta "" (desactivado); solo cae al default si la clave no existe.
     descuento_tramos: parseTramos(map.descuento_tramos),
+    unidades_vendidas_base:
+      map.unidades_vendidas_base != null &&
+      map.unidades_vendidas_base !== "" &&
+      !isNaN(Number(map.unidades_vendidas_base))
+        ? Number(map.unidades_vendidas_base)
+        : DEFAULTS.unidades_vendidas_base,
     // Respeta 0 (desactivado), igual que envio_gratis_desde.
     sena_efectivo_porcentaje:
       map.sena_efectivo_porcentaje != null &&

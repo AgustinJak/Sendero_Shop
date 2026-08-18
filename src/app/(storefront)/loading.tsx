@@ -11,7 +11,7 @@ export default function Loading() {
         className="opacity-80"
         unoptimized
       />
-      <p className="text-lavanda/70 text-sm animate-pulse">Cargando...</p>
+      <p className="text-texto-3 text-sm animate-pulse">Cargando...</p>
     </div>
   );
 }

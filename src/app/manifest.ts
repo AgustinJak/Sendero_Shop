@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest & Record<string, unkn
     name: "Sendero Shop — Figuras y Accesorios 3D",
     short_name: "Sendero Shop",
     description:
-      "Figuras, katanas y accesorios impresos en 3D inspirados en anime, cine y videojuegos.",
+      "Figuras, katanas y accesorios de colección inspirados en anime, cine y videojuegos.",
     start_url: "/",
     display: "standalone",
     background_color: "#0a0e1a",

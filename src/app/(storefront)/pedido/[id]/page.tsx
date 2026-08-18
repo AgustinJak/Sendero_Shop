@@ -73,17 +73,17 @@ export default async function PedidoPage({ params }: Props) {
     <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
       {/* Header */}
       <div className="text-center">
-        <h1 className="font-[family-name:var(--font-cinzel)] text-2xl font-bold text-niebla">
+        <h1 className="display display-seccion text-texto">
           Pedido {p.numero_pedido}
         </h1>
-        <p className="text-lavanda/75 mt-1 text-sm">
+        <p className="text-texto-3 mt-1 text-sm">
           Creado el {new Date(p.created_at).toLocaleDateString("es-AR", { day: "numeric", month: "long", year: "numeric" })}
         </p>
       </div>
 
       {/* Timeline */}
-      <div className="bg-navy-deep rounded-xl border border-lavanda/10 p-6">
-        <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-4">
+      <div className="bg-navy-deep rounded-xl border border-linea p-6">
+        <h2 className="volanta mb-4">
           Estado del pedido
         </h2>
         <OrderTimeline estado={p.estado} metodoEnvio={p.metodo_envio} metodoPago={p.metodo_pago} tieneSena={p.tiene_sena} />
@@ -95,14 +95,14 @@ export default async function PedidoPage({ params }: Props) {
           Mostrar los dos dejaba dos botones de pago con montos distintos. */}
       {p.metodo_pago === "mercadopago" && p.estado === "pendiente_pago" && !p.tiene_sena && (
         <div className="bg-[#009ee3]/10 border border-[#009ee3]/20 rounded-xl p-6 space-y-3">
-          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+          <h2 className="volanta">
             Completá tu pago
           </h2>
           <p className="text-sm text-lavanda-light">
             Tu pedido está reservado. Hacé clic en el botón para pagar con MercadoPago.
           </p>
           <div className="flex justify-between text-sm">
-            <span className="text-lavanda/75">Monto a pagar</span>
+            <span className="text-texto-3">Monto a pagar</span>
             <span className="text-[#009ee3] font-bold text-lg">{formatPrice(p.total)}</span>
           </div>
           <MercadoPagoButton pedidoId={p.id} />
@@ -112,7 +112,7 @@ export default async function PedidoPage({ params }: Props) {
       {/* Transfer payment block — mismo motivo que arriba para el guard de seña. */}
       {esTransferencia && p.estado === "pendiente_pago" && !p.tiene_sena && (
         <div className="bg-ambar/10 border border-ambar/20 rounded-xl p-6 space-y-3">
-          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-ambar-light uppercase tracking-wider">
+          <h2 className="volanta !text-ambar-light">
             Datos para transferencia
           </h2>
           <p className="text-sm text-lavanda-light">
@@ -120,28 +120,28 @@ export default async function PedidoPage({ params }: Props) {
           </p>
           {cfg.cbu && (
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/75">CBU</span>
+              <span className="text-texto-3">CBU</span>
               <span className="text-niebla font-mono">{cfg.cbu}</span>
             </div>
           )}
           {cfg.alias && (
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/75">Alias</span>
+              <span className="text-texto-3">Alias</span>
               <span className="text-niebla font-mono">{cfg.alias}</span>
             </div>
           )}
           <div className="flex justify-between text-sm">
-            <span className="text-lavanda/75">Monto</span>
+            <span className="text-texto-3">Monto</span>
             <span className="text-ambar font-bold text-lg">{formatPrice(p.total)}</span>
           </div>
-          <p className="text-xs text-lavanda/75">
+          <p className="text-xs text-texto-3">
             Tenés 48 horas para enviar el comprobante. Después el pedido se cancela automáticamente.
           </p>
           <a
             href={whatsappLink(whatsapp, `Hola! Te envío el comprobante del pedido ${p.numero_pedido} por ${formatPrice(p.total)}`)}
             target="_blank"
             rel="noopener noreferrer"
-            className="block w-full text-center py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+            className="block w-full text-center py-3 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-lg transition-colors"
           >
             Enviar comprobante por WhatsApp
           </a>
@@ -158,7 +158,7 @@ export default async function PedidoPage({ params }: Props) {
           !p.tracking_url && p.metodo_envio === "correo_argentino";
         return (
           <div className="bg-purpura/10 border border-purpura/20 rounded-xl p-6 space-y-2">
-            <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+            <h2 className="volanta">
               Seguimiento de envío
             </h2>
             <p className="text-niebla font-mono text-lg font-bold">{p.tracking_code}</p>
@@ -173,7 +173,7 @@ export default async function PedidoPage({ params }: Props) {
                   {esCorreoArg ? "Consultar estado en Correo Argentino →" : "Seguir envío →"}
                 </a>
                 {esCorreoArg && (
-                  <p className="text-xs text-lavanda/60 mt-1">
+                  <p className="text-xs text-texto-3 mt-1">
                     Copiá el código de arriba y pegalo en el formulario de Correo Argentino.
                   </p>
                 )}
@@ -184,8 +184,8 @@ export default async function PedidoPage({ params }: Props) {
       })()}
 
       {/* Order summary */}
-      <div className="bg-navy-deep rounded-xl border border-lavanda/10 p-6 space-y-4">
-        <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+      <div className="bg-navy-deep rounded-xl border border-linea p-6 space-y-4">
+        <h2 className="volanta">
           Resumen
         </h2>
 
@@ -194,9 +194,9 @@ export default async function PedidoPage({ params }: Props) {
             <div key={item.id} className="flex justify-between text-sm">
               <div>
                 <span className="text-lavanda-light">{item.nombre_producto}</span>
-                <span className="text-lavanda/75 ml-1">x{item.cantidad}</span>
+                <span className="text-texto-3 ml-1">x{item.cantidad}</span>
                 {item.opciones_seleccionadas?.length > 0 && (
-                  <p className="text-xs text-lavanda/75">
+                  <p className="text-xs text-texto-3">
                     {item.opciones_seleccionadas.map((o) => `${o.grupo_nombre}: ${o.opcion_valor}`).join(" · ")}
                   </p>
                 )}
@@ -206,22 +206,22 @@ export default async function PedidoPage({ params }: Props) {
           ))}
         </div>
 
-        <div className="border-t border-lavanda/10 pt-3 space-y-2 text-sm">
+        <div className="border-t border-linea pt-3 space-y-2 text-sm">
           <div className="flex justify-between">
-            <span className="text-lavanda/75">Subtotal</span>
+            <span className="text-texto-3">Subtotal</span>
             <span className="text-lavanda-light">{formatPrice(p.subtotal)}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-lavanda/75">Envío ({metodoEnvioLabel})</span>
+            <span className="text-texto-3">Envío ({metodoEnvioLabel})</span>
             <span className="text-lavanda-light">{p.costo_envio === 0 ? "Gratis" : formatPrice(p.costo_envio)}</span>
           </div>
           {p.recargo_mp > 0 && (
             <div className="flex justify-between">
-              <span className="text-lavanda/75">Recargo MP</span>
+              <span className="text-texto-3">Recargo MP</span>
               <span className="text-ambar">{formatPrice(p.recargo_mp)}</span>
             </div>
           )}
-          <div className="flex justify-between font-bold text-base pt-2 border-t border-lavanda/10">
+          <div className="flex justify-between font-bold text-base pt-2 border-t border-linea">
             <span className="text-niebla">Total</span>
             <span className="text-ambar">{formatPrice(p.total)}</span>
           </div>
@@ -229,16 +229,16 @@ export default async function PedidoPage({ params }: Props) {
 
         {/* Sucursal de retiro */}
         {p.sucursal_correo_nombre && (
-          <div className="border-t border-lavanda/10 pt-3 space-y-1 text-sm">
-            <p className="text-lavanda/60 text-xs uppercase tracking-wider">Sucursal de retiro</p>
+          <div className="border-t border-linea pt-3 space-y-1 text-sm">
+            <p className="text-texto-3 text-xs uppercase tracking-wider">Sucursal de retiro</p>
             <p className="text-lavanda-light">{p.sucursal_correo_nombre}</p>
           </div>
         )}
 
         {/* Customer info */}
-        <div className="border-t border-lavanda/10 pt-3 space-y-1 text-sm">
-          <p className="text-lavanda/75">{p.nombre_cliente} · {p.email}</p>
-          <p className="text-lavanda/75">Pago: {metodoPagoLabel}</p>
+        <div className="border-t border-linea pt-3 space-y-1 text-sm">
+          <p className="text-texto-3">{p.nombre_cliente} · {p.email}</p>
+          <p className="text-texto-3">Pago: {metodoPagoLabel}</p>
         </div>
       </div>
 
@@ -261,29 +261,29 @@ export default async function PedidoPage({ params }: Props) {
             {todoPagado ? (
               <div className="text-center space-y-1">
                 <p className="text-2xl">✅</p>
-                <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-emerald-400 uppercase tracking-wider">
+                <h2 className="volanta !text-emerald-400">
                   Pedido pagado en su totalidad
                 </h2>
-                <p className="text-xs text-lavanda/60">
+                <p className="text-xs text-texto-3">
                   Seña + saldo confirmados.
                 </p>
               </div>
             ) : senaPagada ? (
               <div className="space-y-1">
-                <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-emerald-400 uppercase tracking-wider">
+                <h2 className="volanta !text-emerald-400">
                   ✓ Seña abonada · Resto a pagar al recibir
                 </h2>
-                <p className="text-xs text-lavanda/70">
+                <p className="text-xs text-texto-3">
                   Tu anticipo fue confirmado{p.sena_pagada_at ? ` el ${new Date(p.sena_pagada_at).toLocaleDateString("es-AR")}` : ""}.
                   El saldo se cobra al recibir/retirar el pedido.
                 </p>
               </div>
             ) : (
               <div className="space-y-1">
-                <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+                <h2 className="volanta">
                   Pago en 2 partes
                 </h2>
-                <p className="text-xs text-lavanda/70">
+                <p className="text-xs text-texto-3">
                   Pagás una seña ahora y el saldo al recibir el pedido.
                 </p>
               </div>
@@ -292,7 +292,7 @@ export default async function PedidoPage({ params }: Props) {
             {/* Cuando seña ya está pagada, destacamos el saldo restante con énfasis */}
             {senaPagada && !p.saldo_pagado && (
               <div className="bg-navy-deep rounded-lg p-4 text-center space-y-1">
-                <p className="text-xs text-lavanda/60 uppercase tracking-wider">Resto a pagar al recibir</p>
+                <p className="text-xs text-texto-3 uppercase tracking-wider">Resto a pagar al recibir</p>
                 <p className="text-2xl font-bold text-ambar">{formatPrice(saldo)}</p>
               </div>
             )}
@@ -318,7 +318,7 @@ export default async function PedidoPage({ params }: Props) {
                   )}
                 </div>
               </div>
-              <div className="flex items-center justify-between gap-3 pt-2 border-t border-lavanda/10">
+              <div className="flex items-center justify-between gap-3 pt-2 border-t border-linea">
                 <div>
                   <p className="text-sm text-lavanda-light">📦 Saldo al recibir/retirar</p>
                 </div>
@@ -338,8 +338,8 @@ export default async function PedidoPage({ params }: Props) {
             {/* Cómo pagar la seña — se elige acá y no en el checkout, así el
                 cliente puede cambiar de idea sin rehacer el pedido. */}
             {!senaPagada && p.estado === "pendiente_pago" && (
-              <div className="space-y-3 pt-2 border-t border-lavanda/10">
-                <p className="text-xs text-lavanda/75">
+              <div className="space-y-3 pt-2 border-t border-linea">
+                <p className="text-xs text-texto-3">
                   Pagá la seña por MercadoPago o por transferencia. Apenas se
                   acredite, tu pedido pasa a producción.
                 </p>
@@ -353,24 +353,24 @@ export default async function PedidoPage({ params }: Props) {
                     </p>
                     {cfg.cbu && (
                       <div className="flex justify-between gap-3 text-sm">
-                        <span className="text-lavanda/75">CBU</span>
+                        <span className="text-texto-3">CBU</span>
                         <span className="text-niebla font-mono break-all">{cfg.cbu}</span>
                       </div>
                     )}
                     {cfg.alias && (
                       <div className="flex justify-between gap-3 text-sm">
-                        <span className="text-lavanda/75">Alias</span>
+                        <span className="text-texto-3">Alias</span>
                         <span className="text-niebla font-mono break-all">{cfg.alias}</span>
                       </div>
                     )}
-                    <p className="text-xs text-lavanda/60">
+                    <p className="text-xs text-texto-3">
                       Mandanos el comprobante por WhatsApp con tu número de
                       pedido ({p.numero_pedido}) y lo confirmamos a mano.
                     </p>
                   </div>
                 )}
 
-                <p className="text-xs text-lavanda/50">
+                <p className="text-xs text-texto-3">
                   Si la seña no se paga en 48 horas, el pedido se cancela solo.
                 </p>
               </div>
@@ -383,7 +383,7 @@ export default async function PedidoPage({ params }: Props) {
       {p.estado === "entregado" && p.items && p.items.length > 0 && (
         <div className="bg-purpura/10 border border-purpura/20 rounded-xl p-6 text-center space-y-3">
           <div className="text-2xl">⭐</div>
-          <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+          <h2 className="volanta">
             ¿Qué te pareció tu compra?
           </h2>
           <p className="text-sm text-lavanda-light">
@@ -397,7 +397,7 @@ export default async function PedidoPage({ params }: Props) {
                 <Link
                   key={item.id}
                   href={`/producto/${slug}`}
-                  className="px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-sm font-medium rounded-lg transition-colors"
+                  className="px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-ambar text-sm font-medium rounded-lg transition-colors"
                 >
                   Reseñar &quot;{item.nombre_producto}&quot;
                 </Link>
@@ -422,11 +422,11 @@ export default async function PedidoPage({ params }: Props) {
           </div>
         )}
 
-        <p className="text-xs text-lavanda/75">
-          Te enviamos un resumen a <span className="text-lavanda/75">{p.email}</span>.
+        <p className="text-xs text-texto-3">
+          Te enviamos un resumen a <span className="text-texto-3">{p.email}</span>.
           Si no lo ves, revisá tu carpeta de spam.
         </p>
-        <p className="text-xs text-lavanda/75">
+        <p className="text-xs text-texto-3">
           ¿Dudas? Escribinos por{" "}
           <a href={whatsappLink(whatsapp, `Hola, tengo una consulta sobre el pedido ${p.numero_pedido}`)} className="text-ambar hover:underline" target="_blank" rel="noopener noreferrer">
             WhatsApp

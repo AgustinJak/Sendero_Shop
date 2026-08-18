@@ -95,14 +95,14 @@ export default function EnvioProducto({
   }
 
   return (
-    <div className="rounded-xl border border-lavanda/10 bg-navy-deep/40 p-4 space-y-3">
+    <div className="rounded-xl border border-linea bg-navy-deep/40 p-4 space-y-3">
       {/* Encabezado: da contexto de qué resuelve este bloque y absorbe el
           "a todo el país" que antes duplicaba TrustBadges. */}
       <div className="flex items-center gap-2.5">
         <TruckIcon className="h-5 w-5 shrink-0 text-lavanda" />
         <p className="text-sm text-lavanda-light">
           Envíos a <span className="font-medium text-niebla">todo el país</span>
-          <span className="text-lavanda/50"> · Correo Argentino</span>
+          <span className="text-texto-3"> · Correo Argentino</span>
         </p>
       </div>
 
@@ -112,7 +112,7 @@ export default function EnvioProducto({
           className={`flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm ${
             productoCalifica
               ? "bg-emerald-500/10 border border-emerald-500/25 text-emerald-400"
-              : "bg-navy/50 border border-lavanda/10 text-lavanda-light"
+              : "bg-navy/50 border border-linea text-lavanda-light"
           }`}
         >
           {/* Sin camión acá: ya está en el encabezado del bloque. */}
@@ -136,7 +136,7 @@ export default function EnvioProducto({
       <div>
         <label
           htmlFor="cp-envio"
-          className="block text-xs text-lavanda/60 mb-1.5"
+          className="block text-xs text-texto-3 mb-1.5"
         >
           Calculá el costo de envío
         </label>
@@ -149,7 +149,7 @@ export default function EnvioProducto({
             value={cp}
             onChange={(e) => setCp(e.target.value)}
             placeholder="Tu código postal"
-            className="flex-1 min-w-0 rounded-lg bg-navy border border-lavanda/15 px-3 py-2 text-sm text-niebla placeholder:text-lavanda/40 focus:outline-none focus:border-purpura/60"
+            className="flex-1 min-w-0 rounded-lg bg-navy border border-linea px-3 py-2 text-sm text-niebla placeholder:text-texto-3 focus:outline-none focus:border-purpura/60"
           />
           <button
             type="submit"
@@ -169,7 +169,7 @@ export default function EnvioProducto({
                 <div>
                   <span className="text-lavanda-light">Envío a domicilio</span>
                   {(result.domicilio.tiempoMin || result.domicilio.tiempoMax) && (
-                    <span className="block text-xs text-lavanda/50">
+                    <span className="block text-xs text-texto-3">
                       Llega en {result.domicilio.tiempoMin ?? ""}
                       {result.domicilio.tiempoMin && result.domicilio.tiempoMax
                         ? "–"
@@ -188,7 +188,7 @@ export default function EnvioProducto({
                     Retiro en sucursal de Correo Argentino
                   </span>
                   {(result.sucursal.tiempoMin || result.sucursal.tiempoMax) && (
-                    <span className="block text-xs text-lavanda/50">
+                    <span className="block text-xs text-texto-3">
                       Llega en {result.sucursal.tiempoMin ?? ""}
                       {result.sucursal.tiempoMin && result.sucursal.tiempoMax
                         ? "–"
@@ -200,7 +200,7 @@ export default function EnvioProducto({
                 <PrecioEnvio precio={result.sucursal.precio} gratis={productoCalifica} />
               </div>
             )}
-            <p className="text-[11px] text-lavanda/40 pt-1">
+            <p className="text-[11px] text-texto-3 pt-1">
               Costo estimado con Correo Argentino. El valor final se confirma en
               el checkout.
             </p>
@@ -215,7 +215,7 @@ function PrecioEnvio({ precio, gratis }: { precio: number; gratis: boolean }) {
   if (gratis) {
     return (
       <span className="text-right">
-        <span className="mr-1.5 text-xs text-lavanda/40 line-through">
+        <span className="mr-1.5 text-xs text-texto-3 line-through">
           {formatPrice(precio)}
         </span>
         <span className="font-semibold text-emerald-400">GRATIS</span>

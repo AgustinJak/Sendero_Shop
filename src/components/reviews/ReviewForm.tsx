@@ -70,7 +70,7 @@ export default function ReviewForm({ productoId }: ReviewFormProps) {
         </p>
         <button
           onClick={() => setStatus("idle")}
-          className="mt-3 text-xs text-purpura hover:text-purpura/80 transition-colors"
+          className="mt-3 text-xs text-ambar hover:text-ambar-light transition-colors"
         >
           Escribir otra reseña
         </button>
@@ -98,7 +98,7 @@ export default function ReviewForm({ productoId }: ReviewFormProps) {
         </p>
         <button
           onClick={() => setStatus("idle")}
-          className="mt-3 text-xs text-purpura hover:text-purpura/80 transition-colors"
+          className="mt-3 text-xs text-ambar hover:text-ambar-light transition-colors"
         >
           Intentar con otro email
         </button>
@@ -110,46 +110,46 @@ export default function ReviewForm({ productoId }: ReviewFormProps) {
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Rating */}
       <div>
-        <label className="block text-sm text-lavanda/75 mb-2">Calificación</label>
+        <label className="block text-sm text-texto-3 mb-2">Calificación</label>
         <StarRating rating={rating} size="lg" interactive onChange={setRating} />
       </div>
 
       {/* Nombre y email */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm text-lavanda/75 mb-1">Nombre</label>
+          <label className="block text-sm text-texto-3 mb-1">Nombre</label>
           <input
             type="text"
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
             required
             placeholder="Tu nombre"
-            className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light placeholder-lavanda/50 focus:outline-none focus:border-purpura"
+            className="w-full px-3 py-2 bg-navy-deep border border-linea rounded-lg text-sm text-lavanda-light placeholder-lavanda/50 focus:outline-none focus:border-purpura"
           />
         </div>
         <div>
-          <label className="block text-sm text-lavanda/75 mb-1">Email</label>
+          <label className="block text-sm text-texto-3 mb-1">Email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
             placeholder="tu@email.com"
-            className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light placeholder-lavanda/50 focus:outline-none focus:border-purpura"
+            className="w-full px-3 py-2 bg-navy-deep border border-linea rounded-lg text-sm text-lavanda-light placeholder-lavanda/50 focus:outline-none focus:border-purpura"
           />
-          <p className="text-xs text-lavanda/70 mt-1">No se mostrará públicamente</p>
+          <p className="text-xs text-texto-3 mt-1">No se mostrará públicamente</p>
         </div>
       </div>
 
       {/* Comentario */}
       <div>
-        <label className="block text-sm text-lavanda/75 mb-1">Comentario (opcional)</label>
+        <label className="block text-sm text-texto-3 mb-1">Comentario (opcional)</label>
         <textarea
           value={comentario}
           onChange={(e) => setComentario(e.target.value)}
           rows={3}
           placeholder="Contanos tu experiencia con el producto..."
-          className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light placeholder-lavanda/50 focus:outline-none focus:border-purpura resize-none"
+          className="w-full px-3 py-2 bg-navy-deep border border-linea rounded-lg text-sm text-lavanda-light placeholder-lavanda/50 focus:outline-none focus:border-purpura resize-none"
         />
       </div>
 

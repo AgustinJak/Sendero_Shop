@@ -1,3 +1,4 @@
+import TopBar from "@/components/layout/TopBar";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import FloatingActions from "@/components/layout/FloatingActions";
@@ -45,6 +46,7 @@ export default async function StorefrontLayout({
 
   return (
     <CartProvider tramos={tramos} envioGratisDesde={envioGratisDesde}>
+      <TopBar envioGratisDesde={envioGratisDesde} />
       <Header />
       <main className="flex-1">{children}</main>
       <Footer whatsapp={whatsapp} />

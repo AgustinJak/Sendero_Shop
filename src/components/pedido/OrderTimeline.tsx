@@ -11,7 +11,7 @@ const STEPS_ENVIO: TimelineStep[] = [
   { key: "pendiente_pago", label: "Pendiente de pago" },
   { key: "pago_confirmado", label: "Pago confirmado" },
   { key: "en_produccion", label: "En producción" },
-  { key: "impreso", label: "Impreso" },
+  { key: "impreso", label: "Terminado" },
   { key: "enviado", label: "Enviado" },
   { key: "entregado", label: "Entregado" },
 ];
@@ -20,7 +20,7 @@ const STEPS_RETIRO: TimelineStep[] = [
   { key: "pendiente_pago", label: "Pendiente de pago" },
   { key: "pago_confirmado", label: "Pago confirmado" },
   { key: "en_produccion", label: "En producción" },
-  { key: "impreso", label: "Impreso" },
+  { key: "impreso", label: "Terminado" },
   { key: "esperando_retiro", label: "Esperando retiro" },
   { key: "entregado", label: "Retirado" },
 ];
@@ -55,7 +55,7 @@ export default function OrderTimeline({
         </div>
         <div>
           <p className="text-red-400 font-semibold text-sm">Pedido cancelado</p>
-          <p className="text-lavanda/60 text-xs">Este pedido fue cancelado.</p>
+          <p className="text-texto-3 text-xs">Este pedido fue cancelado.</p>
         </div>
       </div>
     );
@@ -95,7 +95,7 @@ export default function OrderTimeline({
                     ? "bg-green-500/20 border-green-500"
                     : isCurrent
                     ? "bg-ambar/20 border-ambar"
-                    : "bg-navy-deep border-lavanda/20"
+                    : "bg-navy-deep border-linea"
                 }`}
               >
                 {isCompleted ? (
@@ -126,7 +126,7 @@ export default function OrderTimeline({
                     : isCurrent
                     ? "text-ambar"
                     : isPending
-                    ? "text-lavanda/50"
+                    ? "text-texto-3"
                     : ""
                 }`}
               >

@@ -52,10 +52,10 @@ export default function MayoristaCallout({
 
   return (
     <div className="rounded-2xl border border-ambar/25 bg-gradient-to-br from-ambar/10 to-navy-deep p-5 sm:p-6">
-      <h3 className="font-[family-name:var(--font-cinzel)] text-base font-bold text-niebla flex items-center gap-2">
+      <p className="text-base font-semibold text-texto flex items-center gap-2">
         <TagIcon />
         ¿Buscás precios por mayor?
-      </h3>
+      </p>
       <p className="mt-1 text-sm text-lavanda-light">Llevando más, pagás menos:</p>
 
       <ul className="mt-3 space-y-1.5">
@@ -74,7 +74,7 @@ export default function MayoristaCallout({
                   activo
                     ? "text-niebla font-medium"
                     : superado
-                      ? "text-lavanda/50"
+                      ? "text-texto-3"
                       : "text-lavanda-light"
                 }
               >
@@ -89,7 +89,7 @@ export default function MayoristaCallout({
                   {t.pct}% OFF
                 </span>
                 {accionable ? (
-                  <span className="text-xs text-lavanda/60 group-hover:text-niebla transition-colors">
+                  <span className="text-xs text-texto-3 group-hover:text-niebla transition-colors">
                     +{faltanParaEste}
                   </span>
                 ) : (

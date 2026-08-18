@@ -92,7 +92,7 @@ ${additionalImages ? additionalImages + "\n" : ""}      <g:availability>in_stock
   <channel>
     <title>Sendero Shop — Figuras y Accesorios 3D</title>
     <link>${SITE_URL}</link>
-    <description>Figuras, katanas y accesorios impresos en 3D inspirados en anime, cine y videojuegos.</description>
+    <description>Figuras, katanas y accesorios de colección inspirados en anime, cine y videojuegos.</description>
 ${items.join("\n")}
   </channel>
 </rss>`;

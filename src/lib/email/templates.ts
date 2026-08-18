@@ -59,7 +59,7 @@ function baseLayout(content: string): string {
           <tr>
             <td style="padding:20px 32px;border-top:1px solid ${COLORS.lavanda}22;text-align:center;">
               <p style="margin:0;font-size:12px;color:${COLORS.lavanda};">
-                Sendero Shop — Figuras y accesorios impresos en 3D
+                Sendero Shop — Figuras y accesorios de colección
               </p>
               <p style="margin:4px 0 0;font-size:11px;color:${COLORS.lavanda}88;">
                 Villa Crespo, CABA, Argentina

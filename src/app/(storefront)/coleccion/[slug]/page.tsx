@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description =
     coleccion.meta_description ||
     coleccion.descripcion ||
-    `Colección ${coleccion.nombre}. Figuras y accesorios impresos en 3D. Envío a todo Argentina.`;
+    `Colección ${coleccion.nombre}. Figuras y accesorios de colección. Envío a todo Argentina.`;
 
   return {
     title,
@@ -70,7 +70,7 @@ export default async function ColeccionPage({ params }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumbs */}
-      <nav className="mb-6 text-sm text-lavanda/75">
+      <nav className="mb-6 text-sm text-texto-3">
         <Link href="/" className="hover:text-niebla transition-colors">
           Inicio
         </Link>
@@ -80,7 +80,7 @@ export default async function ColeccionPage({ params }: Props) {
 
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla">
+        <h1 className="display display-seccion text-texto">
           {coleccion.nombre}
         </h1>
         {coleccion.descripcion && (
@@ -88,7 +88,7 @@ export default async function ColeccionPage({ params }: Props) {
             {coleccion.descripcion}
           </p>
         )}
-        <p className="text-lavanda/75 text-sm mt-2">
+        <p className="text-texto-3 text-sm mt-2">
           {coleccion.productos.length}{" "}
           {coleccion.productos.length === 1 ? "producto" : "productos"}
         </p>

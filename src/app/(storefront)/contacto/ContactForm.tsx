@@ -37,7 +37,7 @@ export default function ContactForm() {
         </p>
         <button
           onClick={() => setStatus("idle")}
-          className="mt-4 text-xs text-purpura hover:text-purpura/80 transition-colors"
+          className="mt-4 text-xs text-ambar hover:text-ambar-light transition-colors"
         >
           Enviar otro mensaje
         </button>
@@ -48,33 +48,33 @@ export default function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm text-lavanda/75 mb-1">Nombre</label>
+        <label className="block text-sm text-texto-3 mb-1">Nombre</label>
         <input
           type="text"
           value={form.nombre}
           onChange={(e) => setForm({ ...form, nombre: e.target.value })}
           required
-          className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+          className="w-full px-3 py-2 bg-navy-deep border border-linea rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
         />
       </div>
       <div>
-        <label className="block text-sm text-lavanda/75 mb-1">Email</label>
+        <label className="block text-sm text-texto-3 mb-1">Email</label>
         <input
           type="email"
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           required
-          className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+          className="w-full px-3 py-2 bg-navy-deep border border-linea rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
         />
       </div>
       <div>
-        <label className="block text-sm text-lavanda/75 mb-1">Mensaje</label>
+        <label className="block text-sm text-texto-3 mb-1">Mensaje</label>
         <textarea
           value={form.mensaje}
           onChange={(e) => setForm({ ...form, mensaje: e.target.value })}
           required
           rows={5}
-          className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura resize-none"
+          className="w-full px-3 py-2 bg-navy-deep border border-linea rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura resize-none"
         />
       </div>
 

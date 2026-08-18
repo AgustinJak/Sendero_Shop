@@ -50,11 +50,11 @@ export default function CartDrawer() {
 
           {/* Drawer */}
           <div
-            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-navy-deep border-l border-lavanda/10 z-[70] flex flex-col animate-slide-in-right"
+            className="fixed right-0 top-0 bottom-0 w-full max-w-md bg-navy-deep border-l border-linea z-[70] flex flex-col animate-slide-in-right"
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-lavanda/10">
-              <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-linea">
+              <h2 className="text-lg font-semibold text-texto">
                 Carrito ({itemCount})
               </h2>
               <button
@@ -71,7 +71,7 @@ export default function CartDrawer() {
             {/* Items */}
             <div className="flex-1 overflow-y-auto px-6 py-4">
               {!isLoaded ? (
-                <p className="text-lavanda/60 text-center py-8">Cargando...</p>
+                <p className="text-texto-3 text-center py-8">Cargando...</p>
               ) : cart.items.length === 0 ? (
                 <div className="text-center py-16 px-4">
                   <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-lavanda/5 flex items-center justify-center">
@@ -80,7 +80,7 @@ export default function CartDrawer() {
                     </svg>
                   </div>
                   <p className="text-niebla font-medium mb-1">Tu carrito está vacío</p>
-                  <p className="text-lavanda/60 text-sm mb-6">Explorá nuestro catálogo y encontrá tu próxima pieza</p>
+                  <p className="text-texto-3 text-sm mb-6">Explorá nuestro catálogo y encontrá tu próxima pieza</p>
                   <a
                     href="/catalogo"
                     onClick={closeDrawer}
@@ -108,7 +108,7 @@ export default function CartDrawer() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center">
-                            <span className="text-lavanda/50 text-xs">Sin img</span>
+                            <span className="text-texto-3 text-xs">Sin img</span>
                           </div>
                         )}
                       </div>
@@ -136,7 +136,7 @@ export default function CartDrawer() {
 
                         {/* Opciones seleccionadas */}
                         {item.opciones.length > 0 && (
-                          <p className="text-xs text-lavanda/70 mt-0.5">
+                          <p className="text-xs text-texto-3 mt-0.5">
                             {item.opciones.map(o => `${o.grupo_nombre}: ${o.opcion_valor}`).join(" · ")}
                           </p>
                         )}
@@ -155,7 +155,7 @@ export default function CartDrawer() {
                                 {conDescuento && (
                                   <>
                                     {" "}
-                                    <span className="text-xs font-normal text-lavanda/50 line-through">
+                                    <span className="text-xs font-normal text-texto-3 line-through">
                                       {formatPrice(lista)}
                                     </span>{" "}
                                     <span className="text-xs font-semibold text-emerald-400">
@@ -179,7 +179,7 @@ export default function CartDrawer() {
                                   .slice()
                                   .sort((a, b) => a.min - b.min)[0];
                                 return (
-                                  <p className="text-xs text-lavanda/60">
+                                  <p className="text-xs text-texto-3">
                                     Desde {primero.min}u: {primero.pct}% OFF
                                   </p>
                                 );
@@ -192,7 +192,7 @@ export default function CartDrawer() {
                         <div className="flex items-center gap-2 mt-2">
                           <button
                             onClick={() => updateQuantity(item.producto_id, item.opciones, item.cantidad - 1)}
-                            className="w-7 h-7 flex items-center justify-center rounded border border-lavanda/20 text-lavanda-light hover:bg-lavanda/10 transition-colors text-sm"
+                            className="w-7 h-7 flex items-center justify-center rounded border border-linea text-lavanda-light hover:bg-lavanda/10 transition-colors text-sm"
                           >
                             -
                           </button>
@@ -201,14 +201,14 @@ export default function CartDrawer() {
                           </span>
                           <button
                             onClick={() => updateQuantity(item.producto_id, item.opciones, item.cantidad + 1)}
-                            className="w-7 h-7 flex items-center justify-center rounded border border-lavanda/20 text-lavanda-light hover:bg-lavanda/10 transition-colors text-sm"
+                            className="w-7 h-7 flex items-center justify-center rounded border border-linea text-lavanda-light hover:bg-lavanda/10 transition-colors text-sm"
                           >
                             +
                           </button>
 
                           <button
                             onClick={() => removeItem(item.producto_id, item.opciones)}
-                            className="ml-auto text-lavanda/60 hover:text-red-400 transition-colors"
+                            className="ml-auto text-texto-3 hover:text-red-400 transition-colors"
                             aria-label="Eliminar"
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -225,15 +225,15 @@ export default function CartDrawer() {
 
             {/* Footer */}
             {cart.items.length > 0 && (
-              <div className="border-t border-lavanda/10 px-6 py-4 space-y-4">
+              <div className="border-t border-linea px-6 py-4 space-y-4">
                 <div className="space-y-1">
                   {/* Con descuento arrancamos del precio de lista para que la
                       cuenta cierre: lista − descuento = subtotal. */}
                   {ahorroTotal > 0 && (
                     <>
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-lavanda/75">Precio de lista</span>
-                        <span className="text-lavanda/60 line-through">
+                        <span className="text-texto-3">Precio de lista</span>
+                        <span className="text-texto-3 line-through">
                           {formatPrice(totalLista)}
                         </span>
                       </div>
@@ -259,7 +259,7 @@ export default function CartDrawer() {
                   </div>
                 ) : envioGratisDesde > 0 ? (
                   <div className="space-y-1.5">
-                    <p className="text-xs text-lavanda/60">
+                    <p className="text-xs text-texto-3">
                       Te faltan{" "}
                       <span className="font-semibold text-ambar">
                         {formatPrice(faltaParaEnvioGratis)}
@@ -281,7 +281,7 @@ export default function CartDrawer() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-xs text-lavanda/60">
+                  <p className="text-xs text-texto-3">
                     Envío calculado en el checkout
                   </p>
                 )}

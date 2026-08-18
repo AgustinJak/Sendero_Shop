@@ -9,15 +9,16 @@ import ActiveFilters from "@/components/catalogo/ActiveFilters";
 import { FilterTransitionProvider } from "@/components/catalogo/FilterTransitionContext";
 import GridLoadingOverlay from "@/components/catalogo/GridLoadingOverlay";
 import CatalogBanner from "@/components/home/CatalogBanner";
+import { slugify } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Catálogo",
   description:
-    "Explorá nuestro catálogo de figuras, katanas y accesorios impresos en 3D. Envío a todo Argentina.",
+    "Explorá nuestro catálogo de figuras, katanas y accesorios de colección. Envío a todo Argentina.",
   openGraph: {
     title: "Catálogo — Sendero Shop",
     description:
-      "Figuras, katanas y accesorios impresos en 3D. Filtrá por anime, categoría y precio.",
+      "Figuras, katanas y accesorios de colección. Filtrá por anime, categoría y precio.",
   },
   alternates: {
     canonical: "https://sendero3d.com/catalogo",
@@ -51,6 +52,21 @@ export default async function CatalogoPage({ searchParams }: Props) {
       getBanners("catalogo_top"),
     ]);
 
+  // El encabezado refleja lo que el usuario esta mirando. Los slugs vienen
+  // de la URL, asi que se buscan los nombres reales en las categorias/lineas
+  // cargadas en vez de mostrar el slug crudo.
+  const nombreCategoria = params.categoria
+    ? categorias.flatMap((c) => [c, ...(c.children ?? [])]).find((c) => c.slug === params.categoria)?.nombre
+    : undefined;
+  const nombreLinea = params.linea
+    ? availableFilters.lineas.find((l) => slugify(l) === params.linea)
+    : undefined;
+  const filtroActivo = Boolean(nombreCategoria || nombreLinea || params.q);
+
+  const titulo = params.q
+    ? `"${params.q}"`
+    : [nombreCategoria, nombreLinea].filter(Boolean).join(" · ") || "Catálogo";
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Banner catálogo */}
@@ -61,13 +77,22 @@ export default async function CatalogoPage({ searchParams }: Props) {
       <Suspense>
         <FilterTransitionProvider>
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla">
-                Catálogo
-              </h1>
-              <p className="text-lavanda/75 text-sm mt-1">
-                {total} {total === 1 ? "producto" : "productos"}
+          <div className="flex items-end justify-between gap-6 mb-8">
+            <div className="max-w-[52ch]">
+              <p className="volanta mb-2">
+                {params.q
+                  ? "Resultados de búsqueda"
+                  : filtroActivo
+                    ? "Estás viendo"
+                    : "Todo el catálogo"}
+              </p>
+              <h1 className="display display-seccion text-texto">{titulo}</h1>
+              <p className="text-texto-3 mt-3">
+                {total === 0
+                  ? "No encontramos piezas con estos filtros. Probá quitando alguno."
+                  : `${total} ${total === 1 ? "pieza disponible" : "piezas disponibles"}${
+                      filtroActivo ? " con los filtros aplicados" : " para elegir"
+                    }.`}
               </p>
             </div>
 
@@ -140,7 +165,7 @@ function Pagination({
       {current > 1 && (
         <a
           href={pageUrl(current - 1)}
-          className="px-4 py-2 border border-lavanda/20 rounded-lg text-sm text-lavanda-light hover:bg-lavanda/10 transition-colors"
+          className="px-4 py-2 border border-linea rounded-lg text-sm text-lavanda-light hover:bg-lavanda/10 transition-colors"
         >
           Anterior
         </a>
@@ -153,7 +178,7 @@ function Pagination({
           className={`px-4 py-2 rounded-lg text-sm transition-colors ${
             p === current
               ? "bg-purpura text-niebla"
-              : "border border-lavanda/20 text-lavanda-light hover:bg-lavanda/10"
+              : "border border-linea text-lavanda-light hover:bg-lavanda/10"
           }`}
         >
           {p}
@@ -163,7 +188,7 @@ function Pagination({
       {current < total && (
         <a
           href={pageUrl(current + 1)}
-          className="px-4 py-2 border border-lavanda/20 rounded-lg text-sm text-lavanda-light hover:bg-lavanda/10 transition-colors"
+          className="px-4 py-2 border border-linea rounded-lg text-sm text-lavanda-light hover:bg-lavanda/10 transition-colors"
         >
           Siguiente
         </a>

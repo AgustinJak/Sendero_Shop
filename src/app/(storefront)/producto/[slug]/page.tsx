@@ -7,6 +7,7 @@ import { formatPrice } from "@/lib/utils";
 import { getSiteConfig } from "@/lib/site-config";
 import ProductDetail from "@/components/productos/ProductDetail";
 import ProductGrid from "@/components/productos/ProductGrid";
+import SectionHeader from "@/components/ui/SectionHeader";
 import ReviewList from "@/components/reviews/ReviewList";
 import TrackItemList from "@/components/productos/TrackItemList";
 import { createServiceRoleClient } from "@/lib/supabase-server";
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = producto.meta_title || `${producto.nombre} — Sendero Shop`;
   const description =
     producto.meta_description ||
-    `${producto.nombre}${producto.linea ? ` de ${producto.linea}` : ""}, impreso en 3D. ${formatPrice(producto.precio)}. Envío a todo Argentina.`;
+    `${producto.nombre}${producto.linea ? ` de ${producto.linea}` : ""}, pieza de colección. ${formatPrice(producto.precio)}. Envío a todo Argentina.`;
   const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
 
   return {
@@ -140,7 +141,7 @@ export default async function ProductoPage({ params }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Breadcrumbs */}
-      <nav className="mb-6 text-sm text-lavanda/75">
+      <nav className="mb-6 text-sm text-texto-3">
         <Link href="/" className="hover:text-niebla transition-colors">
           Inicio
         </Link>
@@ -178,9 +179,11 @@ export default async function ProductoPage({ params }: Props) {
       {/* Te puede interesar */}
       {relacionados.length > 0 && (
         <section className="mt-16">
-          <h2 className="font-[family-name:var(--font-cinzel)] text-2xl font-bold text-niebla mb-8 text-center">
-            Te puede interesar
-          </h2>
+          <SectionHeader
+            volanta="Del mismo mundo"
+            titulo="Te puede interesar"
+            bajada="Piezas de la misma línea o categoría que la que estás viendo."
+          />
           <ProductGrid productos={relacionados} />
           <TrackItemList
             listName="Relacionados"

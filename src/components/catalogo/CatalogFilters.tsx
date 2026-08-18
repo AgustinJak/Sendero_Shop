@@ -63,7 +63,7 @@ export default function FilterSidebar({ filters, categorias = [], hideHeader = f
       {!hideHeader && (
         <>
           <div className="flex items-center justify-between">
-            <h2 className="font-[family-name:var(--font-cinzel)] text-xs font-bold text-niebla uppercase tracking-widest">
+            <h2 className="volanta">
               Filtros
             </h2>
             {activeCount > 0 && (
@@ -226,7 +226,7 @@ function CategoryGroup({
         {hasChildren && (
           <button
             onClick={() => setExpanded(!expanded)}
-            className="p-1 text-lavanda/60 hover:text-lavanda-light transition-colors cursor-pointer"
+            className="p-1 text-texto-3 hover:text-lavanda-light transition-colors cursor-pointer"
             aria-label={expanded ? "Contraer" : "Expandir"}
           >
             <svg
@@ -247,7 +247,7 @@ function CategoryGroup({
       {/* Children */}
       {hasChildren && (
         <div ref={childrenRef} className="overflow-hidden" style={{ height: expanded ? "auto" : 0, opacity: expanded ? 1 : 0 }}>
-          <div className="ml-3 pl-3 border-l border-lavanda/10">
+          <div className="ml-3 pl-3 border-l border-linea">
             {parent.children!.map((child) => (
               <div key={child.id} data-child-item>
                 <FilterItem
@@ -359,7 +359,7 @@ function SilkDivider() {
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[10px] font-semibold text-lavanda/60 uppercase tracking-[0.15em] mb-2 font-[family-name:var(--font-cinzel)]">
+    <h3 className="text-[10px] font-semibold text-texto-3 uppercase tracking-[0.15em] mb-2">
       {children}
     </h3>
   );
@@ -408,7 +408,7 @@ export function MobileFilterToggle({
     <>
       <button
         onClick={() => setOpen(true)}
-        className="lg:hidden flex items-center gap-2 px-4 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light hover:border-purpura/40 transition-colors"
+        className="lg:hidden flex items-center gap-2 px-4 py-2 bg-navy-deep border border-linea rounded-lg text-sm text-lavanda-light hover:border-purpura/40 transition-colors"
       >
         <svg
           className="w-4 h-4"
@@ -444,12 +444,12 @@ export function MobileFilterToggle({
             className="absolute bottom-0 left-0 right-0 bg-navy rounded-t-2xl p-6 max-h-[75vh] overflow-y-auto"
           >
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla">
+              <h2 className="text-sm font-semibold text-texto">
                 Filtros
               </h2>
               <button
                 onClick={handleClose}
-                className="text-lavanda/75 hover:text-niebla transition-colors p-1"
+                className="text-texto-3 hover:text-niebla transition-colors p-1"
               >
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

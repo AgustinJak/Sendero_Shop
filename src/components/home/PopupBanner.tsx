@@ -35,7 +35,7 @@ export default function PopupBanner({ banner }: { banner: Banner }) {
       )}
       <div className="p-6 text-center">
         {banner.titulo && (
-          <h3 className="font-[family-name:var(--font-cinzel)] text-xl font-bold text-niebla mb-2">
+          <h3 className="text-xl font-semibold text-texto mb-2">
             {banner.titulo}
           </h3>
         )}
@@ -57,7 +57,7 @@ export default function PopupBanner({ banner }: { banner: Banner }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-      <div className="relative bg-navy-deep border border-lavanda/20 rounded-xl max-w-md w-full overflow-hidden">
+      <div className="relative bg-navy-deep border border-linea rounded-xl max-w-md w-full overflow-hidden">
         <button
           onClick={dismiss}
           className="absolute top-3 right-3 z-10 w-8 h-8 rounded-full bg-navy/80 text-niebla flex items-center justify-center hover:bg-navy transition-colors"

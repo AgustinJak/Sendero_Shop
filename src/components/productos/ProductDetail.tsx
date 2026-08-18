@@ -105,24 +105,25 @@ export default function ProductDetail({
       <div className="space-y-6">
         {/* Breadcrumb inline */}
         {producto.linea && (
-          <p className="text-sm text-lavanda/75 uppercase tracking-wider">
-            {producto.linea}
-          </p>
+          <p className="volanta">{producto.linea}</p>
         )}
 
-        <h1 className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla">
-          {producto.nombre}
-        </h1>
+        <h1 className="display display-seccion text-texto">{producto.nombre}</h1>
 
         {/* Precio */}
-        <div className="flex items-baseline gap-3">
-          <span className="text-2xl font-bold text-ambar">
+        <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <span className="text-3xl sm:text-4xl font-bold text-ambar">
             {formatPrice(precioFinal)}
           </span>
           {tieneOferta && (
-            <span className="text-lg text-lavanda/70 line-through">
-              {formatPrice(producto.precio)}
-            </span>
+            <>
+              <span className="text-lg text-texto-3 line-through">
+                {formatPrice(producto.precio)}
+              </span>
+              <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-400">
+                Ahorrás {formatPrice(producto.precio - precioFinal)}
+              </span>
+            </>
           )}
         </div>
 
@@ -217,7 +218,7 @@ export default function ProductDetail({
         </div>
 
         {/* Info adicional */}
-        <div className="border-t border-lavanda/10 pt-6 space-y-3">
+        <div className="border-t border-linea pt-6 space-y-3">
           {producto.tamano && (
             <InfoRow label="Tamaño" value={producto.tamano} />
           )}
@@ -237,10 +238,8 @@ export default function ProductDetail({
 
         {/* Descripción */}
         {producto.descripcion && (
-          <div className="border-t border-lavanda/10 pt-6">
-            <h2 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider mb-3">
-              Descripción
-            </h2>
+          <div className="border-t border-linea pt-6">
+            <h2 className="volanta mb-3">Descripción</h2>
             <div
               className={`text-sm text-lavanda-light leading-relaxed ${PROSE_CLASSES}`}
               dangerouslySetInnerHTML={{ __html: producto.descripcion }}
@@ -255,7 +254,7 @@ export default function ProductDetail({
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between text-sm">
-      <span className="text-lavanda/75">{label}</span>
+      <span className="text-texto-3">{label}</span>
       <span className="text-lavanda-light">{value}</span>
     </div>
   );

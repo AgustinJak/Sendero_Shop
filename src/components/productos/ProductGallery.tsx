@@ -61,8 +61,8 @@ export default function ProductGallery({
   // a tener contenido, React vería distinta cantidad de hooks entre renders.
   if (sorted.length === 0) {
     return (
-      <div className="aspect-square bg-navy-deep rounded-xl border border-lavanda/10 flex items-center justify-center">
-        <span className="text-lavanda/50">Sin imagen</span>
+      <div className="aspect-square bg-navy-deep rounded-xl border border-linea flex items-center justify-center">
+        <span className="text-texto-3">Sin imagen</span>
       </div>
     );
   }
@@ -78,7 +78,7 @@ export default function ProductGallery({
     <div className="space-y-4">
       {/* Main display */}
       <div
-        className={`aspect-square relative bg-navy-deep rounded-xl overflow-hidden border border-lavanda/10 ${!isVideo ? "cursor-pointer" : ""}`}
+        className={`aspect-square relative bg-navy-deep rounded-xl overflow-hidden border border-linea ${!isVideo ? "cursor-pointer" : ""}`}
         onClick={() => {
           if (!isVideo) setLightboxOpen(true);
           else if (isYT && !youtubeActive) setLightboxOpen(true);
@@ -148,7 +148,7 @@ export default function ProductGallery({
               className={`relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border-2 transition-colors ${
                 i === indice
                   ? "border-purpura"
-                  : "border-lavanda/10 hover:border-lavanda/30"
+                  : "border-linea hover:border-linea-fuerte"
               }`}
             >
               {media.tipo === "video" && isYouTubeUrl(media.url) ? (

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Categoria, Coleccion } from "@/types";
 import { whatsappLink } from "@/lib/utils";
+import SectionHeader from "@/components/ui/SectionHeader";
 
 /* ── Colecciones con banner/imagen ── */
 
@@ -15,15 +16,13 @@ export function CollectionsSection({ colecciones }: { colecciones: Coleccion[] }
 
   return (
     <section className="py-16 px-4 max-w-7xl mx-auto">
-      <motion.h2
-        className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla mb-8 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
-        Colecciones
-      </motion.h2>
+      <SectionHeader
+        volanta="Selecciones armadas"
+        titulo="Colecciones"
+        bajada="Piezas agrupadas por serie y por mundo, para encontrar la tuya sin recorrer todo el catálogo."
+        href="/catalogo"
+        hrefLabel="Ver el catálogo"
+      />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
         {items.map((col, i) => (
           <motion.div
@@ -36,7 +35,7 @@ export function CollectionsSection({ colecciones }: { colecciones: Coleccion[] }
           >
             <Link
               href={`/coleccion/${col.slug}`}
-              className="block relative group rounded-xl overflow-hidden border border-lavanda/10 hover:border-purpura/40 transition-all"
+              className="block relative group rounded-xl overflow-hidden border border-linea hover:border-purpura/40 transition-all"
             >
               <div className="aspect-[16/10] relative bg-navy-deep">
                 {col.imagen_cover ? (
@@ -54,11 +53,11 @@ export function CollectionsSection({ colecciones }: { colecciones: Coleccion[] }
                 <div className="absolute inset-0 bg-gradient-to-t from-navy-deep/90 via-navy-deep/30 to-transparent" />
                 {/* Content */}
                 <div className="absolute bottom-0 left-0 right-0 p-4 sm:p-5">
-                  <h3 className="font-[family-name:var(--font-cinzel)] text-lg sm:text-xl font-bold text-niebla group-hover:text-ambar transition-colors">
+                  <h3 className="text-lg sm:text-xl font-semibold text-texto group-hover:text-ambar transition-colors">
                     {col.nombre}
                   </h3>
                   {col.descripcion && (
-                    <p className="text-xs sm:text-sm text-lavanda-light/70 mt-1 line-clamp-2">
+                    <p className="text-xs sm:text-sm text-texto-2 mt-1 line-clamp-2">
                       {col.descripcion}
                     </p>
                   )}
@@ -81,15 +80,13 @@ export function CategoriesSection({ categorias }: { categorias: Categoria[] }) {
 
   return (
     <section className="pb-16 px-4 max-w-7xl mx-auto">
-      <motion.h2
-        className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla mb-8 text-center"
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ duration: 0.6 }}
-      >
-        Categorías
-      </motion.h2>
+      <SectionHeader
+        volanta="Explorá por tipo"
+        titulo="Categorías"
+        bajada="Armas, merchandising y objetos para la casa. Cada una con sus líneas y franquicias."
+        href="/catalogo"
+        hrefLabel="Ver todo"
+      />
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6">
         {items.map((cat, i) => (
           <motion.div
@@ -102,10 +99,10 @@ export function CategoriesSection({ categorias }: { categorias: Categoria[] }) {
           >
             <Link
               href={`/catalogo?categoria=${cat.slug}`}
-              className="block relative group bg-navy-deep rounded-xl overflow-hidden border border-lavanda/10 hover:border-lavanda/30 transition-colors"
+              className="block relative group bg-navy-deep rounded-xl overflow-hidden border border-linea hover:border-linea-fuerte transition-colors"
             >
               <div className="aspect-[16/9] bg-lavanda/5 flex items-center justify-center">
-                <span className="font-[family-name:var(--font-cinzel)] text-xl text-lavanda group-hover:text-niebla transition-colors">
+                <span className="text-xl font-semibold text-texto-2 group-hover:text-texto transition-colors">
                   {cat.nombre}
                 </span>
               </div>
@@ -120,9 +117,9 @@ export function CategoriesSection({ categorias }: { categorias: Categoria[] }) {
 export function WhatsAppCTA({ whatsapp }: { whatsapp: string }) {
   return (
     <section className="py-16 px-4">
-      <div className="max-w-3xl mx-auto text-center bg-navy-deep rounded-2xl p-8 sm:p-12 border border-lavanda/10">
+      <div className="max-w-3xl mx-auto text-center bg-navy-deep rounded-2xl p-8 sm:p-12 border border-linea">
         <motion.h2
-          className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla mb-4"
+          className="display display-seccion text-texto mb-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
@@ -130,20 +127,20 @@ export function WhatsAppCTA({ whatsapp }: { whatsapp: string }) {
           ¿Tenés una idea en mente?
         </motion.h2>
         <motion.p
-          className="text-lavanda-light mb-6"
+          className="text-texto-2 mb-6"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1 }}
         >
-          Podemos imprimir casi cualquier cosa. Escribinos y te asesoramos
+          Podemos fabricar casi cualquier cosa. Escribinos y te asesoramos
           sobre tu próxima pieza.
         </motion.p>
         <motion.a
           href={whatsappLink(whatsapp, "Hola! Quiero consultar por un producto personalizado")}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 px-8 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors"
+          className="inline-flex items-center gap-2 px-8 py-3 bg-green-700 hover:bg-green-800 text-white font-semibold rounded-lg transition-colors"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}

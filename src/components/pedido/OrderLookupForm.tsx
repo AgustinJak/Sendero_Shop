@@ -40,7 +40,7 @@ export default function OrderLookupForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label htmlFor="email" className="block text-sm text-lavanda/75 mb-1">
+        <label htmlFor="email" className="block text-sm text-texto-3 mb-1">
           Email
         </label>
         <input
@@ -50,12 +50,12 @@ export default function OrderLookupForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="tu@email.com"
-          className="w-full px-4 py-3 bg-navy-deep border border-lavanda/20 rounded-lg text-niebla placeholder:text-lavanda/50 focus:outline-none focus:border-purpura transition-colors"
+          className="w-full px-4 py-3 bg-navy-deep border border-linea rounded-lg text-niebla placeholder:text-texto-3 focus:outline-none focus:border-purpura transition-colors"
         />
       </div>
 
       <div>
-        <label htmlFor="numero" className="block text-sm text-lavanda/75 mb-1">
+        <label htmlFor="numero" className="block text-sm text-texto-3 mb-1">
           Número de pedido
         </label>
         <input
@@ -65,7 +65,7 @@ export default function OrderLookupForm() {
           value={numeroPedido}
           onChange={(e) => setNumeroPedido(e.target.value)}
           placeholder="SS-00001"
-          className="w-full px-4 py-3 bg-navy-deep border border-lavanda/20 rounded-lg text-niebla placeholder:text-lavanda/50 focus:outline-none focus:border-purpura transition-colors uppercase"
+          className="w-full px-4 py-3 bg-navy-deep border border-linea rounded-lg text-niebla placeholder:text-texto-3 focus:outline-none focus:border-purpura transition-colors uppercase"
         />
       </div>
 

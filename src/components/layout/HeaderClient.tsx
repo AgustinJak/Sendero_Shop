@@ -34,7 +34,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
   }
 
   return (
-    <header className="sticky top-0 z-50 bg-navy-deep/95 backdrop-blur-sm border-b border-lavanda/10">
+    <header className="sticky top-0 z-50 bg-navy-deep/95 backdrop-blur-sm border-b border-linea">
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
@@ -129,7 +129,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
         {/* Mobile Menu — sin AnimatePresence (dejaba el bloque pegado) */}
         {menuOpen && (
             <div
-              className="md:hidden overflow-hidden border-t border-lavanda/10"
+              className="md:hidden overflow-hidden border-t border-linea"
             >
               <div className="flex flex-col gap-4 py-4">
                 <Link
@@ -156,7 +156,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                           <Link
                             key={sub.slug}
                             href={`/catalogo?categoria=${sub.slug}`}
-                            className="text-sm text-lavanda/75 hover:text-niebla transition-colors"
+                            className="text-sm text-texto-3 hover:text-niebla transition-colors"
                             onClick={() => setMenuOpen(false)}
                           >
                             {sub.nombre}
@@ -208,7 +208,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
             >
               <div className="relative">
                 <svg
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-lavanda/50"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-texto-3"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth={1.5}
@@ -226,19 +226,19 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Buscar productos..."
-                  className="w-full pl-12 pr-12 py-4 bg-navy border border-lavanda/20 rounded-xl text-lg text-niebla placeholder:text-lavanda/60 focus:outline-none focus:border-purpura"
+                  className="w-full pl-12 pr-12 py-4 bg-navy border border-linea rounded-xl text-lg text-niebla placeholder:text-texto-3 focus:outline-none focus:border-purpura"
                 />
                 <button
                   type="button"
                   onClick={() => setSearchOpen(false)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-lavanda/50 hover:text-niebla transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-texto-3 hover:text-niebla transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                   </svg>
                 </button>
               </div>
-              <p className="text-center text-xs text-lavanda/60 mt-3">
+              <p className="text-center text-xs text-texto-3 mt-3">
                 Presioná Enter para buscar
               </p>
             </form>

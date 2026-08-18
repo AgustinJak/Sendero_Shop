@@ -500,3 +500,15 @@ export async function getBanners(
   const { data } = await query;
   return (data as Banner[]) || [];
 }
+
+/**
+ * Total de unidades vendidas, para la prueba social del hero.
+ *
+ * Se lee de la base en vez de hardcodear un número: una cifra escrita a mano
+ * en el JSX envejece mal y termina siendo mentira sin que nadie se entere.
+ */
+export async function getUnidadesVendidas(): Promise<number> {
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase.from("productos").select("unidades_vendidas");
+  return (data ?? []).reduce((acc, p) => acc + (Number(p.unidades_vendidas) || 0), 0);
+}

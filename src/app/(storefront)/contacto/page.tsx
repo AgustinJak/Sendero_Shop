@@ -14,7 +14,7 @@ export default async function ContactoPage() {
   const whatsapp = await getWhatsapp();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
-      <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-4 text-center">
+      <h1 className="display display-seccion text-texto mb-4 text-center">
         Contacto
       </h1>
       <p className="text-lavanda-light text-center mb-10">
@@ -39,14 +39,14 @@ export default async function ContactoPage() {
               <p className="text-niebla font-semibold group-hover:text-green-400 transition-colors">
                 WhatsApp
               </p>
-              <p className="text-sm text-lavanda/75">
+              <p className="text-sm text-texto-3">
                 {formatWhatsappDisplay(whatsapp)}
               </p>
             </div>
           </a>
 
-          <div className="bg-navy-deep border border-lavanda/10 rounded-xl p-5 space-y-3">
-            <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+          <div className="bg-navy-deep border border-linea rounded-xl p-5 space-y-3">
+            <h3 className="volanta">
               Horarios de atención
             </h3>
             <div className="text-sm text-lavanda-light space-y-1">
@@ -55,14 +55,14 @@ export default async function ContactoPage() {
             </div>
           </div>
 
-          <div className="bg-navy-deep border border-lavanda/10 rounded-xl p-5 space-y-3">
-            <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+          <div className="bg-navy-deep border border-linea rounded-xl p-5 space-y-3">
+            <h3 className="volanta">
               Ubicación
             </h3>
             <p className="text-sm text-lavanda-light">
               Villa Crespo, CABA, Argentina
             </p>
-            <p className="text-xs text-lavanda/70">
+            <p className="text-xs text-texto-3">
               Solo retiro con cita previa coordinada por WhatsApp.
             </p>
           </div>

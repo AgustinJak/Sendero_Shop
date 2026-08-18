@@ -10,6 +10,7 @@ const CONFIG_KEYS = [
   { key: "recargo_mp_porcentaje", label: "Recargo MercadoPago (%)", placeholder: "13" },
   { key: "envio_gratis_desde", label: "Envío gratis desde ($) — 0 para desactivar", placeholder: "250000" },
   { key: "descuento_tramos", label: "Descuento por cantidad (cantidad:% — 0 para desactivar)", placeholder: "5:10, 10:20, 20:30" },
+  { key: "unidades_vendidas_base", label: "Piezas vendidas fuera de la web (Meli, ferias)", placeholder: "900" },
   { key: "sena_efectivo_porcentaje", label: "Seña en pedidos en efectivo (%) — 0 para desactivar", placeholder: "20" },
   { key: "email_notificaciones", label: "Email para notificaciones", placeholder: "ventas@sendero3d.com" },
   { key: "tiempo_produccion_default", label: "Tiempo producción default (días)", placeholder: "7" },

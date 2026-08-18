@@ -19,8 +19,8 @@ export default function QuantitySelector({
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-sm text-lavanda/75">Cantidad</span>
-      <div className="flex items-center rounded-lg border border-lavanda/20 bg-navy-deep">
+      <span className="text-sm text-texto-3">Cantidad</span>
+      <div className="flex items-center rounded-lg border border-linea bg-navy-deep">
         <button
           type="button"
           onClick={() => onChange(clamp(cantidad - 1))}

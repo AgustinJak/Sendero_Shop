@@ -33,16 +33,16 @@ export default function ReviewList({ productoId }: { productoId: string }) {
       : 0;
 
   return (
-    <div className="mt-12 border-t border-lavanda/10 pt-8">
+    <div className="mt-12 border-t border-linea pt-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+          <h2 className="text-lg font-semibold text-texto">
             Reseñas
           </h2>
           {reviews.length > 0 && (
             <div className="flex items-center gap-2 mt-1">
               <StarRating rating={Math.round(avgRating)} size="sm" />
-              <span className="text-sm text-lavanda/75">
+              <span className="text-sm text-texto-3">
                 {avgRating.toFixed(1)} ({reviews.length}{" "}
                 {reviews.length === 1 ? "reseña" : "reseñas"})
               </span>
@@ -51,7 +51,7 @@ export default function ReviewList({ productoId }: { productoId: string }) {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-sm font-medium rounded-lg transition-colors"
+          className="px-4 py-2 bg-purpura/20 hover:bg-purpura/30 text-ambar text-sm font-medium rounded-lg transition-colors"
         >
           {showForm ? "Cancelar" : "Escribir reseña"}
         </button>
@@ -59,7 +59,7 @@ export default function ReviewList({ productoId }: { productoId: string }) {
 
       {/* Formulario */}
       {showForm && (
-        <div className="mb-8 bg-navy rounded-xl border border-lavanda/10 p-6">
+        <div className="mb-8 bg-navy rounded-xl border border-linea p-6">
           <ReviewForm productoId={productoId} />
         </div>
       )}
@@ -76,13 +76,13 @@ export default function ReviewList({ productoId }: { productoId: string }) {
         </div>
       ) : reviews.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-lavanda/60 text-sm">
+          <p className="text-texto-3 text-sm">
             Todavía no hay reseñas para este producto.
           </p>
           {!showForm && (
             <button
               onClick={() => setShowForm(true)}
-              className="mt-2 text-sm text-purpura hover:text-purpura/80 transition-colors"
+              className="mt-2 text-sm text-ambar hover:text-ambar-light transition-colors"
             >
               Sé el primero en dejar una reseña
             </button>
@@ -98,14 +98,14 @@ export default function ReviewList({ productoId }: { productoId: string }) {
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-3">
                   {/* Avatar inicial */}
-                  <div className="w-8 h-8 rounded-full bg-purpura/20 flex items-center justify-center text-sm font-bold text-purpura">
+                  <div className="w-8 h-8 rounded-full bg-purpura/20 flex items-center justify-center text-sm font-bold text-ambar">
                     {review.nombre_cliente.charAt(0).toUpperCase()}
                   </div>
                   <div>
                     <p className="text-sm font-medium text-niebla">
                       {review.nombre_cliente}
                     </p>
-                    <p className="text-xs text-lavanda/60">
+                    <p className="text-xs text-texto-3">
                       {new Date(review.created_at).toLocaleDateString("es-AR", {
                         day: "numeric",
                         month: "long",

@@ -30,7 +30,7 @@ export default function SortSelect() {
     <select
       value={current}
       onChange={(e) => handleChange(e.target.value)}
-      className="bg-navy-deep border border-lavanda/20 rounded-lg px-3 py-2 text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+      className="bg-navy-deep border border-linea rounded-lg px-3 py-2 text-sm text-lavanda-light focus:outline-none focus:border-purpura"
     >
       {OPTIONS.map((opt) => (
         <option key={opt.value} value={opt.value}>

@@ -21,7 +21,7 @@ export default function ProductoLoading() {
           <div className="h-8 w-3/4 bg-lavanda/10 rounded-lg animate-pulse" />
           <div className="h-7 w-32 bg-ambar/10 rounded animate-pulse" />
 
-          <div className="border-t border-lavanda/10 pt-4 space-y-3">
+          <div className="border-t border-linea pt-4 space-y-3">
             <div className="h-5 w-24 bg-lavanda/10 rounded animate-pulse" />
             <div className="flex gap-2">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -32,7 +32,7 @@ export default function ProductoLoading() {
 
           <div className="h-12 w-full bg-purpura/20 rounded-xl animate-pulse mt-4" />
 
-          <div className="border-t border-lavanda/10 pt-4 space-y-2">
+          <div className="border-t border-linea pt-4 space-y-2">
             <div className="h-5 w-28 bg-lavanda/10 rounded animate-pulse" />
             <div className="h-3 bg-lavanda/5 rounded animate-pulse" />
             <div className="h-3 bg-lavanda/5 rounded animate-pulse" />

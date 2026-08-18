@@ -97,7 +97,7 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
               >
                 <div className="flex">
                   {/* Izquierda: categorías padre (hover abre sus subcategorías) */}
-                  <div className="w-56 shrink-0 p-2 border-r border-lavanda/10 max-h-[65vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                  <div className="w-56 shrink-0 p-2 border-r border-linea max-h-[65vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                     {categorias.map((cat) => {
                       const isActive = active?.slug === cat.slug;
                       return (
@@ -107,7 +107,7 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
                           onMouseEnter={() => setActiveParent(cat.slug)}
                           onFocus={() => setActiveParent(cat.slug)}
                           onClick={() => setIsOpen(false)}
-                          className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-[family-name:var(--font-cinzel)] transition-colors ${
+                          className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                             isActive
                               ? "bg-lavanda/10 text-niebla"
                               : "text-lavanda-light hover:text-niebla hover:bg-lavanda/5"
@@ -137,8 +137,8 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
                   <div className="flex-1 min-w-0 p-4">
                     {active && (
                       <>
-                        <div className="flex items-center justify-between gap-3 border-b border-lavanda/10 pb-2 mb-3">
-                          <h3 className="font-[family-name:var(--font-cinzel)] text-niebla text-sm truncate">
+                        <div className="flex items-center justify-between gap-3 border-b border-linea pb-2 mb-3">
+                          <h3 className="text-texto text-sm font-semibold truncate">
                             {active.nombre}
                           </h3>
                           <Link
@@ -177,7 +177,7 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
                 </div>
 
                 {/* Botón pronunciado: ver todos los productos */}
-                <div className="border-t border-lavanda/10 p-3">
+                <div className="border-t border-linea p-3">
                   <Link
                     href="/catalogo"
                     onClick={() => setIsOpen(false)}

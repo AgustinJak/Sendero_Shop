@@ -43,13 +43,12 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://sendero3d.com"),
   title: {
-    default: "Sendero Shop — Figuras y Accesorios Impresos en 3D",
+    default: "Sendero Shop — Figuras y Accesorios de Colección",
     template: "%s | Sendero Shop",
   },
   description:
-    "Figuras, katanas y accesorios impresos en 3D inspirados en anime, cine y videojuegos. Producción a pedido en Argentina.",
+    "Figuras, katanas y accesorios de colección inspirados en anime, cine y videojuegos. Fabricación propia a pedido en Argentina.",
   keywords: [
-    "impresión 3D",
     "figuras anime",
     "katanas",
     "accesorios 3D",
@@ -67,15 +66,15 @@ export const metadata: Metadata = {
     locale: "es_AR",
     url: "https://sendero3d.com",
     siteName: "Sendero Shop",
-    title: "Sendero Shop — Figuras y Accesorios Impresos en 3D",
+    title: "Sendero Shop — Figuras y Accesorios de Colección",
     description:
-      "Figuras, katanas y accesorios impresos en 3D inspirados en anime, cine y videojuegos. Producción a pedido en Argentina.",
+      "Figuras, katanas y accesorios de colección inspirados en anime, cine y videojuegos. Fabricación propia a pedido en Argentina.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Sendero Shop — Figuras y Accesorios Impresos en 3D",
+    title: "Sendero Shop — Figuras y Accesorios de Colección",
     description:
-      "Figuras, katanas y accesorios impresos en 3D inspirados en anime. Envío a todo Argentina.",
+      "Figuras, katanas y accesorios de colección inspirados en anime. Envío a todo Argentina.",
   },
   alternates: {
     canonical: "https://sendero3d.com",

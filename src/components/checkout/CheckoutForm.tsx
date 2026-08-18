@@ -457,7 +457,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
   if (itemCount === 0) {
     return (
       <div className="text-center py-16">
-        <p className="text-lavanda/75 text-lg">Tu carrito está vacío</p>
+        <p className="text-texto-3 text-lg">Tu carrito está vacío</p>
         <a href="/catalogo" className="text-ambar hover:text-ambar-light mt-4 inline-block">
           Ir al catálogo
         </a>
@@ -477,7 +477,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
       {/* Formulario */}
       <div className="lg:col-span-2 space-y-6">
         {/* Steps indicator */}
-        <div className="flex gap-2 text-xs text-lavanda/75">
+        <div className="flex gap-2 text-xs text-texto-3">
           {(["datos", "envio", "pago", "resumen"] as Step[]).map((s, i) => (
             <button
               key={s}
@@ -488,7 +488,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
               className={`px-3 py-1 rounded-full transition-colors ${
                 step === s
                   ? "bg-purpura text-niebla"
-                  : "bg-navy-deep border border-lavanda/10 hover:border-lavanda/20"
+                  : "bg-navy-deep border border-linea hover:border-linea"
               }`}
             >
               {i + 1}. {s === "datos" ? "Datos" : s === "envio" ? "Envío" : s === "pago" ? "Pago" : "Confirmar"}
@@ -504,8 +504,8 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
         {/* PASO 1: Datos */}
         {step === "datos" && (
-          <section className="bg-navy-deep rounded-xl border border-lavanda/10 p-6 space-y-4">
-            <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+          <section className="bg-navy-deep rounded-xl border border-linea p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-texto">
               Datos personales
             </h2>
             <Input label="Nombre completo" value={datos.nombre_completo} onChange={(v) => setDatos({ ...datos, nombre_completo: v })} />
@@ -520,8 +520,8 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
         {/* PASO 2: Envío */}
         {step === "envio" && (
-          <section className="bg-navy-deep rounded-xl border border-lavanda/10 p-6 space-y-4">
-            <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+          <section className="bg-navy-deep rounded-xl border border-linea p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-texto">
               Método de envío
             </h2>
 
@@ -535,7 +535,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
                     metodoEnvio === opt.value
                       ? "border-purpura bg-purpura/10"
-                      : "border-lavanda/10 hover:border-lavanda/20"
+                      : "border-linea hover:border-linea"
                   }`}
                 >
                   <input
@@ -547,7 +547,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   />
                   <div>
                     <p className="text-sm font-medium text-niebla">{opt.label}</p>
-                    <p className="text-xs text-lavanda/70">{opt.desc}</p>
+                    <p className="text-xs text-texto-3">{opt.desc}</p>
                   </div>
                 </label>
               ))}
@@ -560,7 +560,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   <button
                     onClick={() => setTipoEnvio("domicilio")}
                     className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${
-                      tipoEnvio === "domicilio" ? "border-purpura bg-purpura/10 text-niebla" : "border-lavanda/10 text-lavanda-light"
+                      tipoEnvio === "domicilio" ? "border-purpura bg-purpura/10 text-niebla" : "border-linea text-lavanda-light"
                     }`}
                   >
                     A domicilio
@@ -568,7 +568,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   <button
                     onClick={() => setTipoEnvio("sucursal")}
                     className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${
-                      tipoEnvio === "sucursal" ? "border-purpura bg-purpura/10 text-niebla" : "border-lavanda/10 text-lavanda-light"
+                      tipoEnvio === "sucursal" ? "border-purpura bg-purpura/10 text-niebla" : "border-linea text-lavanda-light"
                     }`}
                   >
                     A sucursal
@@ -580,7 +580,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   <select
                     value={direccion.provincia}
                     onChange={(e) => setDireccion({ ...direccion, provincia: e.target.value })}
-                    className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla focus:outline-none focus:border-purpura"
+                    className="w-full bg-navy border border-linea rounded-lg px-4 py-3 text-sm text-niebla focus:outline-none focus:border-purpura"
                   >
                     <option value="">Provincia *</option>
                     {PROVINCIAS.map((p) => (
@@ -628,7 +628,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
                 {/* Cotización en vivo */}
                 {cotizandoEnvio && (
-                  <div className="flex items-center gap-2 text-sm text-lavanda/75">
+                  <div className="flex items-center gap-2 text-sm text-texto-3">
                     <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -642,7 +642,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                 )}
 
                 {cotizacion && !cotizandoEnvio && (
-                  <div className="bg-navy/50 border border-lavanda/10 rounded-lg p-3 space-y-1">
+                  <div className="bg-navy/50 border border-linea rounded-lg p-3 space-y-1">
                     {/* Con envío gratis no mostramos importes: no se cobran. */}
                     {cotizacion.domicilio && (
                       <div className="flex justify-between text-sm">
@@ -650,7 +650,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                         {calificaEnvioGratis ? (
                           <span className="font-semibold text-emerald-400">GRATIS</span>
                         ) : (
-                          <span className={`font-semibold ${tipoEnvio === "domicilio" ? "text-ambar" : "text-lavanda/75"}`}>
+                          <span className={`font-semibold ${tipoEnvio === "domicilio" ? "text-ambar" : "text-texto-3"}`}>
                             {formatPrice(cotizacion.domicilio.precio)}
                           </span>
                         )}
@@ -662,14 +662,14 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                         {calificaEnvioGratis ? (
                           <span className="font-semibold text-emerald-400">GRATIS</span>
                         ) : (
-                          <span className={`font-semibold ${tipoEnvio === "sucursal" ? "text-ambar" : "text-lavanda/75"}`}>
+                          <span className={`font-semibold ${tipoEnvio === "sucursal" ? "text-ambar" : "text-texto-3"}`}>
                             {formatPrice(cotizacion.sucursal.precio)}
                           </span>
                         )}
                       </div>
                     )}
                     {(cotizacion.domicilio?.tiempoMin || cotizacion.domicilio?.tiempoMax) && (
-                      <p className="text-xs text-lavanda/60 mt-1">
+                      <p className="text-xs text-texto-3 mt-1">
                         Tiempo estimado: {cotizacion.domicilio?.tiempoMin}–{cotizacion.domicilio?.tiempoMax} días hábiles
                       </p>
                     )}
@@ -680,7 +680,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                 {tipoEnvio === "sucursal" && metodoEnvio === "correo_argentino" && direccion.provincia && (
                   <div className="space-y-2">
                     {cargandoSucursales ? (
-                      <div className="flex items-center gap-2 text-sm text-lavanda/75">
+                      <div className="flex items-center gap-2 text-sm text-texto-3">
                         <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
@@ -689,11 +689,11 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                       </div>
                     ) : sucursalesCA.length > 0 ? (
                       <>
-                        <label className="block text-xs text-lavanda/75">Sucursal de retiro</label>
+                        <label className="block text-xs text-texto-3">Sucursal de retiro</label>
                         <select
                           value={sucursalSeleccionada}
                           onChange={(e) => setSucursalSeleccionada(e.target.value)}
-                          className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla focus:outline-none focus:border-purpura"
+                          className="w-full bg-navy border border-linea rounded-lg px-4 py-3 text-sm text-niebla focus:outline-none focus:border-purpura"
                         >
                           <option value="">Seleccioná una sucursal</option>
                           {sucursalesCA.map((s) => (
@@ -705,7 +705,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                         {sucursalSeleccionada && (() => {
                           const sel = sucursalesCA.find(s => s.id === sucursalSeleccionada);
                           return sel ? (
-                            <div className="text-xs text-lavanda/60 space-y-0.5">
+                            <div className="text-xs text-texto-3 space-y-0.5">
                               <p>{sel.direccion}, {sel.ciudad} ({sel.codigoPostal})</p>
                               {sel.horario && <p>Horario: {sel.horario}</p>}
                               {sel.telefono && <p>Tel: {sel.telefono}</p>}
@@ -719,7 +719,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
                 {/* Mensaje cuando falta cotización */}
                 {!cotizacion && !cotizandoEnvio && !cotizacionError && direccion.codigo_postal.trim().length < 4 && (
-                  <p className="text-sm text-lavanda/60">
+                  <p className="text-sm text-texto-3">
                     Ingresá el código postal para ver el costo de envío
                   </p>
                 )}
@@ -734,46 +734,46 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
         {/* PASO 3: Pago */}
         {step === "pago" && (
-          <section className="bg-navy-deep rounded-xl border border-lavanda/10 p-6 space-y-4">
-            <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+          <section className="bg-navy-deep rounded-xl border border-linea p-6 space-y-4">
+            <h2 className="text-lg font-semibold text-texto">
               Método de pago
             </h2>
 
             <div className="space-y-2">
               <label
                 className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                  metodoPago === "transferencia" ? "border-purpura bg-purpura/10" : "border-lavanda/10 hover:border-lavanda/20"
+                  metodoPago === "transferencia" ? "border-purpura bg-purpura/10" : "border-linea hover:border-linea"
                 }`}
               >
                 <input type="radio" name="pago" checked={metodoPago === "transferencia"} onChange={() => setMetodoPago("transferencia")} className="accent-purpura" />
                 <div>
                   <p className="text-sm font-medium text-niebla">Transferencia bancaria</p>
-                  <p className="text-xs text-lavanda/70">Sin recargo. 48hs para enviar comprobante.</p>
+                  <p className="text-xs text-texto-3">Sin recargo. 48hs para enviar comprobante.</p>
                 </div>
               </label>
 
               <label
                 className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                  metodoPago === "mercadopago" ? "border-purpura bg-purpura/10" : "border-lavanda/10 hover:border-lavanda/20"
+                  metodoPago === "mercadopago" ? "border-purpura bg-purpura/10" : "border-linea hover:border-linea"
                 }`}
               >
                 <input type="radio" name="pago" checked={metodoPago === "mercadopago"} onChange={() => setMetodoPago("mercadopago")} className="accent-purpura" />
                 <div>
                   <p className="text-sm font-medium text-niebla">MercadoPago</p>
-                  <p className="text-xs text-lavanda/70">Tarjeta, dinero en cuenta, Rapipago. +{recargoPct}% recargo.</p>
+                  <p className="text-xs text-texto-3">Tarjeta, dinero en cuenta, Rapipago. +{recargoPct}% recargo.</p>
                 </div>
               </label>
 
               {metodoEnvio === "retiro" && (
                 <label
                   className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                    metodoPago === "efectivo" ? "border-purpura bg-purpura/10" : "border-lavanda/10 hover:border-lavanda/20"
+                    metodoPago === "efectivo" ? "border-purpura bg-purpura/10" : "border-linea hover:border-linea"
                   }`}
                 >
                   <input type="radio" name="pago" checked={metodoPago === "efectivo"} onChange={() => setMetodoPago("efectivo")} className="accent-purpura" />
                   <div>
                     <p className="text-sm font-medium text-niebla">Efectivo</p>
-                    <p className="text-xs text-lavanda/70">
+                    <p className="text-xs text-texto-3">
                       {senaEfectivoPct > 0
                         ? `Seña del ${senaEfectivoPct}% para reservar. El resto al retirar.`
                         : "Pagás al retirar. Sin recargo."}
@@ -794,8 +794,8 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                 <p className="text-sm font-semibold text-niebla">
                   Pago en 2 partes
                 </p>
-                <p className="text-xs text-lavanda/75 leading-relaxed">
-                  Como imprimimos cada pieza a pedido, pedimos una seña para
+                <p className="text-xs text-texto-3 leading-relaxed">
+                  Como fabricamos cada pieza a pedido, pedimos una seña para
                   reservar tu lugar en la cola de producción. La pagás por
                   MercadoPago o transferencia después de confirmar, sin recargo.
                 </p>
@@ -828,8 +828,8 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
         {/* PASO 4: Resumen */}
         {step === "resumen" && (
-          <section className="bg-navy-deep rounded-xl border border-lavanda/10 p-6 space-y-6">
-            <h2 className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla">
+          <section className="bg-navy-deep rounded-xl border border-linea p-6 space-y-6">
+            <h2 className="text-lg font-semibold text-texto">
               Confirmar pedido
             </h2>
 
@@ -838,7 +838,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
               <SummaryRow label="DNI" value={datos.dni} />
               <SummaryRow label="Email" value={datos.email} />
               <SummaryRow label="Teléfono" value={datos.telefono} />
-              <div className="border-t border-lavanda/10 my-2" />
+              <div className="border-t border-linea my-2" />
               <SummaryRow label="Envío" value={
                 metodoEnvio === "retiro" ? "Retiro en persona" :
                 `Correo Argentino (${tipoEnvio === "domicilio" ? "a domicilio" : "a sucursal"})`
@@ -857,7 +857,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
               } />
               {llevaSena && (
                 <>
-                  <div className="border-t border-lavanda/10 my-2" />
+                  <div className="border-t border-linea my-2" />
                   <SummaryRow label="Seña a pagar ahora" value={formatPrice(montoSena)} />
                   <SummaryRow label="Saldo al retirar" value={formatPrice(saldoSena)} />
                 </>
@@ -887,14 +887,29 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   ? `Confirmar y señar — ${formatPrice(montoSena)}`
                   : `Confirmar pedido — ${formatPrice(total)}`}
             </button>
+
+            {/* El consentimiento se refiere al acto de apretar el boton, asi
+                que el aviso va debajo y no arriba. */}
+            <p className="text-center text-xs text-texto-3">
+              Al confirmar este pedido aceptás nuestros{" "}
+              <a
+                href="/terminos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-ambar underline underline-offset-2 hover:text-ambar-light transition-colors"
+              >
+                términos y condiciones
+              </a>
+              .
+            </p>
           </section>
         )}
       </div>
 
       {/* Sidebar — Resumen del carrito */}
       <div className="lg:col-span-1">
-        <div className="bg-navy-deep rounded-xl border border-lavanda/10 p-6 sticky top-24 space-y-4">
-          <h3 className="font-[family-name:var(--font-cinzel)] text-sm font-bold text-niebla uppercase tracking-wider">
+        <div className="bg-navy-deep rounded-xl border border-linea p-6 sticky top-24 space-y-4">
+          <h3 className="volanta">
             Tu pedido
           </h3>
 
@@ -904,7 +919,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                 <div className="min-w-0 flex-1">
                   <p className="text-lavanda-light truncate">{item.nombre} x{item.cantidad}</p>
                   {item.opciones.length > 0 && (
-                    <p className="text-xs text-lavanda/75">
+                    <p className="text-xs text-texto-3">
                       {item.opciones.map(o => o.opcion_valor).join(", ")}
                     </p>
                   )}
@@ -921,7 +936,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                         <span className="text-xs text-lavanda-light">
                           {formatPrice(item.precio_unitario)} c/u
                         </span>
-                        <span className="text-xs text-lavanda/40 line-through">
+                        <span className="text-xs text-texto-3 line-through">
                           {formatPrice(lista)}
                         </span>
                       </div>
@@ -933,14 +948,14 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
             ))}
           </div>
 
-          <div className="border-t border-lavanda/10 pt-3 space-y-2">
+          <div className="border-t border-linea pt-3 space-y-2">
             {/* Con descuento arrancamos del precio de lista para que la cuenta
                 cierre: lista − descuento = subtotal. */}
             {ahorroTotal > 0 && (
               <>
                 <div className="flex justify-between text-sm">
-                  <span className="text-lavanda/75">Precio de lista</span>
-                  <span className="text-lavanda/60 line-through">
+                  <span className="text-texto-3">Precio de lista</span>
+                  <span className="text-texto-3 line-through">
                     {formatPrice(totalLista)}
                   </span>
                 </div>
@@ -954,14 +969,14 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                 sería repetir el mismo número. */}
             {cart.subtotal !== total && (
               <div className="flex justify-between text-sm">
-                <span className="text-lavanda/75">Subtotal</span>
+                <span className="text-texto-3">Subtotal</span>
                 <span className="text-lavanda-light">{formatPrice(cart.subtotal)}</span>
               </div>
             )}
             <div className="flex justify-between text-sm">
-              <span className="text-lavanda/75">
+              <span className="text-texto-3">
                 Envío
-                {cotizandoEnvio && <span className="text-xs ml-1 text-lavanda/50">(cotizando...)</span>}
+                {cotizandoEnvio && <span className="text-xs ml-1 text-texto-3">(cotizando...)</span>}
               </span>
               <span className={calificaEnvioGratis && metodoEnvio !== "retiro" ? "text-emerald-400 font-semibold" : "text-lavanda-light"}>
                 {metodoEnvio === "retiro"
@@ -977,11 +992,11 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
             </div>
             {recargoMP > 0 && (
               <div className="flex justify-between text-sm">
-                <span className="text-lavanda/75">Recargo MP ({recargoPct}%)</span>
+                <span className="text-texto-3">Recargo MP ({recargoPct}%)</span>
                 <span className="text-ambar">{formatPrice(recargoMP)}</span>
               </div>
             )}
-            <div className="flex justify-between font-bold pt-2 border-t border-lavanda/10">
+            <div className="flex justify-between font-bold pt-2 border-t border-linea">
               <span className="text-niebla">Total</span>
               <span className="text-ambar text-lg">{formatPrice(total)}</span>
             </div>
@@ -999,13 +1014,13 @@ function Input({
 }) {
   return (
     <div>
-      <label className="block text-xs text-lavanda/75 mb-1">{label}</label>
+      <label className="block text-xs text-texto-3 mb-1">{label}</label>
       <input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/50 focus:outline-none focus:border-purpura transition-colors"
+        className="w-full bg-navy border border-linea rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-texto-3 focus:outline-none focus:border-purpura transition-colors"
       />
     </div>
   );
@@ -1014,7 +1029,7 @@ function Input({
 function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
-      <span className="text-lavanda/75">{label}</span>
+      <span className="text-texto-3">{label}</span>
       <span className="text-lavanda-light text-right max-w-[60%]">{value}</span>
     </div>
   );
@@ -1126,7 +1141,7 @@ function AutocompleteInput({
 
   return (
     <div ref={wrapperRef} className="relative">
-      <label className="block text-xs text-lavanda/75 mb-1">{label}</label>
+      <label className="block text-xs text-texto-3 mb-1">{label}</label>
       <input
         type="text"
         value={value}
@@ -1135,10 +1150,10 @@ function AutocompleteInput({
         onBlur={() => setFocused(false)}
         placeholder={placeholder}
         autoComplete="off"
-        className="w-full bg-navy border border-lavanda/20 rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-lavanda/50 focus:outline-none focus:border-purpura transition-colors"
+        className="w-full bg-navy border border-linea rounded-lg px-4 py-3 text-sm text-niebla placeholder:text-texto-3 focus:outline-none focus:border-purpura transition-colors"
       />
       {open && focused && sugerenciasVisibles.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-navy-deep border border-lavanda/20 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+        <ul className="absolute z-50 w-full mt-1 bg-navy-deep border border-linea rounded-lg shadow-lg max-h-48 overflow-y-auto">
           {sugerenciasVisibles.map((s) => (
             <li
               key={s}

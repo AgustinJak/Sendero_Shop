@@ -121,12 +121,12 @@ export default function VariantSelector({
                     className={`px-4 py-2 rounded-lg text-sm border transition-colors cursor-pointer ${
                       selectedId === opcion.id
                         ? "border-purpura bg-purpura/20 text-niebla"
-                        : "border-lavanda/20 text-lavanda-light hover:border-lavanda/40"
+                        : "border-linea text-lavanda-light hover:border-linea-fuerte"
                     }`}
                   >
                     {opcion.valor}
                     {precioMostrado > 0 && (
-                      <span className="ml-1 text-xs text-lavanda/75">
+                      <span className="ml-1 text-xs text-texto-3">
                         +{formatPrice(precioMostrado)}
                       </span>
                     )}

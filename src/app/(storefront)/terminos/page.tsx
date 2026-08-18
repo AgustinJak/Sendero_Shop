@@ -11,12 +11,12 @@ export default async function TerminosPage() {
   const whatsapp = await getWhatsapp();
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-16">
-      <h1 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl font-bold text-niebla mb-8 text-center">
+      <h1 className="display display-seccion text-texto mb-8 text-center">
         Términos y Condiciones
       </h1>
 
       <div className="space-y-6 text-lavanda-light text-sm leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-niebla [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-ambar [&_a]:underline [&_strong]:font-bold [&_strong]:text-niebla">
-        <p className="text-xs text-lavanda/70">Última actualización: Marzo 2026</p>
+        <p className="text-xs text-texto-3">Última actualización: Marzo 2026</p>
 
         <Section title="1. Información general">
           <p>
@@ -90,7 +90,7 @@ export default async function TerminosPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h2 className="font-[family-name:var(--font-cinzel)] text-base font-bold text-niebla mb-2">
+      <h2 className="text-base font-semibold text-texto mb-2">
         {title}
       </h2>
       {children}

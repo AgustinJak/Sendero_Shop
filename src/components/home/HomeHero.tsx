@@ -24,7 +24,13 @@ const PARTICULAS = Array.from({ length: 20 }, (_, i) => ({
   delay: disperso(i + 61) * 3,
 }));
 
-export default function HomeHero({ whatsapp }: { whatsapp: string }) {
+export default function HomeHero({
+  whatsapp,
+  unidadesVendidas = 0,
+}: {
+  whatsapp: string;
+  unidadesVendidas?: number;
+}) {
   return (
     <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Partículas flotantes */}
@@ -50,8 +56,17 @@ export default function HomeHero({ whatsapp }: { whatsapp: string }) {
       </div>
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
+        <motion.p
+          className="volanta mb-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          Diseño y fabricación propia · Villa Crespo, CABA
+        </motion.p>
+
         <motion.h1
-          className="font-[family-name:var(--font-cinzel)] text-4xl sm:text-5xl md:text-6xl font-bold text-niebla mb-6 leading-tight"
+          className="display display-hero text-texto mb-6"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
@@ -60,12 +75,12 @@ export default function HomeHero({ whatsapp }: { whatsapp: string }) {
         </motion.h1>
 
         <motion.p
-          className="text-lg sm:text-xl text-lavanda-light mb-8 max-w-2xl mx-auto"
+          className="text-lg sm:text-xl text-texto-2 mb-8 max-w-2xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.2 }}
         >
-          Figuras, katanas y accesorios impresos en 3D inspirados en tus
+          Figuras, katanas y accesorios de colección inspirados en tus
           franquicias favoritas. Cada pieza es única, fabricada a pedido para
           vos.
         </motion.p>
@@ -88,11 +103,25 @@ export default function HomeHero({ whatsapp }: { whatsapp: string }) {
             href={whatsappLink(whatsapp, "Hola! Quiero consultar por un producto")}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center px-8 py-3 border border-lavanda/30 text-lavanda-light hover:bg-lavanda/10 rounded-lg transition-colors"
+            className="inline-flex items-center justify-center px-8 py-3 border border-linea-fuerte text-texto-2 hover:bg-lavanda/10 rounded-lg transition-colors"
           >
             Consultanos
           </a>
         </motion.div>
+
+        {unidadesVendidas > 0 && (
+          <motion.p
+            className="mt-8 flex items-center justify-center gap-2 text-sm text-texto-3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            <span className="text-ambar tracking-widest" aria-hidden="true">★★★★★</span>
+            <span>
+              <b className="text-texto-2">+{Math.floor(unidadesVendidas / 10) * 10} piezas</b> entregadas a clientes
+            </span>
+          </motion.p>
+        )}
       </div>
 
       <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-navy to-transparent" />

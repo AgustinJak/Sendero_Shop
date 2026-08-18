@@ -36,7 +36,7 @@ export default function CatalogoLoading() {
           {Array.from({ length: 12 }).map((_, i) => (
             <div
               key={i}
-              className="bg-navy-deep rounded-xl overflow-hidden border border-lavanda/10"
+              className="bg-navy-deep rounded-xl overflow-hidden border border-linea"
             >
               <div className="aspect-square bg-lavanda/5 animate-pulse" />
               <div className="p-4 space-y-2">

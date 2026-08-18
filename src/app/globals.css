@@ -7,9 +7,27 @@
   --color-lavanda: #8B85B2;
   --color-lavanda-light: #B8B3D1;
   --color-niebla: #E8E6F0;
-  --color-purpura: #6C63A0;
+  /* Bajado un 4% desde #6C63A0: con text-niebla encima daba 4.33:1 y el
+     mínimo es 4.5. Afecta a los badges y a los botones primarios, que usan
+     esta combinación. La diferencia no se percibe a simple vista. */
+  --color-purpura: #68609B;
   --color-ambar: #D4A853;
   --color-ambar-light: #E8C97A;
+
+  /* --- Escala de texto (semántica) ---
+     Reemplaza a las 16 variantes sueltas de `text-lavanda/NN` que había por
+     el código. Los tres niveles pasan WCAG AA (4.5:1) sobre navy y navy-deep;
+     `text-lavanda/60`, el más usado del sitio, daba 2.48:1 y no se leía.
+     Regla: si es texto, es uno de estos tres y nada más. */
+  --color-texto: #E8E6F0;      /* títulos y valores — 12.23:1 */
+  --color-texto-2: #B8B3D1;    /* cuerpo — 7.49:1 */
+  --color-texto-3: #8D87B4;    /* meta, ayudas, labels — 4.52:1, el piso */
+
+  /* --- Líneas ---
+     Colores planos en vez de `border-lavanda/10`: el valor sólido se ve igual
+     sobre navy y sobre navy-deep; la opacidad no. */
+  --color-linea: #29314F;
+  --color-linea-fuerte: #383D5D;
 
   /* Fuentes */
   --font-display: var(--font-cinzel);
@@ -92,4 +110,42 @@ body {
 ::selection {
   background-color: var(--color-purpura);
   color: var(--color-niebla);
+}
+
+/* ============================================================
+   Tipografía de display
+   ============================================================
+   Cinzel es una capital romana derivada de la Trajana: está pensada para
+   títulos cortos y grandes. Abajo de ~24px pierde el detalle que la hace
+   valer y se lee rígida, así que queda reservada al logo, al hero y a los
+   títulos de sección. Nombres de producto, subtítulos y cualquier texto
+   chico van en la sans.
+
+   Además la escala es fluida (clamp) en vez de saltar entre breakpoints:
+   en anchos intermedios el salto discreto se nota como descuido. */
+
+.display {
+  font-family: var(--font-cinzel), Georgia, serif;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.display-hero {
+  font-size: clamp(2.25rem, 6vw, 4rem);
+}
+
+.display-seccion {
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+}
+
+/* Volanta de sección: el renglón chico en mayúsculas que anuncia de qué va
+   la sección antes del título. Es lo que hace que una sección se presente
+   en vez de simplemente empezar. */
+.volanta {
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--color-ambar);
 }

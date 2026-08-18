@@ -18,7 +18,7 @@ export default function CatalogBanner({ banner }: { banner: Banner }) {
       <div className="absolute inset-0 bg-navy/40 flex items-center justify-center text-center px-4">
         <div>
           {banner.titulo && (
-            <h3 className="font-[family-name:var(--font-cinzel)] text-lg sm:text-xl font-bold text-niebla drop-shadow">
+            <h3 className="display display-seccion text-texto drop-shadow">
               {banner.titulo}
             </h3>
           )}

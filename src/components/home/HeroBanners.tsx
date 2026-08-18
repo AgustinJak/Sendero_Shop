@@ -42,9 +42,9 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
         <div className="absolute inset-0 flex items-center justify-center text-center px-4">
           <div>
             {banner.titulo && (
-              <h2 className="font-[family-name:var(--font-cinzel)] text-3xl sm:text-4xl md:text-5xl font-bold text-niebla mb-4 drop-shadow-lg animate-drop-in">
+              <h1 className="display display-hero text-texto mb-4 drop-shadow-lg animate-drop-in">
                 {banner.titulo}
-              </h2>
+              </h1>
             )}
             {banner.subtitulo && (
               <p className="text-lg sm:text-xl text-lavanda-light max-w-2xl mx-auto drop-shadow animate-drop-in">

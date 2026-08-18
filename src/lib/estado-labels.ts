@@ -11,7 +11,7 @@ export const ESTADO_LABELS: Record<EstadoPedido, string> = {
   pendiente_pago: "Pendiente de pago",
   pago_confirmado: "Pago confirmado",
   en_produccion: "En producción",
-  impreso: "Impreso",
+  impreso: "Terminado",
   enviado: "Enviado",
   esperando_retiro: "Esperando retiro",
   entregado: "Entregado",

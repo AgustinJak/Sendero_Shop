@@ -24,7 +24,7 @@ export default function ScrollToTop() {
   return (
     <button
       onClick={scrollUp}
-      className="fixed bottom-44 right-6 z-40 w-10 h-10 bg-navy-deep/90 border border-lavanda/20 rounded-full flex items-center justify-center text-lavanda-light hover:text-niebla hover:border-lavanda/40 transition-colors backdrop-blur-sm shadow-lg cursor-pointer animate-fade-in"
+      className="fixed bottom-44 right-6 z-40 w-10 h-10 bg-navy-deep/90 border border-linea rounded-full flex items-center justify-center text-lavanda-light hover:text-niebla hover:border-linea-fuerte transition-colors backdrop-blur-sm shadow-lg cursor-pointer animate-fade-in"
       aria-label="Volver arriba"
     >
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

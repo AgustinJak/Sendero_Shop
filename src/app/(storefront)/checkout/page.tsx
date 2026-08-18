@@ -25,7 +25,7 @@ export default async function CheckoutPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <h1 className="font-[family-name:var(--font-cinzel)] text-2xl sm:text-3xl font-bold text-niebla mb-8">
+      <h1 className="display display-seccion text-texto mb-8">
         Checkout
       </h1>
       <CheckoutForm
