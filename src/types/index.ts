@@ -208,6 +208,9 @@ export interface Pedido {
   sena_pagada_at: string | null;
   saldo_pagado: boolean;
   saldo_pagado_at: string | null;
+  // Referencia de entrecalles para la etiqueta de mensajería local. No se pide
+  // en el checkout: la carga el admin, que suele recibirla por WhatsApp.
+  entre_calles: string | null;
   notas: string | null;
   cancelado_at: string | null;
   created_at: string;

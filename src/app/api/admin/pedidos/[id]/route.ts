@@ -29,6 +29,7 @@ export async function PATCH(
       "notas",
       "sena_pagada",
       "saldo_pagado",
+      "entre_calles",
     ];
     const updates: Record<string, unknown> = {};
     for (const field of allowedFields) {

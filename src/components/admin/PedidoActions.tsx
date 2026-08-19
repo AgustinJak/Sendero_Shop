@@ -52,6 +52,7 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const [inventarioInfo, setInventarioInfo] = useState<string | null>(null);
   const [trackingCode, setTrackingCode] = useState(pedido.tracking_code || "");
   const [notas, setNotas] = useState(pedido.notas || "");
+  const [entreCalles, setEntreCalles] = useState(pedido.entre_calles || "");
 
   const possibleTransitions = getTransitions(pedido);
   const yaImportado = Boolean(pedido.correo_imported_at);
@@ -355,6 +356,50 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
               </p>
             )}
           </>
+        )}
+      </div>
+
+      {/* Etiqueta de envío */}
+      <div className="bg-navy rounded-xl border border-lavanda/10 p-4 space-y-3">
+        <h2 className="text-sm font-semibold text-niebla">Etiqueta de envío</h2>
+        <p className="text-xs text-lavanda/60">
+          Rótulo de 10×15 cm para mensajería en CABA y GBA.
+        </p>
+
+        <div className="space-y-1.5">
+          <label className="block text-xs text-lavanda/60">Entre calles</label>
+          <input
+            type="text"
+            value={entreCalles}
+            onChange={(e) => setEntreCalles(e.target.value)}
+            placeholder="Ej: Av. Rivadavia y Medrano"
+            className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light placeholder-lavanda/30 focus:outline-none focus:border-purpura"
+          />
+          {entreCalles !== (pedido.entre_calles || "") && (
+            <button
+              onClick={() => updatePedido({ entre_calles: entreCalles })}
+              disabled={loading}
+              className="w-full py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-xs rounded-lg transition-colors disabled:opacity-50"
+            >
+              Guardar entre calles
+            </button>
+          )}
+        </div>
+
+        {/* Enlace normal y no fetch: el navegador maneja la descarga solo y no
+            hay que sostener el PDF en memoria ni armar un blob. */}
+        <a
+          href={`/api/admin/pedidos/${pedido.id}/etiqueta`}
+          className="block w-full py-2 bg-ambar/15 hover:bg-ambar/25 text-ambar text-sm font-medium text-center rounded-lg transition-colors"
+        >
+          Generar etiqueta (PDF)
+        </a>
+
+        {!pedido.telefono && (
+          <p className="text-xs text-yellow-400">
+            Este pedido no tiene teléfono cargado y la etiqueta va a salir sin
+            ese dato.
+          </p>
         )}
       </div>
 
