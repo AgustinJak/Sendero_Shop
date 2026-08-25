@@ -5,7 +5,6 @@ import HomeHero from "@/components/home/HomeHero";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
 import { CategoriesSection, CollectionsSection, WhatsAppCTA } from "@/components/home/HomeSections";
-import TrustStrip from "@/components/home/TrustStrip";
 import SectionHeader from "@/components/ui/SectionHeader";
 
 export default async function Home() {
@@ -31,8 +30,6 @@ export default async function Home() {
       ) : (
         <HomeHero whatsapp={whatsapp} unidadesVendidas={piezasVendidas} />
       )}
-
-      <TrustStrip />
 
       {/* Productos Destacados */}
       {destacados.length > 0 && (
