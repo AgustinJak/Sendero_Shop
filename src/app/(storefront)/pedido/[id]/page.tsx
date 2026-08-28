@@ -10,6 +10,7 @@ import OrderTimeline from "@/components/pedido/OrderTimeline";
 import CancelOrderButton from "@/components/pedido/CancelOrderButton";
 import MercadoPagoButton from "@/components/pedido/MercadoPagoButton";
 import { getMetodoEnvioLabel } from "@/lib/estado-labels";
+import { SYB_HORARIO_DETALLE } from "@/lib/envio-syb";
 
 export const metadata: Metadata = {
   title: "Mi pedido",
@@ -142,6 +143,16 @@ export default async function PedidoPage({ params }: Props) {
           >
             Enviar comprobante por WhatsApp
           </a>
+        </div>
+      )}
+
+      {/* Franja horaria del courier.
+          Va destacada y no escondida en el resumen: es lo que decide si el
+          cliente va a estar en el domicilio cuando llegue la moto. */}
+      {p.metodo_envio === "syb" && p.estado !== "cancelado" && (
+        <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/10 p-6 space-y-1">
+          <h2 className="volanta !text-emerald-400">Horario de entrega</h2>
+          <p className="text-sm text-lavanda-light">{SYB_HORARIO_DETALLE}</p>
         </div>
       )}
 

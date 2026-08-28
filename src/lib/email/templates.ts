@@ -2,6 +2,7 @@ import type { Pedido, PedidoItem } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { resolveTrackingUrl } from "@/lib/correo-argentino";
 import { getMetodoEnvioLabel, METODO_ENVIO_LABELS } from "@/lib/estado-labels";
+import { SYB_HORARIO_DETALLE } from "@/lib/envio-syb";
 
 // ==========================================
 // Shared styles
@@ -191,7 +192,14 @@ export function pedidoConfirmadoEmail(
       <tr>
         <td style="padding:16px;">
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Método de envío</p>
-          <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;">${metodoEnvioLabel}</p>
+          <p style="margin:0 0 ${pedido.metodo_envio === "syb" ? "6" : "12"}px;color:${COLORS.niebla};font-size:14px;">${metodoEnvioLabel}</p>
+          ${
+            // La franja horaria va acá y no solo en el checkout: es el dato que
+            // el cliente necesita después de comprar, para estar en el domicilio.
+            pedido.metodo_envio === "syb"
+              ? `<p style="margin:0 0 12px;color:${COLORS.ambar};font-size:13px;">${SYB_HORARIO_DETALLE}</p>`
+              : ""
+          }
           ${pedido.sucursal_correo_nombre ? `
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Sucursal de retiro</p>
           <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;">${pedido.sucursal_correo_nombre}</p>

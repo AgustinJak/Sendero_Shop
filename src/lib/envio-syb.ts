@@ -135,4 +135,15 @@ export function buscarZonaSybPorCP(cp: string, zonas: ZonaSyb[]): ZonaSyb | null
  * y no le dice nada a quien compra. El precio ya comunica lo que hace falta.
  */
 export const SYB_LABEL = "Moto mensajería";
-export const SYB_PLAZO = "Entrega en el día";
+
+/** Franja horaria del courier. Es el dato que decide si el cliente va a estar. */
+export const SYB_HORARIO = "de 13 a 21 h";
+
+/** Versión corta, para la lista de opciones del checkout. */
+export const SYB_PLAZO = `Entrega en el día, ${SYB_HORARIO}`;
+
+/**
+ * Versión completa para después de la compra (email y página del pedido),
+ * donde el cliente necesita saber cuándo tiene que estar en el domicilio.
+ */
+export const SYB_HORARIO_DETALLE = `La entrega es el mismo día, en una franja ${SYB_HORARIO}. Aseguráte de que haya alguien para recibirlo.`;

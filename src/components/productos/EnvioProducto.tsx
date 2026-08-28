@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { formatPrice } from "@/lib/utils";
+import { SYB_LABEL, SYB_PLAZO } from "@/lib/envio-syb";
 
 interface CotizOpcion {
   precio: number;
@@ -170,12 +171,8 @@ export default function EnvioProducto({
             {result.syb && (
               <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm">
                 <div>
-                  <span className="font-medium text-emerald-400">
-                    Moto mensajería
-                  </span>
-                  <span className="block text-xs text-texto-3">
-                    Entrega en el día
-                  </span>
+                  <span className="font-medium text-emerald-400">{SYB_LABEL}</span>
+                  <span className="block text-xs text-texto-3">{SYB_PLAZO}</span>
                 </div>
                 <PrecioEnvio precio={result.syb.precio} gratis={productoCalifica} />
               </div>
