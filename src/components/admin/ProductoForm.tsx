@@ -78,7 +78,6 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     const edits = new Set<string>();
     // If editing existing product, mark non-empty fields as manually edited
     if (producto) {
-      if (producto.sku) edits.add("sku");
       if (producto.meta_title) edits.add("meta_title");
       if (producto.meta_description) edits.add("meta_description");
     }
@@ -90,28 +89,8 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     onFormChange?.(form);
   }, [form, onFormChange]);
 
-  const [skuSeq, setSkuSeq] = useState<number | null>(null);
-
-  // Fetch next SKU sequence number on mount (only for new products)
-  useEffect(() => {
-    if (!producto) {
-      fetch("/api/admin/productos/next-sku")
-        .then((r) => r.json())
-        .then((data) => setSkuSeq(data.next || 1))
-        .catch(() => setSkuSeq(1));
-    }
-  }, [producto]);
-
-  // Auto-generate SKU
-  function generateSku(nombre: string, linea: string, categoriaId: string): string {
-    const cat = flatCategorias.find((c) => c.id === categoriaId);
-    const parts = ["SS"];
-    if (linea) parts.push(linea.slice(0, 3).toUpperCase().replace(/\s/g, ""));
-    if (cat) parts.push(cat.nombre.slice(0, 3).toUpperCase().replace(/\s/g, ""));
-    const seq = skuSeq ?? 1;
-    parts.push(String(seq).padStart(3, "0"));
-    return parts.join("-");
-  }
+  // El SKU ya no se autogenera: desde el 2026-08-26 lo genera el inventario y
+  // acá se carga a mano. Ver lib/sku.ts.
 
   // Auto-generate meta title
   function generateMetaTitle(nombre: string): string {
@@ -124,7 +103,7 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
     if (!nombre) return "";
     const parts = [nombre];
     if (linea) parts.push(`de ${linea}`);
-    parts.push("impreso en 3D");
+    parts.push("pieza de colección");
     if (precio > 0) parts.push(formatPrice(precio));
     parts.push("Envío a todo Argentina");
     return parts.join(", ") + ".";
@@ -133,9 +112,6 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
   // Auto-fill generated fields
   function autoFill(data: ProductoFormData): ProductoFormData {
     const updated = { ...data };
-    if (!manualEdits.has("sku")) {
-      updated.sku = generateSku(data.nombre, data.linea, data.categoria_id);
-    }
     if (!manualEdits.has("meta_title")) {
       updated.meta_title = generateMetaTitle(data.nombre);
     }
@@ -317,16 +293,18 @@ export default function ProductoForm({ producto, categorias, onFormChange }: Pro
       {/* SKU, Tiempo producción */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label className="block text-sm text-lavanda/60 mb-1">
-            SKU {!manualEdits.has("sku") && <span className="text-lavanda/30 text-xs">(auto)</span>}
-          </label>
+          <label className="block text-sm text-lavanda/60 mb-1">SKU</label>
           <input
             type="text"
             value={form.sku}
-            onChange={(e) => updateAutoField("sku", e.target.value)}
-            placeholder="Se genera automáticamente"
-            className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light focus:outline-none focus:border-purpura"
+            onChange={(e) => setForm({ ...form, sku: e.target.value.toUpperCase() })}
+            placeholder="Ej: KAT-TANJI-95-CF"
+            className="w-full px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm font-mono text-lavanda-light focus:outline-none focus:border-purpura"
           />
+          <p className="mt-1 text-xs text-lavanda/40">
+            Lo genera el inventario. Copiá acá el código de la combinación, sin
+            inventarlo: es la llave con la que se mapea el pedido.
+          </p>
         </div>
         <div>
           <label className="block text-sm text-lavanda/60 mb-1">Tiempo producción (días)</label>

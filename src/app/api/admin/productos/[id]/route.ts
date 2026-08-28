@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { normalizarSku, skuEnUso } from "@/lib/sku";
 
 export async function PATCH(
   req: NextRequest,
@@ -24,6 +25,23 @@ export async function PATCH(
     if (field in body) {
       updates[field] = body[field];
     }
+  }
+
+  // El SKU se carga a mano desde el 2026-08-26 (lo genera el inventario), así
+  // que se normaliza a mayúsculas y se valida que no lo tenga otro producto.
+  // Se excluye el propio id para que guardar sin cambiarlo no choque consigo.
+  if ("sku" in updates) {
+    const sku = normalizarSku(updates.sku);
+    if (sku) {
+      const enUso = await skuEnUso(sku, id);
+      if (enUso) {
+        return NextResponse.json(
+          { error: `El SKU ${sku} ya lo usa "${enUso}"` },
+          { status: 409 }
+        );
+      }
+    }
+    updates.sku = sku;
   }
 
   const serviceClient = await createServiceRoleClient();

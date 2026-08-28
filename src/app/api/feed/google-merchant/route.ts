@@ -73,9 +73,9 @@ ${p.peso_gr ? `      <g:shipping_weight>${p.peso_gr} g</g:shipping_weight>` : ""
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
   <channel>
-    <title>Sendero Shop — Figuras 3D</title>
+    <title>Sendero Shop — Figuras y accesorios de colección</title>
     <link>${SITE_URL}</link>
-    <description>Figuras y accesorios impresos en 3D</description>
+    <description>Figuras y accesorios de colección</description>
 ${items}
   </channel>
 </rss>`;
