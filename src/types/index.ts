@@ -151,7 +151,7 @@ export type EstadoPedido =
   | "entregado"
   | "cancelado";
 
-export type MetodoEnvio = "retiro" | "correo_argentino" | "andreani";
+export type MetodoEnvio = "retiro" | "correo_argentino" | "andreani" | "syb";
 export type TipoEnvio = "domicilio" | "sucursal";
 export type MetodoPago = "mercadopago" | "transferencia" | "efectivo";
 
@@ -163,6 +163,13 @@ export interface DireccionEnvio {
   codigo_postal: string;
   localidad: string;
   provincia: string;
+  /**
+   * Partido/municipio, tomado de la API de georef cuando el cliente elige la
+   * localidad del autocompletado. Es el dato con el que se decide la zona del
+   * courier local: la localidad sola no alcanza porque "Ramos Mejía" y "San
+   * Justo" son ambas La Matanza. Queda vacío si escribió la dirección a mano.
+   */
+  municipio?: string | null;
 }
 
 export interface Pedido {
@@ -296,6 +303,17 @@ export interface PedidoBorrador {
 }
 
 // --- Envíos ---
+export interface EnvioSybZona {
+  id: string;
+  nombre: string;
+  precio: number;
+  zonas: string[];
+  orden: number;
+  activo: boolean;
+  /** Rangos y CPs sueltos: "1000-1499, 1602". Solo para el calculador. */
+  codigos_postales?: string | null;
+}
+
 export interface EnvioZona {
   id: string;
   nombre_zona: string;

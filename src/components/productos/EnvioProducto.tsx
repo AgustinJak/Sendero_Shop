@@ -13,6 +13,8 @@ interface CotizOpcion {
 interface Cotizacion {
   domicilio: CotizOpcion | null;
   sucursal: CotizOpcion | null;
+  /** Courier local. Null si el CP no cae en una zona con cobertura. */
+  syb: { precio: number; zona: string } | null;
 }
 
 interface EnvioProductoProps {
@@ -102,7 +104,6 @@ export default function EnvioProducto({
         <TruckIcon className="h-5 w-5 shrink-0 text-lavanda" />
         <p className="text-sm text-lavanda-light">
           Envíos a <span className="font-medium text-niebla">todo el país</span>
-          <span className="text-texto-3"> · Correo Argentino</span>
         </p>
       </div>
 
@@ -164,13 +165,28 @@ export default function EnvioProducto({
 
         {result && (
           <div className="mt-3 space-y-2">
+            {/* El courier local va primero: cuando hay cobertura es la opción
+                más barata y la más rápida, así que es la que conviene ver. */}
+            {result.syb && (
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-emerald-500/25 bg-emerald-500/10 px-3 py-2 text-sm">
+                <div>
+                  <span className="font-medium text-emerald-400">
+                    Moto mensajería
+                  </span>
+                  <span className="block text-xs text-texto-3">
+                    Entrega en el día
+                  </span>
+                </div>
+                <PrecioEnvio precio={result.syb.precio} gratis={productoCalifica} />
+              </div>
+            )}
             {result.domicilio && (
               <div className="flex items-center justify-between text-sm">
                 <div>
-                  <span className="text-lavanda-light">Envío a domicilio</span>
+                  <span className="text-lavanda-light">Correo a domicilio</span>
                   {(result.domicilio.tiempoMin || result.domicilio.tiempoMax) && (
                     <span className="block text-xs text-texto-3">
-                      Llega en {result.domicilio.tiempoMin ?? ""}
+                      {result.domicilio.tiempoMin ?? ""}
                       {result.domicilio.tiempoMin && result.domicilio.tiempoMax
                         ? "–"
                         : ""}
@@ -184,12 +200,10 @@ export default function EnvioProducto({
             {result.sucursal && (
               <div className="flex items-center justify-between text-sm">
                 <div>
-                  <span className="text-lavanda-light">
-                    Retiro en sucursal de Correo Argentino
-                  </span>
+                  <span className="text-lavanda-light">Correo a sucursal</span>
                   {(result.sucursal.tiempoMin || result.sucursal.tiempoMax) && (
                     <span className="block text-xs text-texto-3">
-                      Llega en {result.sucursal.tiempoMin ?? ""}
+                      {result.sucursal.tiempoMin ?? ""}
                       {result.sucursal.tiempoMin && result.sucursal.tiempoMax
                         ? "–"
                         : ""}
@@ -201,8 +215,7 @@ export default function EnvioProducto({
               </div>
             )}
             <p className="text-[11px] text-texto-3 pt-1">
-              Costo estimado con Correo Argentino. El valor final se confirma en
-              el checkout.
+              Estimado. El precio final se confirma en el checkout.
             </p>
           </div>
         )}

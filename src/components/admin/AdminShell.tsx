@@ -17,6 +17,7 @@ const NAV_ITEMS = [
   { href: "/admin/banners", label: "Banners", icon: BannersIcon },
   { href: "/admin/notificaciones", label: "Notificaciones", icon: NotificacionesIcon },
   { href: "/admin/mayoristas", label: "Mayoristas", icon: MayoristasIcon },
+  { href: "/admin/envios", label: "Envío en el día", icon: ConfigIcon },
   { href: "/admin/config", label: "Configuración", icon: ConfigIcon },
 ];
 

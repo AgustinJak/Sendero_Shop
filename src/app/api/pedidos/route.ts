@@ -6,6 +6,7 @@ import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
 import { rateLimitByIp } from "@/lib/rate-limit";
 import { resolverPrecios } from "@/lib/precios-server";
 import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
+import { buscarZonaSyb, type ZonaSyb } from "@/lib/envio-syb";
 
 export async function POST(req: NextRequest) {
   try {
@@ -98,10 +99,30 @@ export async function POST(req: NextRequest) {
     // El costo de envío es una cotización viva de Correo Argentino, así que se
     // toma del cliente; se acota a un valor sano para que no reste del total.
     const envioCliente = Number(costoEnvio);
-    const costoEnvioBase =
+    let costoEnvioBase =
       Number.isFinite(envioCliente) && envioCliente > 0
         ? Math.min(envioCliente, 1_000_000)
         : 0;
+
+    // El courier local sí tiene precio autoritativo del lado del servidor: es
+    // una tabla nuestra, no una cotización externa. Se recalcula acá y se
+    // ignora lo que haya mandado el navegador — si no, cualquiera podía pedir
+    // envío en el día a precio cero. Mismo criterio que `resolverPrecios`.
+    if (metodo_envio === "syb") {
+      const { data: zonasSyb } = await supabase
+        .from("envio_syb_zonas")
+        .select("*")
+        .eq("activo", true);
+
+      const zona = buscarZonaSyb(direccion_envio ?? {}, (zonasSyb ?? []) as ZonaSyb[]);
+      if (!zona) {
+        return NextResponse.json(
+          { error: "Esa dirección no tiene cobertura para envío en el día. Elegí Correo Argentino." },
+          { status: 400 }
+        );
+      }
+      costoEnvioBase = Number(zona.precio);
+    }
 
     // Envío gratis: si el subtotal alcanza el umbral, el envío pasa a 0.
     const aplicaEnvioGratis =

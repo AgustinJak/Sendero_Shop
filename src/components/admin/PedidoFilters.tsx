@@ -8,7 +8,7 @@ const ESTADOS = [
   { value: "pendiente_pago", label: "Pendiente de pago" },
   { value: "pago_confirmado", label: "Pago confirmado" },
   { value: "en_produccion", label: "En producción" },
-  { value: "impreso", label: "Impreso" },
+  { value: "impreso", label: "Terminado" },
   { value: "enviado", label: "Enviado" },
   { value: "esperando_retiro", label: "Esperando retiro" },
   { value: "entregado", label: "Entregado" },

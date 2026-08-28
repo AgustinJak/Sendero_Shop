@@ -9,6 +9,7 @@ import type { Pedido, PedidoItem } from "@/types";
 import OrderTimeline from "@/components/pedido/OrderTimeline";
 import CancelOrderButton from "@/components/pedido/CancelOrderButton";
 import MercadoPagoButton from "@/components/pedido/MercadoPagoButton";
+import { getMetodoEnvioLabel } from "@/lib/estado-labels";
 
 export const metadata: Metadata = {
   title: "Mi pedido",
@@ -56,11 +57,7 @@ export default async function PedidoPage({ params }: Props) {
   const esTransferencia = p.metodo_pago === "transferencia";
   const puedeCancelar = p.estado === "pendiente_pago" || p.estado === "pago_confirmado";
 
-  const tipoEnvioLabel = p.tipo_envio === "domicilio" ? "A domicilio" : p.tipo_envio === "sucursal" ? "A sucursal" : null;
-  const metodoEnvioLabel =
-    p.metodo_envio === "retiro"
-      ? "Retiro en persona"
-      : `${p.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}${tipoEnvioLabel ? ` — ${tipoEnvioLabel}` : ""}`;
+  const metodoEnvioLabel = getMetodoEnvioLabel(p.metodo_envio, p.tipo_envio, "guion");
 
   const metodoPagoLabel =
     p.metodo_pago === "mercadopago"

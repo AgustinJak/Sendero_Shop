@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useCartContext } from "@/components/carrito/CartProvider";
 import { formatPrice, calcularRecargoMP, validarDNI, MP_RECARGO_DEFAULT_PCT } from "@/lib/utils";
 import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
+import { buscarZonaSyb, SYB_LABEL, SYB_PLAZO, type ZonaSyb } from "@/lib/envio-syb";
 import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type {
@@ -40,11 +41,13 @@ interface CheckoutFormProps {
   envioGratisDesde?: number;
   /** % del total que se pide de anticipo en efectivo. 0 = desactivado. */
   senaEfectivoPct?: number;
+  /** Zonas del courier local. Vacío = la opción no se ofrece nunca. */
+  zonasSyb?: ZonaSyb[];
 }
 
 type Step = "datos" | "envio" | "pago" | "resumen";
 
-export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 0, senaEfectivoPct = 0 }: CheckoutFormProps) {
+export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 0, senaEfectivoPct = 0, zonasSyb = [] }: CheckoutFormProps) {
   const router = useRouter();
   const { cart, clearCart, itemCount } = useCartContext();
   const [step, setStep] = useState<Step>("datos");
@@ -85,6 +88,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
     codigo_postal: "",
     localidad: "",
     provincia: "",
+    municipio: null,
   });
 
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
@@ -100,6 +104,10 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
   // Debounced CP for live cotización
   const debouncedCP = useDebounce(direccion.codigo_postal, 600);
+
+  // Dependencia del efecto de cotización, en vez de `metodoEnvio`: solo cambia
+  // al pasar de retiro a envío, no al alternar entre transportes.
+  const esRetiro = metodoEnvio === "retiro";
 
   // Calcular peso y dimensiones totales del carrito
   const paquete = (() => {
@@ -124,9 +132,16 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
     };
   })();
 
-  // Fetch cotización when CP changes
+  // Fetch cotización when CP changes.
+  //
+  // Depende del código postal, no del método elegido: la cotización de Correo
+  // hace falta para *armar* la lista de opciones, incluso mientras está
+  // seleccionada la moto. Antes el efecto dependía de `metodoEnvio` y cortaba
+  // temprano en "syb", así que cada vez que el cliente alternaba entre moto y
+  // Correo volvía a pedir la cotización y aparecía "Buscando opciones de
+  // envío..." de nuevo, con la lista parpadeando en cada cambio.
   useEffect(() => {
-    if (metodoEnvio === "retiro") return;
+    if (esRetiro) return;
     if (!debouncedCP || debouncedCP.trim().length < 4) {
       setCotizacion(null);
       setCotizacionError("");
@@ -166,11 +181,11 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
       });
 
     return () => { cancelled = true; };
-  }, [debouncedCP, metodoEnvio]);
+  }, [debouncedCP, esRetiro]);
 
   // Fetch sucursales when province/CP changes and tipo is sucursal
   useEffect(() => {
-    if (metodoEnvio === "retiro" || tipoEnvio !== "sucursal" || !direccion.provincia) {
+    if (metodoEnvio !== "correo_argentino" || tipoEnvio !== "sucursal" || !direccion.provincia) {
       setSucursalesCA([]);
       setSucursalSeleccionada("");
       return;
@@ -197,18 +212,102 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
     return () => { cancelled = true; };
   }, [direccion.provincia, debouncedCP, tipoEnvio, metodoEnvio]);
 
-  // Calcular costo de envío — solo cotización real de la API
+  // Zona del courier local según la dirección. Es null si no hay cobertura o
+  // si falta el municipio (dirección escrita a mano). En ese caso la opción ni
+  // se ofrece, para no cobrar el precio de otra zona.
+  const zonaSyb = buscarZonaSyb(direccion, zonasSyb);
+
+  // El destino se pide ANTES que las opciones de envío: sin saber a dónde va
+  // no se puede mostrar ni el precio de Correo ni si el courier llega. Antes
+  // las opciones aparecían primero, sin precio, y el courier no podía
+  // ofrecerse nunca porque todavía no había dirección.
+  const destinoCompleto =
+    direccion.provincia.trim().length > 0 &&
+    direccion.codigo_postal.trim().length >= 4 &&
+    direccion.localidad.trim().length > 0;
+
+  /** Opciones reales de envío para este destino, ya con su precio. */
+  const opcionesEnvio: {
+    id: string;
+    metodo: MetodoEnvio;
+    tipo: "domicilio" | "sucursal";
+    label: string;
+    desc: string;
+    precio: number;
+  }[] = [];
+
+  if (destinoCompleto) {
+    if (zonaSyb) {
+      opcionesEnvio.push({
+        id: "syb",
+        metodo: "syb",
+        tipo: "domicilio",
+        label: SYB_LABEL,
+        desc: SYB_PLAZO,
+        precio: zonaSyb.precio,
+      });
+    }
+    if (cotizacion?.domicilio) {
+      const t = cotizacion.domicilio;
+      opcionesEnvio.push({
+        id: "correo-domicilio",
+        metodo: "correo_argentino",
+        tipo: "domicilio",
+        label: "Correo Argentino a domicilio",
+        desc:
+          t.tiempoMin || t.tiempoMax
+            ? `Llega en ${t.tiempoMin ?? ""}${t.tiempoMin && t.tiempoMax ? "–" : ""}${t.tiempoMax ?? ""} días hábiles`
+            : "3-7 días hábiles",
+        precio: t.precio,
+      });
+    }
+    if (cotizacion?.sucursal) {
+      const t = cotizacion.sucursal;
+      opcionesEnvio.push({
+        id: "correo-sucursal",
+        metodo: "correo_argentino",
+        tipo: "sucursal",
+        label: "Retiro en sucursal de Correo Argentino",
+        desc:
+          t.tiempoMin || t.tiempoMax
+            ? `Llega en ${t.tiempoMin ?? ""}${t.tiempoMin && t.tiempoMax ? "–" : ""}${t.tiempoMax ?? ""} días hábiles`
+            : "3-7 días hábiles",
+        precio: t.precio,
+      });
+    }
+  }
+
+  const opcionElegida =
+    metodoEnvio === "syb"
+      ? "syb"
+      : tipoEnvio === "sucursal"
+        ? "correo-sucursal"
+        : "correo-domicilio";
+
+  // Si estaba elegido el courier y la dirección deja de tener cobertura, se
+  // vuelve a Correo Argentino. Sin esto el método quedaba en "syb" sin zona y
+  // getCostoEnvio() devolvía 0: envío gratis por accidente.
+  // Se ajusta en el render (estado derivado) y no en un efecto, para no
+  // encadenar un render extra con el precio viejo en pantalla.
+  if (metodoEnvio === "syb" && !zonaSyb) {
+    setMetodoEnvio("correo_argentino");
+  }
+
+  /** La opción de envío realmente elegida, o null si todavía no hay ninguna. */
+  const opcionActual = opcionesEnvio.find((o) => o.id === opcionElegida) ?? null;
+
+  /**
+   * Costo de envío: sale de la opción elegida y de ninguna otra parte.
+   *
+   * Antes leía la cotización de Correo directamente, y como esa cotización se
+   * dispara con el código postal solo, el resumen mostraba "Envío $7.755" y lo
+   * sumaba al total mientras abajo todavía decía "completá la localidad para
+   * ver las opciones". Se cobraba una opción que el cliente no había visto ni
+   * elegido.
+   */
   function getCostoEnvio(): number {
     if (metodoEnvio === "retiro") return 0;
-    if (!cotizacion) return 0;
-
-    if (tipoEnvio === "domicilio" && cotizacion.domicilio) {
-      return cotizacion.domicilio.precio;
-    }
-    if (tipoEnvio === "sucursal" && cotizacion.sucursal) {
-      return cotizacion.sucursal.precio;
-    }
-    return 0;
+    return opcionActual ? opcionActual.precio : 0;
   }
 
   const recargoPct = Number(configuracion.recargo_mp_porcentaje) || MP_RECARGO_DEFAULT_PCT;
@@ -331,17 +430,15 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
   function validarEnvio(): string | null {
     if (metodoEnvio === "retiro") return null;
-    if (!direccion.provincia.trim()) return "Seleccioná la provincia";
-    if (!direccion.codigo_postal.trim()) return "Ingresá el código postal";
-    if (!direccion.calle.trim()) return "Ingresá la calle";
-    if (!direccion.numero.trim()) return "Ingresá el número";
-    if (!direccion.localidad.trim()) return "Ingresá la localidad";
+    if (!destinoCompleto) return "Completá provincia, código postal y localidad";
     const cpErr = validarCPvsProvincia();
     if (cpErr) return cpErr;
     if (cotizandoEnvio) return "Esperá, estamos cotizando el envío...";
-    if (!cotizacion) return "Ingresá un código postal válido para cotizar el envío";
     if (cotizacionError) return cotizacionError;
-    if (tipoEnvio === "sucursal") {
+    if (opcionesEnvio.length === 0) return "No hay envíos disponibles para ese destino";
+    if (!direccion.calle.trim()) return "Ingresá la calle";
+    if (!direccion.numero.trim()) return "Ingresá el número";
+    if (tipoEnvio === "sucursal" && metodoEnvio === "correo_argentino") {
       if (cargandoSucursales) return "Cargando sucursales...";
       if (sucursalesCA.length > 0 && !sucursalSeleccionada) return "Seleccioná una sucursal de Correo Argentino";
     }
@@ -372,7 +469,8 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
       const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number; captchaToken?: string; sucursal_correo_id?: string; sucursal_correo_nombre?: string; cotizacion_real?: boolean } = {
         datos_personales: datos,
         metodo_envio: metodoEnvio,
-        tipo_envio: metodoEnvio === "retiro" ? null : tipoEnvio,
+        tipo_envio:
+          metodoEnvio === "retiro" ? null : metodoEnvio === "syb" ? "domicilio" : tipoEnvio,
         direccion_envio: metodoEnvio === "retiro" ? null : direccion,
         metodo_pago: metodoPago,
         items: cart.items,
@@ -522,61 +620,38 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
         {step === "envio" && (
           <section className="bg-navy-deep rounded-xl border border-linea p-6 space-y-4">
             <h2 className="text-lg font-semibold text-texto">
-              Método de envío
+              ¿Cómo querés recibirlo?
             </h2>
 
-            <div className="space-y-2">
+            {/* 1. Retiro o envío. El retiro no necesita dirección, así que se
+                   decide antes de pedir nada. */}
+            <div className="grid grid-cols-2 gap-2">
               {([
                 { value: "retiro" as MetodoEnvio, label: "Retiro en persona", desc: "Villa Crespo, CABA — Gratis" },
-                { value: "correo_argentino" as MetodoEnvio, label: "Correo Argentino", desc: "3-7 días hábiles" },
-              ]).map((opt) => (
-                <label
-                  key={opt.value}
-                  className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-                    metodoEnvio === opt.value
-                      ? "border-purpura bg-purpura/10"
-                      : "border-linea hover:border-linea"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="envio"
-                    checked={metodoEnvio === opt.value}
-                    onChange={() => setMetodoEnvio(opt.value)}
-                    className="accent-purpura"
-                  />
-                  <div>
-                    <p className="text-sm font-medium text-niebla">{opt.label}</p>
+                { value: "correo_argentino" as MetodoEnvio, label: "Envío a domicilio", desc: "A todo el país" },
+              ]).map((opt) => {
+                const activo =
+                  opt.value === "retiro" ? metodoEnvio === "retiro" : metodoEnvio !== "retiro";
+                return (
+                  <button
+                    key={opt.value}
+                    onClick={() => setMetodoEnvio(opt.value)}
+                    className={`rounded-lg border p-4 text-left transition-colors ${
+                      activo ? "border-purpura bg-purpura/10" : "border-linea hover:border-linea-fuerte"
+                    }`}
+                  >
+                    <p className="text-sm font-medium text-texto">{opt.label}</p>
                     <p className="text-xs text-texto-3">{opt.desc}</p>
-                  </div>
-                </label>
-              ))}
+                  </button>
+                );
+              })}
             </div>
 
             {metodoEnvio !== "retiro" && (
               <>
-                {/* Tipo: domicilio o sucursal */}
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setTipoEnvio("domicilio")}
-                    className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${
-                      tipoEnvio === "domicilio" ? "border-purpura bg-purpura/10 text-niebla" : "border-linea text-lavanda-light"
-                    }`}
-                  >
-                    A domicilio
-                  </button>
-                  <button
-                    onClick={() => setTipoEnvio("sucursal")}
-                    className={`flex-1 py-2 rounded-lg text-sm border transition-colors ${
-                      tipoEnvio === "sucursal" ? "border-purpura bg-purpura/10 text-niebla" : "border-linea text-lavanda-light"
-                    }`}
-                  >
-                    A sucursal
-                  </button>
-                </div>
-
-                {/* Dirección */}
-                <div className="space-y-3">
+                {/* 2. A dónde va. Sin esto no hay precio que mostrar. */}
+                <div className="space-y-3 border-t border-linea pt-4">
+                  <p className="volanta">¿A dónde lo enviamos?</p>
                   <select
                     value={direccion.provincia}
                     onChange={(e) => setDireccion({ ...direccion, provincia: e.target.value })}
@@ -588,29 +663,14 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                     ))}
                   </select>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="col-span-2">
-                      <AutocompleteInput
-                        label="Calle"
-                        value={direccion.calle}
-                        onChange={(v) => setDireccion({ ...direccion, calle: v })}
-                        provincia={direccion.provincia}
-                        tipo="calles"
-                        placeholder={direccion.provincia ? "Escribí para buscar..." : "Seleccioná provincia primero"}
-                      />
-                    </div>
-                    <Input label="Número" value={direccion.numero} onChange={(v) => setDireccion({ ...direccion, numero: v })} />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input label="Piso (opc.)" value={direccion.piso} onChange={(v) => setDireccion({ ...direccion, piso: v })} />
-                    <Input label="Depto (opc.)" value={direccion.departamento} onChange={(v) => setDireccion({ ...direccion, departamento: v })} />
-                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     <Input label="Código Postal" value={direccion.codigo_postal} onChange={(v) => setDireccion({ ...direccion, codigo_postal: v })} type="tel" placeholder="Ej: 1425" />
                     <AutocompleteInput
                       label="Localidad"
                       value={direccion.localidad}
-                      onChange={(v) => setDireccion({ ...direccion, localidad: v })}
+                      onChange={(v, municipio) =>
+                        setDireccion({ ...direccion, localidad: v, municipio: municipio ?? null })
+                      }
                       provincia={direccion.provincia}
                       tipo="localidades"
                       placeholder={direccion.provincia ? "Escribí para buscar..." : "Seleccioná provincia primero"}
@@ -626,14 +686,20 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   </div>
                 )}
 
-                {/* Cotización en vivo */}
-                {cotizandoEnvio && (
+                {!destinoCompleto && (
+                  <p className="text-sm text-texto-3">
+                    Completá provincia, código postal y localidad para ver las
+                    opciones de envío y su costo.
+                  </p>
+                )}
+
+                {destinoCompleto && cotizandoEnvio && (
                   <div className="flex items-center gap-2 text-sm text-texto-3">
                     <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                     </svg>
-                    Cotizando envío...
+                    Buscando opciones de envío...
                   </div>
                 )}
 
@@ -641,38 +707,68 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   <p className="text-sm text-ambar-light">{cotizacionError}</p>
                 )}
 
-                {cotizacion && !cotizandoEnvio && (
-                  <div className="bg-navy/50 border border-linea rounded-lg p-3 space-y-1">
-                    {/* Con envío gratis no mostramos importes: no se cobran. */}
-                    {cotizacion.domicilio && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-lavanda-light">A domicilio ({cotizacion.domicilio.producto})</span>
+                {/* 3. Opciones reales, con precio. Recién acá el cliente elige. */}
+                {destinoCompleto && !cotizandoEnvio && opcionesEnvio.length > 0 && (
+                  <div className="space-y-2 border-t border-linea pt-4">
+                    <p className="volanta">Elegí cómo enviarlo</p>
+                    {opcionesEnvio.map((opt) => (
+                      <label
+                        key={opt.id}
+                        className={`flex cursor-pointer items-center justify-between gap-3 rounded-lg border p-4 transition-colors ${
+                          opcionElegida === opt.id
+                            ? "border-purpura bg-purpura/10"
+                            : "border-linea hover:border-linea-fuerte"
+                        }`}
+                      >
+                        <span className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="opcion-envio"
+                            checked={opcionElegida === opt.id}
+                            onChange={() => {
+                              setMetodoEnvio(opt.metodo);
+                              setTipoEnvio(opt.tipo);
+                            }}
+                            className="accent-purpura"
+                          />
+                          <span>
+                            <span className="block text-sm font-medium text-texto">{opt.label}</span>
+                            <span className="block text-xs text-texto-3">{opt.desc}</span>
+                          </span>
+                        </span>
                         {calificaEnvioGratis ? (
-                          <span className="font-semibold text-emerald-400">GRATIS</span>
+                          <span className="text-sm font-semibold text-emerald-400">GRATIS</span>
                         ) : (
-                          <span className={`font-semibold ${tipoEnvio === "domicilio" ? "text-ambar" : "text-texto-3"}`}>
-                            {formatPrice(cotizacion.domicilio.precio)}
+                          <span className="text-sm font-semibold text-ambar">
+                            {formatPrice(opt.precio)}
                           </span>
                         )}
+                      </label>
+                    ))}
+                  </div>
+                )}
+
+                {/* 4. El resto de la dirección, recién con la opción elegida. */}
+                {destinoCompleto && opcionesEnvio.length > 0 && (
+                  <div className="space-y-3 border-t border-linea pt-4">
+                    <p className="volanta">Dirección de entrega</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="col-span-2">
+                        <AutocompleteInput
+                          label="Calle"
+                          value={direccion.calle}
+                          onChange={(v) => setDireccion({ ...direccion, calle: v })}
+                          provincia={direccion.provincia}
+                          tipo="calles"
+                          placeholder="Escribí para buscar..."
+                        />
                       </div>
-                    )}
-                    {cotizacion.sucursal && (
-                      <div className="flex justify-between text-sm">
-                        <span className="text-lavanda-light">A sucursal ({cotizacion.sucursal.producto})</span>
-                        {calificaEnvioGratis ? (
-                          <span className="font-semibold text-emerald-400">GRATIS</span>
-                        ) : (
-                          <span className={`font-semibold ${tipoEnvio === "sucursal" ? "text-ambar" : "text-texto-3"}`}>
-                            {formatPrice(cotizacion.sucursal.precio)}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {(cotizacion.domicilio?.tiempoMin || cotizacion.domicilio?.tiempoMax) && (
-                      <p className="text-xs text-texto-3 mt-1">
-                        Tiempo estimado: {cotizacion.domicilio?.tiempoMin}–{cotizacion.domicilio?.tiempoMax} días hábiles
-                      </p>
-                    )}
+                      <Input label="Número" value={direccion.numero} onChange={(v) => setDireccion({ ...direccion, numero: v })} />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input label="Piso (opc.)" value={direccion.piso} onChange={(v) => setDireccion({ ...direccion, piso: v })} />
+                      <Input label="Depto (opc.)" value={direccion.departamento} onChange={(v) => setDireccion({ ...direccion, departamento: v })} />
+                    </div>
                   </div>
                 )}
 
@@ -717,10 +813,12 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                   </div>
                 )}
 
-                {/* Mensaje cuando falta cotización */}
-                {!cotizacion && !cotizandoEnvio && !cotizacionError && direccion.codigo_postal.trim().length < 4 && (
-                  <p className="text-sm text-texto-3">
-                    Ingresá el código postal para ver el costo de envío
+                {/* Destino cargado pero sin ninguna opción: el CP no cotiza en
+                    Correo y tampoco cae en zona del courier. */}
+                {destinoCompleto && !cotizandoEnvio && !cotizacionError && opcionesEnvio.length === 0 && (
+                  <p className="text-sm text-ambar-light">
+                    No encontramos envíos para ese destino. Revisá el código
+                    postal o escribinos por WhatsApp.
                   </p>
                 )}
               </>
@@ -841,6 +939,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
               <div className="border-t border-linea my-2" />
               <SummaryRow label="Envío" value={
                 metodoEnvio === "retiro" ? "Retiro en persona" :
+                metodoEnvio === "syb" ? `${SYB_LABEL} — ${SYB_PLAZO.toLowerCase()}` :
                 `Correo Argentino (${tipoEnvio === "domicilio" ? "a domicilio" : "a sucursal"})`
               } />
               {metodoEnvio !== "retiro" && (
@@ -1082,12 +1181,15 @@ function AutocompleteInput({
 }: {
   label: string;
   value: string;
-  onChange: (v: string) => void;
+  /** El municipio solo llega cuando se elige una opción de la lista. */
+  onChange: (v: string, municipio?: string) => void;
   provincia: string;
   tipo: "calles" | "localidades";
   placeholder?: string;
 }) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
+  // Se guarda el municipio junto al nombre: es el dato con el que despues se
+  // decide la zona del courier local. Ver lib/envio-syb.ts.
+  const [suggestions, setSuggestions] = useState<{ nombre: string; municipio: string }[]>([]);
   const [open, setOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const debouncedValue = useDebounce(value, 300);
@@ -1105,15 +1207,21 @@ function AutocompleteInput({
       const params = new URLSearchParams({
         nombre: query,
         provincia: provGeoref,
+        campos: "nombre,municipio",
         max: "6",
       });
       const res = await fetch(`https://apis.datos.gob.ar/georef/api/${tipo}?${params}`);
       if (!res.ok) return;
       const data = await res.json();
-      const items = data[tipo] as { nombre: string }[];
-      const names = [...new Set(items.map((i) => i.nombre))];
-      setSuggestions(names);
-      setOpen(names.length > 0);
+      const items = data[tipo] as { nombre: string; municipio?: { nombre?: string } }[];
+      // Se deduplica por nombre conservando el primer municipio visto.
+      const vistos = new Map<string, string>();
+      for (const i of items) {
+        if (!vistos.has(i.nombre)) vistos.set(i.nombre, i.municipio?.nombre || "");
+      }
+      const opciones = [...vistos].map(([nombre, municipio]) => ({ nombre, municipio }));
+      setSuggestions(opciones);
+      setOpen(opciones.length > 0);
     } catch {
       setSuggestions([]);
     }
@@ -1145,7 +1253,10 @@ function AutocompleteInput({
       <input
         type="text"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        // Escribir a mano no aporta municipio: se manda undefined para que el
+        // llamador lo limpie. Si no, quedaba pegado el de una localidad
+        // anterior y se cotizaba la zona equivocada.
+        onChange={(e) => onChange(e.target.value, undefined)}
         onFocus={() => { setFocused(true); if (sugerenciasVisibles.length > 0) setOpen(true); }}
         onBlur={() => setFocused(false)}
         placeholder={placeholder}
@@ -1156,15 +1267,15 @@ function AutocompleteInput({
         <ul className="absolute z-50 w-full mt-1 bg-navy-deep border border-linea rounded-lg shadow-lg max-h-48 overflow-y-auto">
           {sugerenciasVisibles.map((s) => (
             <li
-              key={s}
+              key={s.nombre}
               onMouseDown={() => {
-                onChange(s);
+                onChange(s.nombre, s.municipio);
                 setOpen(false);
                 setSuggestions([]);
               }}
               className="px-4 py-2 text-sm text-lavanda-light hover:bg-purpura/20 hover:text-niebla cursor-pointer transition-colors"
             >
-              {s}
+              {s.nombre}
             </li>
           ))}
         </ul>

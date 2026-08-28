@@ -1,6 +1,7 @@
 import type { Pedido, PedidoItem } from "@/types";
 import { formatPrice } from "@/lib/utils";
 import { resolveTrackingUrl } from "@/lib/correo-argentino";
+import { getMetodoEnvioLabel, METODO_ENVIO_LABELS } from "@/lib/estado-labels";
 
 // ==========================================
 // Shared styles
@@ -149,11 +150,7 @@ export function pedidoConfirmadoEmail(
   subject: string;
   html: string;
 } {
-  const tipoEnvioSuffix = pedido.tipo_envio ? ` (${pedido.tipo_envio === "domicilio" ? "a domicilio" : "a sucursal"})` : "";
-  const metodoEnvioLabel =
-    pedido.metodo_envio === "retiro"
-      ? "Retiro en persona"
-      : `${pedido.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}${tipoEnvioSuffix}`;
+  const metodoEnvioLabel = getMetodoEnvioLabel(pedido.metodo_envio, pedido.tipo_envio);
 
   const metodoPagoLabel =
     pedido.metodo_pago === "mercadopago"
@@ -414,13 +411,7 @@ export function pedidoEnviadoEmail(pedido: Pedido, whatsapp: string): {
     })()}
 
     <p style="margin:0;color:${COLORS.lavanda};font-size:14px;">
-      ${
-        pedido.metodo_envio === "correo_argentino"
-          ? "Enviado por Correo Argentino."
-          : pedido.metodo_envio === "andreani"
-          ? "Enviado por Andreani."
-          : ""
-      }
+      ${pedido.metodo_envio === "retiro" ? "" : `Enviado por ${METODO_ENVIO_LABELS[pedido.metodo_envio]}.`}
     </p>
 
     ${verPedidoButton(pedido.id)}
@@ -633,7 +624,7 @@ export function nuevoPedidoAdminEmail(pedido: Pedido & { items: PedidoItem[] }):
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Envío</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.metodo_envio === "retiro" ? "Retiro en persona" : `${pedido.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}${pedido.tipo_envio ? ` (${pedido.tipo_envio === "domicilio" ? "a domicilio" : "a sucursal"})` : ""}`}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${getMetodoEnvioLabel(pedido.metodo_envio, pedido.tipo_envio)}</td>
             </tr>
             ${pedido.sucursal_correo_nombre ? `<tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Sucursal</td>

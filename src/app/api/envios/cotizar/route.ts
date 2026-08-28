@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cotizar } from "@/lib/correo-argentino";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { buscarZonaSybPorCP, type ZonaSyb } from "@/lib/envio-syb";
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,9 +27,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await cotizar(match[0], paquete);
+    // El courier local se resuelve por CP, que es lo único que hay acá. Se
+    // consulta en paralelo con Correo: son independientes y una falla del
+    // courier no tiene por qué tirar abajo la cotización de Correo.
+    const [result, zonaSyb] = await Promise.all([
+      cotizar(match[0], paquete),
+      (async () => {
+        try {
+          const supabase = await createServerSupabaseClient();
+          const { data } = await supabase
+            .from("envio_syb_zonas")
+            .select("*")
+            .eq("activo", true)
+            .order("orden");
+          return buscarZonaSybPorCP(match[0], (data ?? []) as ZonaSyb[]);
+        } catch {
+          return null;
+        }
+      })(),
+    ]);
 
     return NextResponse.json({
+      syb: zonaSyb
+        ? { precio: Number(zonaSyb.precio), zona: zonaSyb.nombre }
+        : null,
       domicilio: result.domicilio
         ? {
             precio: result.domicilio.price,

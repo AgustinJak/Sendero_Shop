@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import type { Pedido, PedidoItem } from "@/types";
 import PedidoActions from "@/components/admin/PedidoActions";
+import { getMetodoEnvioLabel } from "@/lib/estado-labels";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -69,8 +70,7 @@ export default async function PedidoDetailPage({ params }: Props) {
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-lavanda/60">
-                  Envío ({p.metodo_envio === "retiro" ? "Retiro en persona" : p.metodo_envio === "correo_argentino" ? "Correo Argentino" : "Andreani"}
-                  {p.tipo_envio && ` — ${p.tipo_envio === "domicilio" ? "A domicilio" : "A sucursal"}`})
+                  Envío ({getMetodoEnvioLabel(p.metodo_envio, p.tipo_envio, "guion")})
                 </span>
                 <span className="text-lavanda-light">{p.costo_envio === 0 ? "Gratis" : formatPrice(p.costo_envio)}</span>
               </div>
