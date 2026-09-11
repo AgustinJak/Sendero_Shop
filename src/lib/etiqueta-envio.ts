@@ -23,7 +23,21 @@ const GRIS = rgb(0.45, 0.45, 0.5);
 const LINEA = rgb(0.8, 0.8, 0.84);
 
 /**
- * Datos del remitente. Salen del mismo lugar que los de Correo Argentino.
+ * Nombre que va arriba de la etiqueta.
+ *
+ * **No sale de `CORREO_REMITENTE_NOMBRE`**, aunque el teléfono y la localidad
+ * sí. Esa variable es la que se le declara a Correo Argentino, que pide la
+ * persona responsable del envío y no la marca: seteada con el nombre real, la
+ * etiqueta salía encabezada por el nombre de pila en vez de por la tienda, y
+ * el cliente que recibe el paquete no sabe quién es.
+ *
+ * `ETIQUETA_REMITENTE_NOMBRE` existe por si algún día hay que cambiarlo sin
+ * deploy, pero el default ya es el correcto y no hace falta setearla.
+ */
+const MARCA = "Sendero de los Sueños";
+
+/**
+ * Datos del remitente.
  *
  * A propósito NO incluye calle ni altura: la etiqueta va pegada a un paquete
  * que circula por manos ajenas, y el domicilio propio no tiene por qué viajar
@@ -33,7 +47,7 @@ const LINEA = rgb(0.8, 0.8, 0.84);
  */
 export function remitenteDesdeEnv(): { nombre: string; telefono: string; localidad: string } {
   return {
-    nombre: process.env.CORREO_REMITENTE_NOMBRE || "Sendero Shop",
+    nombre: process.env.ETIQUETA_REMITENTE_NOMBRE || MARCA,
     telefono:
       process.env.CORREO_REMITENTE_CELULAR || process.env.CORREO_REMITENTE_TELEFONO || "",
     localidad: process.env.CORREO_REMITENTE_LOCALIDAD || "",
