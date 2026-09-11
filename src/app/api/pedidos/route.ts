@@ -7,6 +7,10 @@ import { rateLimitByIp } from "@/lib/rate-limit";
 import { resolverPrecios } from "@/lib/precios-server";
 import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
 import { buscarZonaSyb, type ZonaSyb } from "@/lib/envio-syb";
+import {
+  ENTRE_CALLES_MAX_CARACTERES,
+  NOTA_MAX_CARACTERES,
+} from "@/lib/nota-repartidor";
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,6 +31,8 @@ export async function POST(req: NextRequest) {
       captchaToken,
       sucursal_correo_id,
       sucursal_correo_nombre,
+      entre_calles,
+      nota_repartidor,
     } = body;
 
     // Verificar Turnstile CAPTCHA si está configurado
@@ -149,6 +155,23 @@ export async function POST(req: NextRequest) {
     const estadoInicial: "pendiente_pago" | "pago_confirmado" =
       metodo_pago === "efectivo" && !llevaSena ? "pago_confirmado" : "pendiente_pago";
 
+    // Los dos campos opcionales que carga el cliente. Se recortan acá y no se
+    // confía en el maxLength del formulario: si la nota pasa de 140, el
+    // constraint `pedidos_nota_repartidor_largo` rechaza el INSERT entero y se
+    // pierde el pedido, no solo la nota. Vacío se guarda como null para que la
+    // etiqueta no dibuje un bloque en blanco.
+    //
+    // Se descartan cuando nadie va a tocar un timbre: en retiro no hay
+    // repartidor, y a una sucursal de Correo el paquete llega a un mostrador.
+    const hayEntregaADomicilio =
+      metodo_envio !== "retiro" && tipo_envio !== "sucursal";
+
+    const textoOpcional = (v: unknown, max: number): string | null => {
+      if (!hayEntregaADomicilio) return null;
+      const t = String(v ?? "").replace(/\s+/g, " ").trim().slice(0, max);
+      return t || null;
+    };
+
     // Crear pedido
     const { data: pedido, error: pedidoError } = await supabase
       .from("pedidos")
@@ -160,6 +183,8 @@ export async function POST(req: NextRequest) {
         email: datos_personales.email,
         telefono: datos_personales.telefono,
         direccion_envio: direccion_envio,
+        entre_calles: textoOpcional(entre_calles, ENTRE_CALLES_MAX_CARACTERES),
+        nota_repartidor: textoOpcional(nota_repartidor, NOTA_MAX_CARACTERES),
         metodo_envio: metodo_envio,
         tipo_envio: tipo_envio || null,
         costo_envio: costoEnvioFinal,

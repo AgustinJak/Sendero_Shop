@@ -1,5 +1,6 @@
 import type { Pedido } from "@/types";
 import { remitenteDesdeEnv } from "@/lib/etiqueta-envio";
+import { NOTA_LINEAS } from "@/lib/nota-repartidor";
 
 /**
  * Etiqueta de envío en ZPL, para la impresora térmica.
@@ -55,18 +56,10 @@ export const ALTO_ROLLO_15 = 1200;
 export const ALTO_ROLLO_20 = 1600;
 
 /**
- * Líneas que entran en el bloque de nota, y el largo máximo que se acepta.
- *
- * `^FB` corta el texto que no entra **sin avisar**: si alguien escribe de más,
- * la etiqueta sale con la nota truncada a la mitad de una palabra y nadie se
- * entera hasta que el repartidor la lee. Por eso el límite se valida en el
- * formulario y en la base, y no se confía en el recorte de la impresora.
- *
- * 140 sale de la medida real del bloque: 4 líneas de ~35 caracteres a cuerpo
- * 4,5 mm sobre los 87 mm de ancho útil.
+ * Los límites viven en `lib/nota-repartidor.ts`, no acá: los aplican
+ * formularios de cliente y este archivo arrastra `pdf-lib`.
  */
-export const NOTA_LINEAS = 4;
-export const NOTA_MAX_CARACTERES = 140;
+export { NOTA_LINEAS, NOTA_MAX_CARACTERES } from "@/lib/nota-repartidor";
 
 /**
  * Limpia un campo antes de componerlo con otros.

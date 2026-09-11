@@ -220,7 +220,7 @@ export interface Pedido {
   entre_calles: string | null;
   // Aviso impreso en la etiqueta de envío. Distinto de `notas`, que son
   // internas: estas las lee un tercero. Máximo 140 caracteres, topeado en
-  // la base — ver NOTA_MAX_CARACTERES en lib/etiqueta-zpl.ts.
+  // la base — ver NOTA_MAX_CARACTERES en lib/nota-repartidor.ts.
   nota_repartidor: string | null;
   notas: string | null;
   cancelado_at: string | null;
@@ -467,5 +467,9 @@ export interface CheckoutData {
   metodo_envio: MetodoEnvio;
   tipo_envio: TipoEnvio | null;
   direccion_envio: DireccionEnvio | null;
+  /** Opcional, y solo con entrega a domicilio. Lo carga el cliente. */
+  entre_calles?: string;
+  /** Idem, con el tope de NOTA_MAX_CARACTERES. */
+  nota_repartidor?: string;
   metodo_pago: MetodoPago;
 }

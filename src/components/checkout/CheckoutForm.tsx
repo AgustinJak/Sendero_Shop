@@ -6,6 +6,7 @@ import { useCartContext } from "@/components/carrito/CartProvider";
 import { formatPrice, calcularRecargoMP, validarDNI, MP_RECARGO_DEFAULT_PCT } from "@/lib/utils";
 import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
 import { buscarZonaSyb, SYB_LABEL, SYB_PLAZO, type ZonaSyb } from "@/lib/envio-syb";
+import { NOTA_MAX_CARACTERES } from "@/lib/nota-repartidor";
 import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type {
@@ -91,6 +92,10 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
     municipio: null,
   });
 
+  // Datos que ayudan a entregar, no a cotizar. Los dos opcionales.
+  const [entreCalles, setEntreCalles] = useState("");
+  const [notaRepartidor, setNotaRepartidor] = useState("");
+
   const [metodoPago, setMetodoPago] = useState<MetodoPago>("transferencia");
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
@@ -108,6 +113,11 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
   // Dependencia del efecto de cotización, en vez de `metodoEnvio`: solo cambia
   // al pasar de retiro a envío, no al alternar entre transportes.
   const esRetiro = metodoEnvio === "retiro";
+
+  // Si alguien toca un timbre. Es lo que habilita entre calles y la nota: en
+  // retiro no hay repartidor, y a una sucursal de Correo el paquete llega a un
+  // mostrador.
+  const hayEntregaADomicilio = !esRetiro && tipoEnvio === "domicilio";
 
   // Calcular peso y dimensiones totales del carrito
   const paquete = (() => {
@@ -472,6 +482,11 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
         tipo_envio:
           metodoEnvio === "retiro" ? null : metodoEnvio === "syb" ? "domicilio" : tipoEnvio,
         direccion_envio: metodoEnvio === "retiro" ? null : direccion,
+        // Solo van si hay alguien llevando el paquete a una puerta. Se
+        // chequea de nuevo acá y no alcanza con que el campo esté oculto: el
+        // estado sobrevive si el cliente escribe y después cambia a sucursal.
+        ...(hayEntregaADomicilio && entreCalles.trim() && { entre_calles: entreCalles.trim() }),
+        ...(hayEntregaADomicilio && notaRepartidor.trim() && { nota_repartidor: notaRepartidor.trim() }),
         metodo_pago: metodoPago,
         items: cart.items,
         costoEnvio,
@@ -769,6 +784,51 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                       <Input label="Piso (opc.)" value={direccion.piso} onChange={(v) => setDireccion({ ...direccion, piso: v })} />
                       <Input label="Depto (opc.)" value={direccion.departamento} onChange={(v) => setDireccion({ ...direccion, departamento: v })} />
                     </div>
+
+                    {/* Entre calles y nota: los dos opcionales, y solo a
+                        domicilio — en una sucursal de Correo no hay timbre que
+                        tocar. Van acá y no antes porque son datos que ayudan a
+                        entregar, no a cotizar. */}
+                    {tipoEnvio === "domicilio" && (
+                      <>
+                      <Input
+                        label="Entre calles (opc.)"
+                        value={entreCalles}
+                        onChange={setEntreCalles}
+                        placeholder="Ej: Cabildo y Juramento"
+                      />
+
+                      <div>
+                        <div className="mb-1 flex items-baseline justify-between">
+                          <label className="block text-xs text-texto-3">
+                            Nota para quien entrega (opc.)
+                          </label>
+                          <span
+                            className={`text-xs ${
+                              notaRepartidor.length > NOTA_MAX_CARACTERES * 0.9
+                                ? "text-ambar"
+                                : "text-texto-3"
+                            }`}
+                          >
+                            {notaRepartidor.length}/{NOTA_MAX_CARACTERES}
+                          </span>
+                        </div>
+                        <textarea
+                          value={notaRepartidor}
+                          onChange={(e) =>
+                            setNotaRepartidor(e.target.value.slice(0, NOTA_MAX_CARACTERES))
+                          }
+                          maxLength={NOTA_MAX_CARACTERES}
+                          rows={2}
+                          placeholder="Ej: Timbre roto, golpear la puerta. Portón negro."
+                          className="w-full resize-none rounded-lg border border-linea bg-navy px-4 py-3 text-sm text-niebla placeholder:text-texto-3 focus:border-purpura focus:outline-none"
+                        />
+                        <p className="mt-1 text-xs text-texto-3">
+                          La lee quien te lleva el paquete.
+                        </p>
+                      </div>
+                      </>
+                    )}
                   </div>
                 )}
 

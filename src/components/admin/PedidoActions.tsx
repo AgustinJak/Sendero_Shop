@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Pedido, EstadoPedido } from "@/types";
 import { getEstadoLabel } from "@/lib/estado-labels";
 import { formatPrice } from "@/lib/utils";
-import { NOTA_MAX_CARACTERES } from "@/lib/etiqueta-zpl";
+import { NOTA_MAX_CARACTERES } from "@/lib/nota-repartidor";
 
 const ESTADO_COLORS: Record<EstadoPedido, string> = {
   pendiente_pago: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
