@@ -386,14 +386,26 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
           )}
         </div>
 
-        {/* Enlace normal y no fetch: el navegador maneja la descarga solo y no
-            hay que sostener el PDF en memoria ni armar un blob. */}
-        <a
-          href={`/api/admin/pedidos/${pedido.id}/etiqueta`}
-          className="block w-full py-2 bg-ambar/15 hover:bg-ambar/25 text-ambar text-sm font-medium text-center rounded-lg transition-colors"
-        >
-          Generar etiqueta (PDF)
-        </a>
+        {/* Enlaces normales y no fetch: el navegador maneja la descarga solo y
+            no hay que sostener el archivo en memoria ni armar un blob. */}
+        <div className="grid grid-cols-2 gap-2">
+          <a
+            href={`/api/admin/pedidos/${pedido.id}/etiqueta`}
+            className="block py-2 bg-ambar/15 hover:bg-ambar/25 text-ambar text-sm font-medium text-center rounded-lg transition-colors"
+          >
+            PDF
+          </a>
+          <a
+            href={`/api/admin/pedidos/${pedido.id}/etiqueta?formato=zpl`}
+            className="block py-2 bg-purpura/20 hover:bg-purpura/30 text-ambar text-sm font-medium text-center rounded-lg transition-colors"
+          >
+            ZPL
+          </a>
+        </div>
+        <p className="text-xs text-lavanda/40">
+          PDF para impresora común. ZPL para la térmica: se baja a Descargas y
+          Bodega lo levanta solo desde su sección Etiquetas.
+        </p>
 
         {!pedido.telefono && (
           <p className="text-xs text-yellow-400">
