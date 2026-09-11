@@ -55,6 +55,20 @@ export const ALTO_ROLLO_15 = 1200;
 export const ALTO_ROLLO_20 = 1600;
 
 /**
+ * Líneas que entran en el bloque de nota, y el largo máximo que se acepta.
+ *
+ * `^FB` corta el texto que no entra **sin avisar**: si alguien escribe de más,
+ * la etiqueta sale con la nota truncada a la mitad de una palabra y nadie se
+ * entera hasta que el repartidor la lee. Por eso el límite se valida en el
+ * formulario y en la base, y no se confía en el recorte de la impresora.
+ *
+ * 140 sale de la medida real del bloque: 4 líneas de ~35 caracteres a cuerpo
+ * 4,5 mm sobre los 87 mm de ancho útil.
+ */
+export const NOTA_LINEAS = 4;
+export const NOTA_MAX_CARACTERES = 140;
+
+/**
  * Limpia un campo antes de componerlo con otros.
  *
  * Los datos reales vienen con espacios de sobra — en la base hay direcciones
@@ -170,36 +184,35 @@ export function etiquetaZPL(
     `^FO${x},${y(86)}^A0N,${mm(6)},${mm(6)}^FD${esc(pedido.telefono) || "SIN TELEFONO"}^FS`
   );
 
-  // Pedido: legible, en código de barras y en QR.
-  const fecha = new Date(pedido.created_at).toLocaleDateString("es-AR");
-  L.push(
-    `^FO${x},${y(97)}^A0N,${mm(4)},${mm(4)}^FDPedido ${esc(pedido.numero_pedido)}   ${esc(fecha)}^FS`
-  );
-  // Barras de 11 mm en vez de 13: libera espacio abajo sin perder legibilidad
-  // para el scanner. Con la línea de interpretación termina cerca de los 118.
-  L.push(
-    `^FO${x},${y(103)}^BY2,,${mm(11)}^BCN,${mm(11)},Y,N,N^FD${esc(pedido.numero_pedido)}^FS`
-  );
-
-  // QR a magnificación 4 y arrancando en 121.
+  // Pedido y método, en una línea.
   //
-  // A magnificación 5 y desde 124 el borde inferior pisaba la línea del marco,
-  // que cierra a los 146 mm. Un QR ocupa más que sus módulos: lleva una zona
-  // de silencio de 4 módulos por lado que hay que contar. Con estos valores
-  // termina cerca de los 135 y quedan ~11 mm hasta el marco.
-  L.push(`^FO${x},${y(121)}^BQN,2,4^FDLA,${esc(pedido.numero_pedido)}^FS`);
+  // Sin código de barras ni QR: no se escanean, y el número de pedido ya está
+  // legible acá. Sacarlos libera unos 4 cm, que es lo que ocupa la nota.
+  //
+  // Tampoco va el saldo a cobrar. Además de que el cobro es previo, es una
+  // combinación imposible: la seña solo existe con pago en efectivo, y el
+  // efectivo solo se ofrece con retiro en persona — un pedido que sale con
+  // repartidor nunca tiene saldo pendiente.
+  const fecha = new Date(pedido.created_at).toLocaleDateString("es-AR");
+  const metodo = pedido.metodo_envio === "syb" ? "Moto mensajería" : "Envío";
+  L.push(
+    `^FO${x},${y(97)}^A0N,${mm(4.5)},${mm(4.5)}^FDPedido ${esc(pedido.numero_pedido)}^FS`
+  );
+  L.push(
+    `^FO${x},${y(104)}^A0N,${mm(3.5)},${mm(3.5)}^FD${esc(metodo)} - ${esc(fecha)}^FS`
+  );
 
-  // Al lado del QR: método de envío y si queda saldo por cobrar.
-  const metodo = pedido.metodo_envio === "syb" ? "Moto mensajería" : "Envio";
-  L.push(`^FO${x + mm(32)},${y(124)}^A0N,${mm(4.5)},${mm(4.5)}^FD${esc(metodo)}^FS`);
-
-  const saldo =
-    pedido.tiene_sena && pedido.monto_sena !== null && !pedido.saldo_pagado
-      ? `A COBRAR $${Math.round(Number(pedido.total) - Number(pedido.monto_sena))}`
-      : "";
-  if (saldo) {
+  // Nota para el repartidor. Ocupa el espacio que dejaron las barras y el QR.
+  //
+  // Arranca en 117 y va a cuerpo 4 mm: con 4,5 mm y arrancando en 123, una
+  // nota de 4 líneas terminaba a 1 mm del marco. El interlineado real de `^FB`
+  // no se puede calcular exacto desde acá, así que conviene el margen.
+  const nota = limpiar(pedido.nota_repartidor);
+  if (nota) {
+    L.push(`^FO${M},${y(108)}^GB${ancho},2,2^FS`);
+    L.push(`^FO${x},${y(112)}^A0N,${mm(3.5)},${mm(3.5)}^FDNOTA PARA EL REPARTIDOR^FS`);
     L.push(
-      `^FO${x + mm(32)},${y(131)}^A0N,${mm(4.5)},${mm(4.5)}^FB${interior - mm(32)},2,0,L^FD${esc(saldo)}^FS`
+      `^FO${x},${y(117)}^A0N,${mm(4)},${mm(4)}^FB${interior},${NOTA_LINEAS},0,L^FD${esc(nota)}^FS`
     );
   }
 

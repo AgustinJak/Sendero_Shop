@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { Pedido, EstadoPedido } from "@/types";
 import { getEstadoLabel } from "@/lib/estado-labels";
 import { formatPrice } from "@/lib/utils";
+import { NOTA_MAX_CARACTERES } from "@/lib/etiqueta-zpl";
 
 const ESTADO_COLORS: Record<EstadoPedido, string> = {
   pendiente_pago: "text-yellow-400 bg-yellow-400/10 border-yellow-400/20",
@@ -53,6 +54,7 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
   const [trackingCode, setTrackingCode] = useState(pedido.tracking_code || "");
   const [notas, setNotas] = useState(pedido.notas || "");
   const [entreCalles, setEntreCalles] = useState(pedido.entre_calles || "");
+  const [notaRepartidor, setNotaRepartidor] = useState(pedido.nota_repartidor || "");
 
   const possibleTransitions = getTransitions(pedido);
   const yaImportado = Boolean(pedido.correo_imported_at);
@@ -382,6 +384,48 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
               className="w-full py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-xs rounded-lg transition-colors disabled:opacity-50"
             >
               Guardar entre calles
+            </button>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-baseline justify-between">
+            <label className="block text-xs text-lavanda/60">
+              Nota para el repartidor
+            </label>
+            {/* El contador no es decorativo: `^FB` recorta lo que no entra sin
+                avisar, y la nota saldría cortada a la mitad de una palabra. */}
+            <span
+              className={`text-xs ${
+                notaRepartidor.length > NOTA_MAX_CARACTERES * 0.9
+                  ? "text-yellow-400"
+                  : "text-lavanda/40"
+              }`}
+            >
+              {notaRepartidor.length}/{NOTA_MAX_CARACTERES}
+            </span>
+          </div>
+          <textarea
+            value={notaRepartidor}
+            onChange={(e) =>
+              setNotaRepartidor(e.target.value.slice(0, NOTA_MAX_CARACTERES))
+            }
+            maxLength={NOTA_MAX_CARACTERES}
+            rows={3}
+            placeholder="Ej: Timbre roto, llamar al llegar. Portón negro."
+            className="w-full resize-none px-3 py-2 bg-navy-deep border border-lavanda/20 rounded-lg text-sm text-lavanda-light placeholder-lavanda/30 focus:outline-none focus:border-purpura"
+          />
+          <p className="text-xs text-lavanda/40">
+            Sale impresa en la etiqueta. No es lo mismo que las notas internas:
+            esta la lee el repartidor.
+          </p>
+          {notaRepartidor !== (pedido.nota_repartidor || "") && (
+            <button
+              onClick={() => updatePedido({ nota_repartidor: notaRepartidor || null })}
+              disabled={loading}
+              className="w-full py-2 bg-purpura/20 hover:bg-purpura/30 text-purpura text-xs rounded-lg transition-colors disabled:opacity-50"
+            >
+              Guardar nota
             </button>
           )}
         </div>

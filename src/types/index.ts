@@ -218,6 +218,10 @@ export interface Pedido {
   // Referencia de entrecalles para la etiqueta de mensajería local. No se pide
   // en el checkout: la carga el admin, que suele recibirla por WhatsApp.
   entre_calles: string | null;
+  // Aviso impreso en la etiqueta de envío. Distinto de `notas`, que son
+  // internas: estas las lee un tercero. Máximo 140 caracteres, topeado en
+  // la base — ver NOTA_MAX_CARACTERES en lib/etiqueta-zpl.ts.
+  nota_repartidor: string | null;
   notas: string | null;
   cancelado_at: string | null;
   created_at: string;
