@@ -823,9 +823,6 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
                           placeholder="Ej: Timbre roto, golpear la puerta. Portón negro."
                           className="w-full resize-none rounded-lg border border-linea bg-navy px-4 py-3 text-sm text-niebla placeholder:text-texto-3 focus:border-purpura focus:outline-none"
                         />
-                        <p className="mt-1 text-xs text-texto-3">
-                          La lee quien te lleva el paquete.
-                        </p>
                       </div>
                       </>
                     )}
