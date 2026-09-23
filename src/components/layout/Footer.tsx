@@ -11,11 +11,10 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/icons/logo-original.png"
+                src="/logo-sendero.svg"
                 alt="Sendero Shop"
                 width={32}
                 height={32}
-                className="rounded-full"
               />
               <span className="font-[family-name:var(--font-cinzel)] text-lg font-bold text-niebla tracking-wider">
                 SENDERO SHOP
@@ -61,11 +60,6 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
               <li>
                 <Link href="/catalogo" className="text-sm text-lavanda-light hover:text-niebla transition-colors">
                   Catálogo
-                </Link>
-              </li>
-              <li>
-                <Link href="/categorias" className="text-sm text-lavanda-light hover:text-niebla transition-colors">
-                  Categorías
                 </Link>
               </li>
               <li>
@@ -138,6 +132,17 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
           <p className="text-xs text-texto-3">
             © {new Date().getFullYear()} Sendero Shop. Hecho con amor en
             Argentina.
+          </p>
+          <p className="mt-2 text-xs text-texto-3">
+            Web diseñada por{" "}
+            <a
+              href="https://github.com/AgustinJak"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-lavanda-light underline-offset-2 hover:text-niebla hover:underline transition-colors"
+            >
+              AgusJak
+            </a>
           </p>
         </div>
       </div>

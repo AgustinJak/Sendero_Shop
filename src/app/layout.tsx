@@ -30,10 +30,16 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [
+      // El SVG va primero: el navegador que lo entiende se queda con ese y
+      // lo dibuja nítido en cualquier densidad. Los PNG quedan de fallback
+      // para los que no, así que no se borran.
+      { url: "/logo-sendero.svg", type: "image/svg+xml" },
       { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
       { url: "/favicon.png", sizes: "48x48", type: "image/png" },
       { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
     ],
+    // Apple no acepta SVG en el touch icon ni en los íconos del manifest:
+    // esos siguen siendo PNG por obligación, no por olvido.
     apple: "/icons/apple-touch-icon.png",
   },
   appleWebApp: {
