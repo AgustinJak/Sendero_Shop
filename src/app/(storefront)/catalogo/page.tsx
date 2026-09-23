@@ -10,6 +10,7 @@ import { FilterTransitionProvider } from "@/components/catalogo/FilterTransition
 import GridLoadingOverlay from "@/components/catalogo/GridLoadingOverlay";
 import CatalogBanner from "@/components/home/CatalogBanner";
 import { slugify } from "@/lib/utils";
+import CatalogoEsqueleto from "@/components/catalogo/CatalogoEsqueleto";
 
 export const metadata: Metadata = {
   title: "Catálogo",
@@ -74,7 +75,9 @@ export default async function CatalogoPage({ searchParams }: Props) {
         <CatalogBanner banner={catalogoBanners[0]} />
       )}
 
-      <Suspense>
+      {/* Con fallback: sin él, el footer quedaba pegado al banner y saltaba al
+          llegar la grilla. Ver CatalogoEsqueleto. */}
+      <Suspense fallback={<CatalogoEsqueleto />}>
         <FilterTransitionProvider>
           {/* Header */}
           <div className="flex items-end justify-between gap-6 mb-8">
