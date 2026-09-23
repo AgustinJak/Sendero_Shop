@@ -20,13 +20,21 @@ export default function ServiceWorkerRegister() {
       return;
     }
 
-    navigator.serviceWorker
-      .register("/sw.js", { updateViaCache: "none" })
-      .then((reg) => {
-        // Check for updates periodically
-        reg.update();
-      })
-      .catch(() => {});
+    // Se registra con la página ya cargada y el navegador libre. Al instalarse
+    // precarga la home, el catálogo e íconos (~250 KB): registrado apenas
+    // hidrataba React, eso competía con el banner por el ancho de banda.
+    //
+    // Sin reg.update() después de registrar: disparaba una actualización
+    // mientras el SW todavía se instalaba, y fallaba con "Failed to update a
+    // ServiceWorker" (el error de consola que marcaba PageSpeed). Con
+    // updateViaCache "none" el navegador ya busca versiones nuevas solo.
+    const registrar = () =>
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).catch(() => {});
+    const cuandoEsteLibre = () =>
+      "requestIdleCallback" in window ? window.requestIdleCallback(registrar) : setTimeout(registrar, 1000);
+
+    if (document.readyState === "complete") cuandoEsteLibre();
+    else window.addEventListener("load", cuandoEsteLibre, { once: true });
   }, []);
 
   return null;

@@ -120,7 +120,7 @@ export default async function CatalogoPage({ searchParams }: Props) {
             {/* Grid */}
             <div className="flex-1">
               <GridLoadingOverlay>
-                <ProductGrid productos={productos} />
+                <ProductGrid productos={productos} prioridad />
               </GridLoadingOverlay>
               <TrackItemList
                 listName="Catálogo"

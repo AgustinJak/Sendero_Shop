@@ -106,7 +106,7 @@ export default async function ColeccionPage({ params }: Props) {
       </div>
 
       {/* Grid */}
-      <ProductGrid productos={coleccion.productos} />
+      <ProductGrid productos={coleccion.productos} prioridad />
       <TrackItemList
         listName={`Colección: ${coleccion.nombre}`}
         products={coleccion.productos.map((p) => ({

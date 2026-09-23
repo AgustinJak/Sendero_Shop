@@ -6,9 +6,11 @@ import type { Producto } from "@/types";
 interface ProductCardProps {
   producto: Producto;
   index?: number;
+  /** Ver ProductGrid: solo cuando la grilla es lo primero de la página. */
+  prioridad?: boolean;
 }
 
-export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
+export default function ProductCard({ producto, index = 0, prioridad = false }: ProductCardProps) {
   const imagen = producto.imagenes?.filter((i) => i.tipo !== "video").sort((a, b) => a.orden - b.orden)[0];
   const tieneOferta = producto.precio_oferta && producto.precio_oferta < producto.precio;
 
@@ -30,9 +32,10 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
               alt={imagen.alt_text || producto.nombre}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-              // Las primeras de la grilla suelen ser el LCP.
-              loading={index < 4 ? "eager" : "lazy"}
-              fetchPriority={index < 2 ? "high" : "auto"}
+              // Las primeras de la grilla suelen ser el LCP, pero solo cuando la
+              // grilla encabeza la página.
+              loading={prioridad && index < 4 ? "eager" : "lazy"}
+              fetchPriority={prioridad && index < 2 ? "high" : "auto"}
               className="object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (

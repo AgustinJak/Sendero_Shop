@@ -139,7 +139,7 @@ export default function Footer({ whatsapp }: { whatsapp: string }) {
               href="https://github.com/AgustinJak"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-lavanda-light underline-offset-2 hover:text-niebla hover:underline transition-colors"
+              className="text-lavanda-light underline decoration-lavanda-light/40 underline-offset-2 hover:text-niebla hover:decoration-niebla transition-colors"
             >
               AgusJak
             </a>

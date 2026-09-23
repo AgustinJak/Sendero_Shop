@@ -95,19 +95,25 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${cinzel.variable}`}>
       {GTM_ID && (
-        // lazyOnload: GTM + GA4 pesan ~310 KB, más que todo el JS propio de la
-        // web, y con afterInteractive competían con la hidratación en celulares
-        // lentos. Los eventos que se empujan antes (begin_checkout, purchase)
-        // no se pierden: quedan en window.dataLayer y GTM los lee al cargar.
+        // GTM se carga con la primera interacción (toque, scroll, tecla, mouse),
+        // o a los 8 segundos si no hay ninguna. GTM + GA4 pesan ~310 KB y eran
+        // lo que más bloqueaba el hilo principal en celulares (PageSpeed,
+        // 2026-09-23: 343 ms de CPU). Una persona interactúa enseguida, así que
+        // las visitas reales se siguen midiendo; lo que se pierde es la visita
+        // que se va antes de 8 segundos sin tocar nada.
+        //
+        // dataLayer se inicializa de entrada: los eventos que se empujan antes
+        // (begin_checkout, purchase) quedan encolados y GTM los lee al cargar.
         <Script
           id="gtm-script"
-          strategy="lazyOnload"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
-            __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-})(window,document,'script','dataLayer','${GTM_ID}');`,
+            __html: `(function(w,d,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});
+var hecho=false,ev=['pointerdown','keydown','touchstart','scroll','mousemove'],op={passive:true};
+function cargar(){if(hecho)return;hecho=true;ev.forEach(function(e){w.removeEventListener(e,cargar,op)});
+var j=d.createElement('script');j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i;d.head.appendChild(j);}
+ev.forEach(function(e){w.addEventListener(e,cargar,op)});setTimeout(cargar,8000);
+})(window,document,'dataLayer','${GTM_ID}');`,
           }}
         />
       )}
