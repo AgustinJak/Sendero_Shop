@@ -53,6 +53,12 @@ export interface ProductoImagen {
   id: string;
   producto_id: string;
   url: string;
+  /**
+   * Miniatura WebP de ~480 px para las tarjetas. La genera el servidor al
+   * registrar la imagen (ver lib/imagenes.ts). Null en videos, y en imágenes
+   * viejas hasta que se procesen: las tarjetas caen a `url`.
+   */
+  url_thumb: string | null;
   orden: number;
   alt_text: string | null;
   tipo: "imagen" | "video";
@@ -215,8 +221,8 @@ export interface Pedido {
   sena_pagada_at: string | null;
   saldo_pagado: boolean;
   saldo_pagado_at: string | null;
-  // Referencia de entrecalles para la etiqueta de mensajería local. No se pide
-  // en el checkout: la carga el admin, que suele recibirla por WhatsApp.
+  // Referencia de entrecalles para la etiqueta de mensajería local. El cliente
+  // la puede cargar (opcional) en el checkout, y el admin editarla después.
   entre_calles: string | null;
   // Aviso impreso en la etiqueta de envío. Distinto de `notas`, que son
   // internas: estas las lee un tercero. Máximo 140 caracteres, topeado en

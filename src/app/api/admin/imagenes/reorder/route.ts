@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 // PATCH /api/admin/imagenes/reorder — update image order
-export async function PATCH(req: NextRequest) {
+async function patch(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -24,3 +25,6 @@ export async function PATCH(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const PATCH = conRevalidacion(patch);

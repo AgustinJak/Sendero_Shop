@@ -2,7 +2,6 @@
 
 import { useState, useRef, useEffect, useMemo } from "react";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { extractYouTubeId, getYouTubeThumbnail, isYouTubeUrl } from "@/lib/youtube";
 import type { ProductoImagen, VarianteSeleccion } from "@/types";
 
@@ -132,7 +131,10 @@ export default function ProductGallery({
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
-                priority
+                // Es el LCP de la página de producto. En Next 16 `priority` quedó
+                // deprecado: se pide carga inmediata y prioridad alta por separado.
+                loading="eager"
+                fetchPriority="high"
               />
             )}
         </div>
@@ -179,7 +181,7 @@ export default function ProductGallery({
                 </div>
               ) : (
                 <Image
-                  src={media.url}
+                  src={media.url_thumb ?? media.url}
                   alt={media.alt_text || `${nombre} ${i + 1}`}
                   fill
                   sizes="64px"
@@ -244,11 +246,9 @@ export default function ProductGallery({
 
             {/* Content */}
             {isYT ? (
-              <motion.div
+              <div
                 key={indice}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="w-[90vw] max-w-[1000px] aspect-video"
+                className="w-[90vw] max-w-[1000px] aspect-video animate-zoom-in motion-reduce:animate-none"
                 onClick={(e) => e.stopPropagation()}
               >
                 <iframe
@@ -258,13 +258,11 @@ export default function ProductGallery({
                   title={nombre}
                   className="w-full h-full rounded-lg"
                 />
-              </motion.div>
+              </div>
             ) : !isVideo ? (
-              <motion.div
+              <div
                 key={indice}
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className={`relative ${zoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
+                className={`relative animate-zoom-in motion-reduce:animate-none ${zoomed ? "cursor-zoom-out" : "cursor-zoom-in"}`}
                 onClick={(e) => { e.stopPropagation(); setZoomed(!zoomed); }}
               >
                 <Image
@@ -275,7 +273,7 @@ export default function ProductGallery({
                   className={`max-h-[85vh] w-auto object-contain transition-transform duration-300 ${zoomed ? "scale-150" : "scale-100"}`}
                   quality={90}
                 />
-              </motion.div>
+              </div>
             ) : null}
 
             {/* Counter */}

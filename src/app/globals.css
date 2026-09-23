@@ -39,6 +39,19 @@
   --animate-drop-in: drop-in 0.2s ease-out;
   --animate-slide-in-right: slide-in-right 0.3s ease-out;
   --animate-pop: pop 0.35s ease-out;
+  --animate-flotar: flotar 2s ease-in-out infinite;
+  --animate-page-in: page-in 0.25s ease-out;
+  --animate-scale-in: scale-in 0.15s ease-out 0.03s backwards;
+  --animate-hornet-in: hornet-in 0.4s ease-out 0.15s backwards;
+  --animate-hornet-swing: hornet-swing 4s ease-in-out 0.6s infinite;
+  --animate-zoom-in: zoom-in 0.25s ease-out;
+  --animate-entrar-izq: entrar-izq 0.4s cubic-bezier(0.33, 1, 0.68, 1) backwards;
+  --animate-trazo: trazo 0.6s cubic-bezier(0.33, 1, 0.68, 1) 0.2s backwards;
+  --animate-drawer-in: slide-up 0.4s cubic-bezier(0.215, 0.61, 0.355, 1);
+  --animate-drawer-out: drawer-out 0.3s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards;
+  --animate-overlay-in: fade-in 0.25s ease-out;
+  --animate-overlay-out: overlay-out 0.2s ease-in forwards;
+  --animate-subir: subir 0.8s ease-out backwards;
 }
 
 @keyframes slide-up {
@@ -70,6 +83,167 @@
 @keyframes slide-in-right {
   from {
     transform: translateX(100%);
+  }
+}
+
+/* Vaivén de los botones flotantes. Antes lo hacía framer-motion, que por
+   estar en el layout viajaba en TODAS las páginas (117 KB de JS) solo para
+   mover dos botones 6 px arriba y abajo. */
+@keyframes flotar {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+/* Entrada de cada página (template.tsx). Antes era un motion.div que salía del
+   server con opacity 0 y recién se veía cuando framer-motion terminaba de
+   hidratar: en un celular lento eran segundos de pantalla vacía. En CSS corre
+   apenas se pinta, sin esperar al JS, y en reposo queda visible. */
+@keyframes page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+/* Dropdown del catálogo en el header (HornetDropdown). */
+@keyframes scale-in {
+  from {
+    transform: scale(0.98);
+  }
+}
+
+@keyframes hornet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes hornet-swing {
+  25% {
+    transform: rotate(-1.5deg);
+  }
+  50% {
+    transform: rotate(1.5deg);
+  }
+  75% {
+    transform: rotate(-0.5deg);
+  }
+}
+
+/* Tarjetas de producto: suben y aparecen a medida que entran en pantalla, sin
+   JS. Donde el navegador no soporta animaciones atadas al scroll, se ven
+   directamente — nunca quedan invisibles. Las que ya están en pantalla al
+   cargar se muestran de entrada, que es lo que necesita el LCP. */
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .aparecer-al-ver {
+      animation: aparecer auto linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
+  }
+}
+
+/* Lightbox de la galería de producto. */
+@keyframes zoom-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+/* Filtros del catálogo (CatalogFilters). Antes eran GSAP: 81 KB de JS en el
+   catálogo para entradas, un acordeón y un brillo. */
+@keyframes entrar-izq {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+}
+
+@keyframes trazo {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes drawer-out {
+  to {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes overlay-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes brillo-in {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+}
+
+@keyframes brillo-pulso {
+  to {
+    box-shadow: 0 0 8px rgba(212, 168, 83, 0.5);
+  }
+}
+
+/* Punto del filtro activo: aparece con rebote y después late despacio. */
+.brillo-activo {
+  animation:
+    brillo-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    brillo-pulso 1.5s ease-in-out 0.3s infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .brillo-activo {
+    animation: none;
+  }
+}
+
+/* Hero estático de la home (HomeHero, se ve cuando no hay banners activos). */
+@keyframes subir {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes particula {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-30px) scale(1.5);
+    opacity: 0.8;
+  }
+}
+
+.particula {
+  opacity: 0.2;
+  animation-name: particula;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .particula {
+    animation: none;
   }
 }
 

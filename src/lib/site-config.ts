@@ -11,6 +11,7 @@
 
 import "server-only";
 import { cache } from "react";
+import { unstable_cache } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { parseTramos, TRAMOS_DEFAULT } from "@/lib/mayorista";
 import type { MayoristaTramo } from "@/types";
@@ -42,9 +43,26 @@ const DEFAULTS = {
 
 export type SiteConfig = typeof DEFAULTS;
 
+/**
+ * Las filas de `configuracion`, cacheadas entre requests con la misma etiqueta
+ * que el catálogo ("tienda"): se leen en el layout de todas las páginas, así
+ * que sin esto cada visita al catálogo consultaba Supabase solo para esto. Se
+ * vencen a los 5 minutos o cuando el admin guarda la config.
+ *
+ * `cache()` de React, más abajo, sigue deduplicando dentro de un mismo request.
+ */
+const leerConfiguracion = unstable_cache(
+  async () => {
+    const db = await createServiceRoleClient();
+    const { data } = await db.from("configuracion").select("key, value");
+    return data ?? [];
+  },
+  ["configuracion"],
+  { tags: ["tienda"], revalidate: 300 }
+);
+
 export const getSiteConfig = cache(async (): Promise<SiteConfig> => {
-  const db = await createServiceRoleClient();
-  const { data } = await db.from("configuracion").select("key, value");
+  const data = await leerConfiguracion();
 
   const map: Record<string, string> = {};
   for (const row of data ?? []) map[row.key] = row.value;

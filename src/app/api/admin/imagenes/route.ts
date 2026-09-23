@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import sharp from "sharp";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { CACHE_UN_ANIO, generarVersiones } from "@/lib/imagenes";
+import { conRevalidacion } from "@/lib/revalidar";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"];
 const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
 
-// Compresión — mantener consistente con /optimizar-bucket
-const IMG_MAX_WIDTH = 1600;
-const IMG_WEBP_QUALITY = 80;
+// La compresión vive en lib/imagenes.ts, compartida con register (la subida
+// que usa el panel hoy) y con el reproceso de imágenes viejas.
 
-export async function POST(req: NextRequest) {
+async function post(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -49,56 +49,47 @@ export async function POST(req: NextRequest) {
   const tipo = isVideo ? "video" : "imagen";
   const serviceClient = await createServiceRoleClient();
 
-  // Preparar buffer + metadatos según sea imagen o video
-  let uploadBody: Buffer | File = file;
-  let uploadContentType = file.type;
-  let uploadExt = file.name.split(".").pop() || (isVideo ? "mp4" : "jpg");
+  const base = `${productoId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const storage = serviceClient.storage.from("productos");
 
-  if (isImage) {
-    // Comprimir a WebP 1600px Q80 ANTES de subir.
-    // Esto reduce el egress de Supabase significativamente (PNGs 2MB → WebP ~200KB).
-    try {
-      const inputBuffer = Buffer.from(await file.arrayBuffer());
-      let pipeline = sharp(inputBuffer, { failOn: "none" }).rotate();
-      const meta = await pipeline.metadata();
-      if (meta.width && meta.width > IMG_MAX_WIDTH) {
-        pipeline = pipeline.resize({ width: IMG_MAX_WIDTH, withoutEnlargement: true });
+  let url: string;
+  let urlThumb: string | null = null;
+
+  const subir = async (ruta: string, cuerpo: Buffer | File, contentType: string) => {
+    const { error } = await storage.upload(ruta, cuerpo, { contentType, cacheControl: CACHE_UN_ANIO });
+    if (error) throw new Error(error.message);
+    return storage.getPublicUrl(ruta).data.publicUrl;
+  };
+
+  try {
+    if (isImage) {
+      let versiones: Awaited<ReturnType<typeof generarVersiones>> | null = null;
+      try {
+        versiones = await generarVersiones(Buffer.from(await file.arrayBuffer()));
+      } catch (err) {
+        // Si sharp no puede con el formato, se sube el original.
+        console.error("[imagenes] compresión falló, usando original:", (err as Error).message);
       }
-      uploadBody = await pipeline
-        .webp({ quality: IMG_WEBP_QUALITY, effort: 5 })
-        .toBuffer();
-      uploadContentType = "image/webp";
-      uploadExt = "webp";
-    } catch (err) {
-      // Si sharp falla (p.ej. formato raro), subir el original como fallback
-      console.error("[imagenes] compresión falló, usando original:", (err as Error).message);
+      if (versiones) {
+        url = await subir(`${base}.webp`, versiones.principal, "image/webp");
+        urlThumb = await subir(`${base}-thumb.webp`, versiones.miniatura, "image/webp");
+      } else {
+        url = await subir(`${base}.${file.name.split(".").pop() || "jpg"}`, file, file.type);
+      }
+    } else {
+      url = await subir(`${base}.${file.name.split(".").pop() || "mp4"}`, file, file.type);
     }
+  } catch (err) {
+    return NextResponse.json({ error: (err as Error).message }, { status: 500 });
   }
-
-  // Upload to Supabase Storage
-  const fileName = `${productoId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${uploadExt}`;
-
-  const { error: uploadError } = await serviceClient.storage
-    .from("productos")
-    .upload(fileName, uploadBody, {
-      contentType: uploadContentType,
-      cacheControl: "31536000",
-    });
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
-  }
-
-  const { data: { publicUrl } } = serviceClient.storage
-    .from("productos")
-    .getPublicUrl(fileName);
 
   // Insert record
   const { data, error } = await serviceClient
     .from("producto_imagenes")
     .insert({
       producto_id: productoId,
-      url: publicUrl,
+      url,
+      url_thumb: urlThumb,
       orden,
       alt_text: null,
       tipo,
@@ -112,3 +103,6 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json(data, { status: 201 });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const POST = conRevalidacion(post);

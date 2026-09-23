@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 interface OpcionInput {
   temp_key: string; // clave temporal para mapear reglas
@@ -22,7 +23,7 @@ interface ReglaInput {
   precio_adicional: number;
 }
 
-export async function PUT(
+async function put(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -117,3 +118,6 @@ export async function PUT(
 
   return NextResponse.json({ ok: true });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const PUT = conRevalidacion(put);

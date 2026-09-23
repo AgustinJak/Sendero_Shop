@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
-export async function PATCH(
+async function patch(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; seccionId: string }> }
 ) {
@@ -24,7 +25,7 @@ export async function PATCH(
   return NextResponse.json(data);
 }
 
-export async function DELETE(
+async function del(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string; seccionId: string }> }
 ) {
@@ -39,3 +40,7 @@ export async function DELETE(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const PATCH = conRevalidacion(patch);
+export const DELETE = conRevalidacion(del);

@@ -84,6 +84,10 @@ export default function ProductoImagenes({
           .from("productos")
           .uploadToSignedUrl(path, token, file, {
             contentType: file.type,
+            // Normalmente este crudo se borra al registrar (se reemplaza por la
+            // versión optimizada). Si la optimización fallara y quedara él, que
+            // al menos se cachee: sin esto Supabase lo servía con no-cache.
+            cacheControl: "31536000",
           });
 
         if (uploadErr) {

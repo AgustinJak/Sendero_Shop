@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -16,7 +17,7 @@ export async function GET() {
   return NextResponse.json(data);
 }
 
-export async function POST(req: NextRequest) {
+async function post(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -36,3 +37,6 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const POST = conRevalidacion(post);

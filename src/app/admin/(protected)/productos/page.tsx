@@ -8,7 +8,7 @@ export default async function ProductosAdminPage() {
 
   const { data: productos } = await supabase
     .from("productos")
-    .select("id, nombre, slug, precio, precio_oferta, activo, destacado, linea, categoria:categorias(nombre), imagenes:producto_imagenes(url, orden, tipo)")
+    .select("id, nombre, slug, precio, precio_oferta, activo, destacado, linea, categoria:categorias(nombre), imagenes:producto_imagenes(url, url_thumb, orden, tipo)")
     .order("created_at", { ascending: false });
 
   return (
@@ -41,7 +41,7 @@ export default async function ProductosAdminPage() {
               </thead>
               <tbody className="divide-y divide-lavanda/5">
                 {productos.map((prod) => {
-                  const img = (prod.imagenes as { url: string; orden: number; tipo?: string }[])
+                  const img = (prod.imagenes as { url: string; url_thumb: string | null; orden: number; tipo?: string }[])
                     ?.filter((i) => i.tipo !== "video")
                     ?.sort((a, b) => a.orden - b.orden)[0];
                   const cat = prod.categoria as unknown as { nombre: string } | null;
@@ -50,7 +50,7 @@ export default async function ProductosAdminPage() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
                           {img ? (
-                            <img src={img.url} alt="" className="w-10 h-10 rounded-lg object-cover bg-navy-deep" />
+                            <img src={img.url_thumb ?? img.url} alt="" loading="lazy" className="w-10 h-10 rounded-lg object-cover bg-navy-deep" />
                           ) : (
                             <div className="w-10 h-10 rounded-lg bg-navy-deep flex items-center justify-center text-lavanda/20">
                               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">

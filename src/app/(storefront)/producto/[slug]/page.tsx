@@ -12,6 +12,17 @@ import ReviewList from "@/components/reviews/ReviewList";
 import TrackItemList from "@/components/productos/TrackItemList";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 
+// Se arma una vez y Vercel la sirve ya hecha. Se regenera sola a los 5 minutos,
+// y en el acto cuando el admin cambia algo (ver lib/revalidar.ts).
+export const revalidate = 300;
+
+// Lista vacía: ninguna se arma en el build, cada una se genera la primera vez
+// que alguien la visita y desde ahí queda cacheada. Sin esto Next no cachea
+// las rutas con parámetro.
+export function generateStaticParams() {
+  return [];
+}
+
 const getProducto = cache(async (slug: string) => {
   return getProductoBySlug(slug);
 });
@@ -71,13 +82,16 @@ export default async function ProductoPage({ params }: Props) {
   } = await getSiteConfig();
   const relacionados = await getProductosRelacionados(producto, 4);
 
-  // Fetch approved reviews for JSON-LD aggregateRating
+  // Reseñas aprobadas: para el JSON-LD y para la lista. Antes ReviewList las
+  // pedía desde el navegador después de cargar, y al llegar empujaban el footer
+  // hacia abajo (el salto de layout de esta página). Vienen en el HTML.
   const supabase = await createServiceRoleClient();
   const { data: reviewsData } = await supabase
     .from("reviews")
-    .select("rating")
+    .select("id, nombre_cliente, rating, comentario, created_at")
     .eq("producto_id", producto.id)
-    .eq("aprobado", true);
+    .eq("aprobado", true)
+    .order("created_at", { ascending: false });
 
   const reviewCount = reviewsData?.length || 0;
   const avgRating =
@@ -174,7 +188,7 @@ export default async function ProductoPage({ params }: Props) {
       />
 
       {/* Reviews */}
-      <ReviewList productoId={producto.id} />
+      <ReviewList productoId={producto.id} iniciales={reviewsData ?? []} />
 
       {/* Te puede interesar */}
       {relacionados.length > 0 && (

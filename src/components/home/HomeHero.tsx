@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { whatsappLink } from "@/lib/utils";
 
@@ -36,61 +33,38 @@ export default function HomeHero({
       {/* Partículas flotantes */}
       <div className="absolute inset-0 pointer-events-none">
         {PARTICULAS.map((p, i) => (
-          <motion.div
+          // Vaivén en CSS (`particula` en globals.css); cada una con su ritmo.
+          <div
             key={i}
-            className="absolute w-1 h-1 bg-lavanda/40 rounded-full"
-            style={{ left: `${p.left}%`, top: `${p.top}%` }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.8, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: p.duration,
-              repeat: Infinity,
-              delay: p.delay,
-              ease: "easeInOut",
+            className="particula absolute w-1 h-1 bg-lavanda/40 rounded-full"
+            style={{
+              left: `${p.left}%`,
+              top: `${p.top}%`,
+              animationDuration: `${p.duration}s`,
+              animationDelay: `${p.delay}s`,
             }}
           />
         ))}
       </div>
 
       <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <motion.p
-          className="volanta mb-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        {/* Entrada escalonada en CSS: corre apenas se pinta, sin esperar al JS.
+            Con framer-motion este texto salía del server invisible. */}
+        <p className="volanta mb-4 animate-subir [animation-duration:0.6s] motion-reduce:animate-none">
           Diseño y fabricación propia · Villa Crespo, CABA
-        </motion.p>
+        </p>
 
-        <motion.h1
-          className="display display-hero text-texto mb-6"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
+        <h1 className="display display-hero text-texto mb-6 animate-subir motion-reduce:animate-none">
           Sendero de los Sueños
-        </motion.h1>
+        </h1>
 
-        <motion.p
-          className="text-lg sm:text-xl text-texto-2 mb-8 max-w-2xl mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
+        <p className="text-lg sm:text-xl text-texto-2 mb-8 max-w-2xl mx-auto animate-subir [animation-delay:0.2s] motion-reduce:animate-none">
           Figuras, katanas y accesorios de colección inspirados en tus
           franquicias favoritas. Cada pieza es única, fabricada a pedido para
           vos.
-        </motion.p>
+        </p>
 
-        <motion.div
-          className="flex flex-col sm:flex-row gap-4 justify-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.4 }}
-        >
+        <div className="flex flex-col sm:flex-row gap-4 justify-center animate-subir [animation-delay:0.4s] motion-reduce:animate-none">
           <Link
             href="/catalogo"
             className="group relative inline-flex items-center justify-center px-8 py-3 bg-purpura hover:bg-purpura/80 text-niebla font-semibold rounded-lg overflow-hidden transition-colors"
@@ -107,20 +81,15 @@ export default function HomeHero({
           >
             Consultanos
           </a>
-        </motion.div>
+        </div>
 
         {unidadesVendidas > 0 && (
-          <motion.p
-            className="mt-8 flex items-center justify-center gap-2 text-sm text-texto-3"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
+          <p className="mt-8 flex items-center justify-center gap-2 text-sm text-texto-3 animate-subir [animation-delay:0.6s] motion-reduce:animate-none">
             <span className="text-ambar tracking-widest" aria-hidden="true">★★★★★</span>
             <span>
               <b className="text-texto-2">+{Math.floor(unidadesVendidas / 10) * 10} piezas</b> entregadas a clientes
             </span>
-          </motion.p>
+          </p>
         )}
       </div>
 

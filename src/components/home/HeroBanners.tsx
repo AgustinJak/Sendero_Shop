@@ -32,6 +32,9 @@ export default function HeroBanners({ banners }: { banners: Banner[] }) {
           src={banner.imagen_url}
           alt={banner.titulo || "Banner"}
           className="absolute inset-0 w-full h-full object-cover"
+          // El primer banner es el LCP de la home: que el navegador lo pida
+          // antes que el resto. Los siguientes entran rotando, sin apuro.
+          fetchPriority={current === 0 ? "high" : "auto"}
         />
       )}
       {/* Overlay */}

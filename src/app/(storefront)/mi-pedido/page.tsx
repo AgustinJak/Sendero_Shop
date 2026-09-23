@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import OrderLookupForm from "@/components/pedido/OrderLookupForm";
 
+// Se arma una vez y Vercel la sirve ya hecha. Se regenera sola a los 5 minutos,
+// y en el acto cuando el admin cambia algo (ver lib/revalidar.ts).
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: "Buscar mi pedido",
   description: "Consultá el estado de tu pedido en Sendero Shop.",

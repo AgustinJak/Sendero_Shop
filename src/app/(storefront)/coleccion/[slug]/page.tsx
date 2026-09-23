@@ -6,6 +6,17 @@ import { getColeccionBySlug } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
 
+// Se arma una vez y Vercel la sirve ya hecha. Se regenera sola a los 5 minutos,
+// y en el acto cuando el admin cambia algo (ver lib/revalidar.ts).
+export const revalidate = 300;
+
+// Lista vacía: ninguna se arma en el build, cada una se genera la primera vez
+// que alguien la visita y desde ahí queda cacheada. Sin esto Next no cachea
+// las rutas con parámetro.
+export function generateStaticParams() {
+  return [];
+}
+
 const getColeccion = cache(async (slug: string) => {
   return getColeccionBySlug(slug);
 });

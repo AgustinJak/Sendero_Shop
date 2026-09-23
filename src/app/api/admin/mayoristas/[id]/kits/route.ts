@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 const KIT_SELECT = `*, items:mayorista_kit_items(*, item:mayorista_items(*, imagenes:mayorista_imagenes(*)))`;
 
@@ -7,7 +8,7 @@ const KIT_SELECT = `*, items:mayorista_kit_items(*, item:mayorista_items(*, imag
  * Crear un kit en una lista.
  * Body: { nombre, descripcion?, descuento_extra_pct?, items: [{ item_id, cantidad }] }
  */
-export async function POST(
+async function post(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
@@ -64,3 +65,6 @@ export async function POST(
 
   return NextResponse.json(full, { status: 201 });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const POST = conRevalidacion(post);

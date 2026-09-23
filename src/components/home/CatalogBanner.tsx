@@ -11,6 +11,8 @@ export default function CatalogBanner({ banner }: { banner: Banner }) {
           src={banner.imagen_url}
           alt={banner.titulo || "Banner"}
           className="w-full h-32 sm:h-40 object-cover"
+          // Es lo primero que se ve en el catálogo y suele ser el LCP.
+          fetchPriority="high"
         />
       ) : (
         <div className="w-full h-32 sm:h-40 bg-gradient-to-r from-purpura/20 to-ambar/20" />

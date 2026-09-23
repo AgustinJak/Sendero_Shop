@@ -7,6 +7,10 @@ import TrackItemList from "@/components/productos/TrackItemList";
 import { CategoriesSection, CollectionsSection, WhatsAppCTA } from "@/components/home/HomeSections";
 import SectionHeader from "@/components/ui/SectionHeader";
 
+// Se arma una vez y Vercel la sirve ya hecha. Se regenera sola a los 5 minutos,
+// y en el acto cuando el admin cambia algo (ver lib/revalidar.ts).
+export const revalidate = 300;
+
 export default async function Home() {
   const [heroBanners, destacados, categorias, colecciones, whatsapp, unidadesWeb, siteConfig] =
     await Promise.all([

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 // GET /api/admin/reviews — listar todas las reviews (admin)
 export async function GET() {
@@ -24,7 +25,7 @@ export async function GET() {
 }
 
 // PATCH /api/admin/reviews — aprobar/rechazar/eliminar
-export async function PATCH(req: NextRequest) {
+async function patch(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -52,7 +53,7 @@ export async function PATCH(req: NextRequest) {
 }
 
 // DELETE /api/admin/reviews — eliminar review
-export async function DELETE(req: NextRequest) {
+async function del(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
@@ -75,3 +76,7 @@ export async function DELETE(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const PATCH = conRevalidacion(patch);
+export const DELETE = conRevalidacion(del);

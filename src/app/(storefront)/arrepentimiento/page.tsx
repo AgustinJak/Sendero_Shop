@@ -3,6 +3,10 @@ import Link from "next/link";
 import { getWhatsapp } from "@/lib/site-config";
 import { whatsappLink, formatWhatsappDisplay } from "@/lib/utils";
 
+// Se arma una vez y Vercel la sirve ya hecha. Se regenera sola a los 5 minutos,
+// y en el acto cuando el admin cambia algo (ver lib/revalidar.ts).
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: "Botón de Arrepentimiento",
   description:

@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
-import Image from "next/image";
 import type { Categoria } from "@/types";
 
 interface HornetDropdownProps {
@@ -63,20 +61,18 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
         className="text-lavanda-light hover:text-niebla transition-colors flex items-center gap-1"
       >
         Catálogo
-        <motion.svg
+        <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
           fill="currentColor"
-          className="w-4 h-4"
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
+          className={`w-4 h-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         >
           <path
             fillRule="evenodd"
             d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z"
             clipRule="evenodd"
           />
-        </motion.svg>
+        </svg>
       </Link>
 
       {/* Dropdown — Hornet debajo del menú, como arrastrándolo.
@@ -89,12 +85,7 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
           >
             <div className="relative">
               {/* Menú de categorías */}
-              <motion.div
-                className="bg-navy-deep/98 backdrop-blur-md border border-lavanda/20 rounded-xl shadow-2xl shadow-black/50 overflow-hidden w-[600px] max-w-[calc(100vw-2rem)]"
-                initial={{ scale: 0.98 }}
-                animate={{ scale: 1 }}
-                transition={{ duration: 0.15, delay: 0.03 }}
-              >
+              <div className="bg-navy-deep/98 backdrop-blur-md border border-lavanda/20 rounded-xl shadow-2xl shadow-black/50 overflow-hidden w-[600px] max-w-[calc(100vw-2rem)] animate-scale-in motion-reduce:animate-none">
                 <div className="flex">
                   {/* Izquierda: categorías padre (hover abre sus subcategorías) */}
                   <div className="w-56 shrink-0 p-2 border-r border-linea max-h-[65vh] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -187,44 +178,36 @@ export default function HornetDropdown({ categorias = [] }: HornetDropdownProps)
                     <span aria-hidden="true">→</span>
                   </Link>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Hornet — agarrada de la esquina inferior derecha del menú, colgando.
                   pointer-events-none: es decorativa, no debe agrandar el área de hover. */}
-              <motion.div
-                className="absolute z-10 pointer-events-none"
-                initial={{ opacity: 0, y: -20 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  rotate: [0, -1.5, 1.5, -0.5, 0],
-                }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{
-                  opacity: { duration: 0.3, delay: 0.15 },
-                  y: { duration: 0.4, delay: 0.15 },
-                  rotate: {
-                    duration: 4,
-                    delay: 0.6,
-                    repeat: Infinity,
-                    ease: "easeInOut",
-                    repeatType: "loop",
-                  },
-                }}
+              {/* Entrada en el div de afuera y balanceo en el de adentro: son dos
+                  transforms distintos y en un mismo elemento se pisarían. */}
+              <div
+                className="absolute z-10 pointer-events-none animate-hornet-in motion-reduce:animate-none"
                 // Posición de la Hornet en píxeles (bottom/right). Cambiá estos
                 // dos números y guardá: más negativo bottom = más abajo; más
                 // negativo right = más a la derecha. Positivo = al revés.
-                style={{ transformOrigin: "top right", bottom: -180, right: 300 }}
+                style={{ bottom: -180, right: 300 }}
               >
-                <Image
-                  src="/assets/hornet.png"
-                  alt="Hornet"
-                  width={260}
-                  height={325}
-                  className="drop-shadow-[0_0_25px_rgba(196,30,58,0.5)] pointer-events-none select-none"
-                  priority
-                />
-              </motion.div>
+                <div
+                  className="animate-hornet-swing motion-reduce:animate-none"
+                  style={{ transformOrigin: "top right" }}
+                >
+                  {/* WebP de 520 px (2x de lo que se muestra): el PNG era de
+                      1200x1200 y pesaba 138 KB; este, 10 KB. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/assets/hornet.webp"
+                    alt="Hornet"
+                    width={260}
+                    height={325}
+                    className="drop-shadow-[0_0_25px_rgba(196,30,58,0.5)] pointer-events-none select-none"
+                    decoding="async"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}

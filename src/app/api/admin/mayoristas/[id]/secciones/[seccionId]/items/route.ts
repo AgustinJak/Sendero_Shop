@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 /**
  * Agrega un item a una sección tomando los datos de un producto del catálogo.
@@ -11,7 +12,7 @@ import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supab
  * pública del bucket `productos` (storage_path=null → no se borra del bucket
  * de productos cuando se quita el item de la lista).
  */
-export async function POST(
+async function post(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; seccionId: string }> }
 ) {
@@ -93,3 +94,6 @@ export async function POST(
 
   return NextResponse.json(full, { status: 201 });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const POST = conRevalidacion(post);

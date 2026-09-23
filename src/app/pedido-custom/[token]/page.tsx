@@ -6,6 +6,9 @@ import { calculateSubtotal, calculateDescuento } from "@/lib/borrador";
 import type { PedidoBorrador } from "@/types";
 import CustomCheckout from "./CustomCheckout";
 
+// Datos privados de un pedido a medida: se arma en cada visita, nunca se cachea.
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ token: string }>;
 }

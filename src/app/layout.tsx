@@ -95,9 +95,13 @@ export default function RootLayout({
   return (
     <html lang="es" className={`${inter.variable} ${cinzel.variable}`}>
       {GTM_ID && (
+        // lazyOnload: GTM + GA4 pesan ~310 KB, más que todo el JS propio de la
+        // web, y con afterInteractive competían con la hidratación en celulares
+        // lentos. Los eventos que se empujan antes (begin_checkout, purchase)
+        // no se pierden: quedan en window.dataLayer y GTM los lee al cargar.
         <Script
           id="gtm-script"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
           dangerouslySetInnerHTML={{
             __html: `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],

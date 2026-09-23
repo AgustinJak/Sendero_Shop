@@ -12,12 +12,20 @@ interface ReviewData {
   created_at: string;
 }
 
-export default function ReviewList({ productoId }: { productoId: string }) {
-  const [reviews, setReviews] = useState<ReviewData[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function ReviewList({
+  productoId,
+  iniciales,
+}: {
+  productoId: string;
+  /** Las que ya trajo el server. Si vienen, no se piden de nuevo. */
+  iniciales?: ReviewData[];
+}) {
+  const [reviews, setReviews] = useState<ReviewData[]>(iniciales ?? []);
+  const [loading, setLoading] = useState(!iniciales);
   const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
+    if (iniciales) return;
     fetch(`/api/reviews?producto_id=${productoId}`)
       .then((r) => r.json())
       .then((data) => {
@@ -25,7 +33,7 @@ export default function ReviewList({ productoId }: { productoId: string }) {
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [productoId]);
+  }, [productoId, iniciales]);
 
   const avgRating =
     reviews.length > 0

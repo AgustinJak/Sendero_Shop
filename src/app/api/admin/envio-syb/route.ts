@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 /** Guarda las zonas y precios del courier local. Solo admin. */
-export async function PUT(req: NextRequest) {
+async function put(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -47,3 +48,6 @@ export async function PUT(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const PUT = conRevalidacion(put);

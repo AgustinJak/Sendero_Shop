@@ -1,8 +1,5 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { motion } from "framer-motion";
 import { formatPrice } from "@/lib/utils";
 import type { Producto } from "@/types";
 
@@ -16,12 +13,10 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
   const tieneOferta = producto.precio_oferta && producto.precio_oferta < producto.precio;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4, delay: index * 0.05 }}
-    >
+    // La entrada es CSS atada al scroll (`aparecer-al-ver` en globals.css). El
+    // motion.div anterior salía del server con opacity 0 y la tarjeta — y su
+    // foto, que suele ser el LCP — no se veía hasta que hidrataba el JS.
+    <div className="aparecer-al-ver">
       <Link
         href={`/producto/${producto.slug}`}
         className="group block bg-navy-deep rounded-xl overflow-hidden border border-linea hover:border-linea-fuerte transition-all duration-300 hover:shadow-lg hover:shadow-purpura/10 hover:-translate-y-1"
@@ -29,10 +24,15 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
         <div className="aspect-square relative bg-lavanda/5 overflow-hidden">
           {imagen ? (
             <Image
-              src={imagen.url}
+              // La miniatura alcanza para la tarjeta; la foto grande queda para
+              // la página del producto. Las imágenes viejas sin miniatura caen a url.
+              src={imagen.url_thumb ?? imagen.url}
               alt={imagen.alt_text || producto.nombre}
               fill
               sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              // Las primeras de la grilla suelen ser el LCP.
+              loading={index < 4 ? "eager" : "lazy"}
+              fetchPriority={index < 2 ? "high" : "auto"}
               className="object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
@@ -108,6 +108,6 @@ export default function ProductCard({ producto, index = 0 }: ProductCardProps) {
           )}
         </div>
       </Link>
-    </motion.div>
+    </div>
   );
 }

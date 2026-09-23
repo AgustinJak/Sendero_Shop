@@ -12,6 +12,9 @@ import MercadoPagoButton from "@/components/pedido/MercadoPagoButton";
 import { getMetodoEnvioLabel } from "@/lib/estado-labels";
 import { SYB_HORARIO_DETALLE } from "@/lib/envio-syb";
 
+// Datos privados de un pedido: se arma en cada visita, nunca se cachea.
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Mi pedido",
   robots: "noindex, nofollow",

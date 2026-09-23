@@ -31,6 +31,7 @@ export default function PopupBanner({ banner }: { banner: Banner }) {
           src={banner.imagen_url}
           alt={banner.titulo || "Promoción"}
           className="w-full rounded-t-xl object-cover max-h-64"
+          decoding="async"
         />
       )}
       <div className="p-6 text-center">

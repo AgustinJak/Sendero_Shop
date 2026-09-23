@@ -1,15 +1,17 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { useCallback, useState, useRef, useEffect } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
+import { useState, useEffect } from "react";
 import { useFilterTransition } from "./FilterTransitionContext";
 import type { AvailableFilters } from "@/lib/queries";
 import type { Categoria } from "@/types";
 import { slugify } from "@/lib/utils";
 
-gsap.registerPlugin(useGSAP);
+/*
+ * Las animaciones son CSS (ver "Filtros del catálogo" en globals.css). Antes
+ * eran GSAP, que sumaba 81 KB de JS al catálogo para entradas, un acordeón y
+ * un brillo — todo lo que CSS hace solo.
+ */
 
 interface FilterSidebarProps {
   filters: AvailableFilters;
@@ -20,7 +22,6 @@ interface FilterSidebarProps {
 export default function FilterSidebar({ filters, categorias = [], hideHeader = false }: FilterSidebarProps) {
   const { updateFilter, clearAll, isPending } = useFilterTransition();
   const searchParams = useSearchParams();
-  const containerRef = useRef<HTMLDivElement>(null);
 
   // Optimistic local state — updates immediately on click
   const serverCategoria = searchParams.get("categoria");
@@ -46,19 +47,8 @@ export default function FilterSidebar({ filters, categorias = [], hideHeader = f
   const currentCategoria = localCategoria;
   const currentLinea = localLinea;
 
-  // Stagger entrance animation
-  useGSAP(() => {
-    if (!containerRef.current) return;
-    const sections = containerRef.current.querySelectorAll("[data-filter-section]");
-    gsap.fromTo(
-      sections,
-      { opacity: 0, x: -12 },
-      { opacity: 1, x: 0, duration: 0.4, stagger: 0.1, ease: "power2.out" }
-    );
-  }, { scope: containerRef });
-
   return (
-    <aside ref={containerRef} className="space-y-5">
+    <aside className="space-y-5">
       {/* Header */}
       {!hideHeader && (
         <>
@@ -83,7 +73,7 @@ export default function FilterSidebar({ filters, categorias = [], hideHeader = f
 
       {/* Categorías — hierarchical */}
       {categorias.length > 0 && (
-        <div data-filter-section>
+        <div className="animate-entrar-izq motion-reduce:animate-none">
           <SectionTitle>Categoría</SectionTitle>
           <div className="space-y-1">
             {categorias.map((parent) => (
@@ -104,7 +94,7 @@ export default function FilterSidebar({ filters, categorias = [], hideHeader = f
 
       {/* Línea */}
       {filters.lineas.length > 0 && (
-        <div data-filter-section>
+        <div className="animate-entrar-izq [animation-delay:100ms] motion-reduce:animate-none">
           <SectionTitle>Línea</SectionTitle>
           <div className="space-y-0.5">
             {filters.lineas.map((linea) => {
@@ -139,7 +129,6 @@ function CategoryGroup({
   onSelect: (slug: string) => void;
 }) {
   const hasChildren = parent.children && parent.children.length > 0;
-  const childrenRef = useRef<HTMLDivElement>(null);
 
   // Auto-expand if parent or any child is active
   const isParentActive = currentCategoria === parent.slug;
@@ -153,6 +142,15 @@ function CategoryGroup({
   // contraer lo que no le interese.
   const [expanded, setExpanded] = useState(true);
 
+  // Los hijos entran escalonados solo cuando se abre la sección, no en la
+  // carga: la sección arranca abierta y animarla sería desplegar algo que ya
+  // estaba así.
+  const [animarHijos, setAnimarHijos] = useState(false);
+  function alternar() {
+    if (!expanded) setAnimarHijos(true);
+    setExpanded(!expanded);
+  }
+
   // Al pasar a estar activo, se abre. Se ajusta durante el render (patrón de
   // "estado derivado de props" de React) en vez de con un efecto: el efecto
   // encadenaba un render extra y, al depender de `expanded`, volvía a abrir la
@@ -160,41 +158,11 @@ function CategoryGroup({
   const [eraVisible, setEraVisible] = useState(shouldBeOpen);
   if (shouldBeOpen !== eraVisible) {
     setEraVisible(shouldBeOpen);
-    if (shouldBeOpen) setExpanded(true);
+    if (shouldBeOpen && !expanded) {
+      setAnimarHijos(true);
+      setExpanded(true);
+    }
   }
-
-  // Animate children expand/collapse
-  const primerRender = useRef(true);
-  useEffect(() => {
-    if (!childrenRef.current || !hasChildren) return;
-    // En el primer render el estilo inline ya deja la sección abierta; animarla
-    // sería desplegar algo que se supone que ya estaba así.
-    if (primerRender.current) {
-      primerRender.current = false;
-      return;
-    }
-    if (expanded) {
-      gsap.fromTo(
-        childrenRef.current,
-        { height: 0, opacity: 0 },
-        { height: "auto", opacity: 1, duration: 0.35, ease: "power2.out" }
-      );
-      // Stagger child items
-      const items = childrenRef.current.querySelectorAll("[data-child-item]");
-      gsap.fromTo(
-        items,
-        { opacity: 0, x: -8 },
-        { opacity: 1, x: 0, duration: 0.25, stagger: 0.04, delay: 0.1, ease: "power2.out" }
-      );
-    } else {
-      gsap.to(childrenRef.current, {
-        height: 0,
-        opacity: 0,
-        duration: 0.25,
-        ease: "power2.in",
-      });
-    }
-  }, [expanded, hasChildren]);
 
   return (
     <div className="group">
@@ -225,7 +193,7 @@ function CategoryGroup({
 
         {hasChildren && (
           <button
-            onClick={() => setExpanded(!expanded)}
+            onClick={alternar}
             className="p-1 text-texto-3 hover:text-lavanda-light transition-colors cursor-pointer"
             aria-label={expanded ? "Contraer" : "Expandir"}
           >
@@ -246,18 +214,31 @@ function CategoryGroup({
 
       {/* Children */}
       {hasChildren && (
-        <div ref={childrenRef} className="overflow-hidden" style={{ height: expanded ? "auto" : 0, opacity: expanded ? 1 : 0 }}>
-          <div className="ml-3 pl-3 border-l border-linea">
-            {parent.children!.map((child) => (
-              <div key={child.id} data-child-item>
-                <FilterItem
-                  label={child.nombre}
-                  active={currentCategoria === child.slug}
-                  onClick={() => onSelect(child.slug)}
-                  isChild
-                />
-              </div>
-            ))}
+        // Grid de 0fr a 1fr: anima a altura automática sin medir nada con JS.
+        <div
+          className={`grid transition-[grid-template-rows,opacity] motion-reduce:transition-none ${
+            expanded
+              ? "grid-rows-[1fr] opacity-100 duration-[350ms] ease-out"
+              : "grid-rows-[0fr] opacity-0 duration-[250ms] ease-in"
+          }`}
+        >
+          <div className="overflow-hidden" inert={!expanded}>
+            <div className="ml-3 pl-3 border-l border-linea">
+              {parent.children!.map((child, i) => (
+                <div
+                  key={child.id}
+                  className={expanded && animarHijos ? "animate-entrar-izq motion-reduce:animate-none" : ""}
+                  style={expanded && animarHijos ? { animationDelay: `${100 + i * 40}ms`, animationDuration: "250ms" } : undefined}
+                >
+                  <FilterItem
+                    label={child.nombre}
+                    active={currentCategoria === child.slug}
+                    onClick={() => onSelect(child.slug)}
+                    isChild
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -278,35 +259,9 @@ function FilterItem({
   onClick: () => void;
   isChild?: boolean;
 }) {
-  const itemRef = useRef<HTMLButtonElement>(null);
-  const glowRef = useRef<HTMLSpanElement>(null);
-
-  // GSAP glow pulse on active
-  useEffect(() => {
-    if (!glowRef.current) return;
-    if (active) {
-      gsap.fromTo(
-        glowRef.current,
-        { scale: 0, opacity: 0 },
-        { scale: 1, opacity: 1, duration: 0.3, ease: "back.out(2)" }
-      );
-      // Subtle continuous pulse
-      gsap.to(glowRef.current, {
-        boxShadow: "0 0 8px rgba(212,168,83,0.5)",
-        repeat: -1,
-        yoyo: true,
-        duration: 1.5,
-        ease: "sine.inOut",
-      });
-    } else {
-      gsap.killTweensOf(glowRef.current);
-      gsap.to(glowRef.current, { scale: 0, opacity: 0, duration: 0.2 });
-    }
-  }, [active]);
 
   return (
     <button
-      ref={itemRef}
       onClick={onClick}
       className={`w-full text-left py-1.5 px-2 rounded-md transition-all duration-200 flex items-center gap-2 group/item cursor-pointer ${
         isChild ? "text-xs" : "text-sm"
@@ -326,9 +281,9 @@ function FilterItem({
           }`}
         />
         <span
-          ref={glowRef}
-          className="absolute inset-0 rounded-full bg-ambar/20"
-          style={{ transform: "scale(0)", opacity: 0 }}
+          className={`absolute inset-0 rounded-full bg-ambar/20 ${
+            active ? "brillo-activo" : "scale-0 opacity-0 transition-[transform,opacity] duration-200"
+          }`}
         />
       </span>
       {label}
@@ -339,19 +294,8 @@ function FilterItem({
 /* ── Silk Divider (Hollow Knight inspired) ── */
 
 function SilkDivider() {
-  const lineRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(() => {
-    if (!lineRef.current) return;
-    gsap.fromTo(
-      lineRef.current,
-      { scaleX: 0, transformOrigin: "left center" },
-      { scaleX: 1, duration: 0.6, ease: "power2.out", delay: 0.2 }
-    );
-  }, { scope: lineRef });
-
   return (
-    <div ref={lineRef} className="h-px bg-gradient-to-r from-purpura/30 via-lavanda/10 to-transparent" />
+    <div className="h-px origin-left bg-gradient-to-r from-purpura/30 via-lavanda/10 to-transparent animate-trazo motion-reduce:animate-none" />
   );
 }
 
@@ -372,37 +316,38 @@ export function MobileFilterToggle({
   categorias,
 }: FilterSidebarProps) {
   const [open, setOpen] = useState(false);
+  // Mientras corre la animación de salida el drawer sigue montado.
+  const [cerrando, setCerrando] = useState(false);
   const searchParams = useSearchParams();
-  const overlayRef = useRef<HTMLDivElement>(null);
-  const drawerRef = useRef<HTMLDivElement>(null);
 
   const activeCount = Array.from(searchParams.keys()).filter(
     (k) => k !== "orden" && k !== "page"
   ).length;
 
-  // Animate drawer open/close
-  useEffect(() => {
-    if (!overlayRef.current || !drawerRef.current) return;
-    if (open) {
-      gsap.fromTo(overlayRef.current, { opacity: 0 }, { opacity: 1, duration: 0.25 });
-      gsap.fromTo(
-        drawerRef.current,
-        { y: "100%" },
-        { y: "0%", duration: 0.4, ease: "power3.out" }
-      );
-    }
-  }, [open]);
+  function terminarCierre() {
+    setCerrando(false);
+    setOpen(false);
+  }
 
-  const handleClose = useCallback(() => {
-    if (!overlayRef.current || !drawerRef.current) return;
-    gsap.to(overlayRef.current, { opacity: 0, duration: 0.2 });
-    gsap.to(drawerRef.current, {
-      y: "100%",
-      duration: 0.3,
-      ease: "power3.in",
-      onComplete: () => setOpen(false),
-    });
-  }, []);
+  function handleClose() {
+    // Con "reducir movimiento" la animación no corre y onAnimationEnd nunca
+    // llegaría: el drawer quedaría abierto para siempre.
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      terminarCierre();
+      return;
+    }
+    setCerrando(true);
+    // Respaldo por si animationend no llega (pestaña oculta, animación
+    // cancelada): el drawer no puede quedar montado tapando la página. Dura un
+    // poco más que drawer-out (0,3 s); cerrar dos veces no hace nada.
+    window.setTimeout(terminarCierre, 320);
+  }
+
+  function alTerminarAnimacion(e: React.AnimationEvent<HTMLDivElement>) {
+    // Las animaciones de los filtros de adentro también burbujean hasta acá.
+    if (e.target !== e.currentTarget || !cerrando) return;
+    terminarCierre();
+  }
 
   return (
     <>
@@ -435,13 +380,14 @@ export function MobileFilterToggle({
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            ref={overlayRef}
-            className="absolute inset-0 bg-black/60"
+            className={`absolute inset-0 bg-black/60 ${cerrando ? "animate-overlay-out" : "animate-overlay-in"} motion-reduce:animate-none`}
             onClick={handleClose}
           />
           <div
-            ref={drawerRef}
-            className="absolute bottom-0 left-0 right-0 bg-navy rounded-t-2xl p-6 max-h-[75vh] overflow-y-auto"
+            onAnimationEnd={alTerminarAnimacion}
+            className={`absolute bottom-0 left-0 right-0 bg-navy rounded-t-2xl p-6 max-h-[75vh] overflow-y-auto ${
+              cerrando ? "animate-drawer-out" : "animate-drawer-in"
+            } motion-reduce:animate-none`}
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-semibold text-texto">

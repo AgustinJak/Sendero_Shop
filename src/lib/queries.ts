@@ -1,4 +1,5 @@
-import { createServerSupabaseClient, createServiceRoleClient } from "./supabase-server";
+import { unstable_cache } from "next/cache";
+import { createPublicSupabaseClient } from "./supabase-server";
 import { slugify } from "./utils";
 import type { Producto, Categoria, Coleccion, Banner } from "@/types";
 
@@ -10,7 +11,7 @@ import type { Producto, Categoria, Coleccion, Banner } from "@/types";
  * "ningún producto", no como "sin filtro").
  */
 async function categoriaIdsPorSlug(slug: string): Promise<string[]> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
 
   const { data: parent } = await supabase
     .from("categorias")
@@ -37,7 +38,7 @@ async function categoriaIdsPorSlug(slug: string): Promise<string[]> {
  * slug sobre las líneas que existen.
  */
 async function lineaPorSlug(slug: string): Promise<string | null> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
 
   const { data } = await supabase
     .from("productos")
@@ -70,10 +71,10 @@ export interface ProductosResult {
   totalPages: number;
 }
 
-export async function getProductos(
+async function getProductosSinCache(
   filters: ProductFilters = {}
 ): Promise<ProductosResult> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
   const page = filters.page || 1;
   const limit = filters.limit || 20;
   const offset = (page - 1) * limit;
@@ -98,7 +99,7 @@ export async function getProductos(
   let query = supabase
     .from("productos")
     .select(
-      `*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id), categoria:categorias(id, nombre, slug)`,
+      `*, imagenes:producto_imagenes(id, url, url_thumb, orden, alt_text, tipo, opcion_id), categoria:categorias(id, nombre, slug)`,
       { count: "exact" }
     )
     .eq("activo", true)
@@ -158,16 +159,16 @@ export async function getProductos(
   };
 }
 
-export async function getProductoBySlug(
+async function getProductoBySlugSinCache(
   slug: string
 ): Promise<Producto | null> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
 
   const { data, error } = await supabase
     .from("productos")
     .select(
       `*,
-      imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id),
+      imagenes:producto_imagenes(id, url, url_thumb, orden, alt_text, tipo, opcion_id),
       categoria:categorias(id, nombre, slug),
       variante_grupos(id, producto_id, nombre, orden,
         opciones:variante_opciones(id, grupo_id, valor, precio_adicional, imagen_url, activo, orden)
@@ -182,14 +183,14 @@ export async function getProductoBySlug(
   return data as unknown as Producto;
 }
 
-export async function getProductosDestacados(
+async function getProductosDestacadosSinCache(
   limit = 8
 ): Promise<Producto[]> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
 
   const { data } = await supabase
     .from("productos")
-    .select(`*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)`)
+    .select(`*, imagenes:producto_imagenes(id, url, url_thumb, orden, alt_text, tipo, opcion_id)`)
     .eq("activo", true)
     .eq("destacado", true)
     .order("created_at", { ascending: false })
@@ -203,12 +204,12 @@ export async function getProductosDestacados(
  * Prioridad: misma línea/franquicia → misma categoría → novedades (relleno).
  * Excluye el producto actual y evita duplicados.
  */
-export async function getProductosRelacionados(
+async function getProductosRelacionadosSinCache(
   producto: Pick<Producto, "id" | "linea" | "categoria_id">,
   limit = 4
 ): Promise<Producto[]> {
-  const supabase = await createServerSupabaseClient();
-  const select = `*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)`;
+  const supabase = createPublicSupabaseClient();
+  const select = `*, imagenes:producto_imagenes(id, url, url_thumb, orden, alt_text, tipo, opcion_id)`;
   const collected = new Map<string, Producto>();
 
   function add(rows: Producto[] | null) {
@@ -262,10 +263,10 @@ export async function getProductosRelacionados(
  * El vínculo es mayorista_items.producto_id → sección → lista.
  * La RLS pública de mayorista_listas ya filtra solo las activas.
  */
-export async function getListaMayoristaDeProducto(
+async function getListaMayoristaDeProductoSinCache(
   productoId: string
 ): Promise<{ codigo: string; nombre: string } | null> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase
     .from("mayorista_items")
     .select("seccion:mayorista_secciones(lista:mayorista_listas(codigo, nombre, activa))")
@@ -283,8 +284,8 @@ export async function getListaMayoristaDeProducto(
 
 // --- Categorías ---
 
-export async function getCategorias(): Promise<Categoria[]> {
-  const supabase = await createServerSupabaseClient();
+async function getCategoriasSinCache(): Promise<Categoria[]> {
+  const supabase = createPublicSupabaseClient();
 
   const { data } = await supabase
     .from("categorias")
@@ -295,7 +296,7 @@ export async function getCategorias(): Promise<Categoria[]> {
   return (data as Categoria[]) || [];
 }
 
-export async function getCategoriasTree(): Promise<Categoria[]> {
+async function getCategoriasTreeSinCache(): Promise<Categoria[]> {
   const categorias = await getCategorias();
 
   const roots = categorias.filter((c) => !c.parent_id);
@@ -327,10 +328,10 @@ export interface FiltrosDeContexto {
  * Las líneas se acotan al contexto: parado en Armas no se ofrece BTS, porque
  * no existe ningún producto Armas + BTS y elegirlo dejaría el grid vacío.
  */
-export async function getAvailableFilters(
+async function getAvailableFiltersSinCache(
   contexto: FiltrosDeContexto = {}
 ): Promise<AvailableFilters> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
 
   const { data } = await supabase
     .from("productos")
@@ -377,8 +378,8 @@ export async function getAvailableFilters(
 
 // --- Colecciones ---
 
-export async function getColecciones(): Promise<Coleccion[]> {
-  const supabase = await createServerSupabaseClient();
+async function getColeccionesSinCache(): Promise<Coleccion[]> {
+  const supabase = createPublicSupabaseClient();
 
   const { data } = await supabase
     .from("colecciones")
@@ -389,10 +390,10 @@ export async function getColecciones(): Promise<Coleccion[]> {
   return (data as Coleccion[]) || [];
 }
 
-export async function getColeccionBySlug(
+async function getColeccionBySlugSinCache(
   slug: string
 ): Promise<(Coleccion & { productos: Producto[] }) | null> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
 
   const { data: coleccion, error } = await supabase
     .from("colecciones")
@@ -418,7 +419,7 @@ export async function getColeccionBySlug(
       const ids = data.map((cp) => cp.producto_id);
       const { data: prods } = await supabase
         .from("productos")
-        .select("*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)")
+        .select("*, imagenes:producto_imagenes(id, url, url_thumb, orden, alt_text, tipo, opcion_id)")
         .in("id", ids)
         .eq("activo", true);
 
@@ -440,7 +441,7 @@ export async function getColeccionBySlug(
 
     let query = supabase
       .from("productos")
-      .select("*, imagenes:producto_imagenes(id, url, orden, alt_text, tipo, opcion_id)")
+      .select("*, imagenes:producto_imagenes(id, url, url_thumb, orden, alt_text, tipo, opcion_id)")
       .eq("activo", true);
 
     const lineas = csv(col.regla.linea);
@@ -477,10 +478,10 @@ export async function getColeccionBySlug(
 
 // --- Banners ---
 
-export async function getBanners(
+async function getBannersSinCache(
   posicion?: Banner["posicion"]
 ): Promise<Banner[]> {
-  const supabase = await createServerSupabaseClient();
+  const supabase = createPublicSupabaseClient();
   const now = new Date().toISOString();
 
   let query = supabase
@@ -507,8 +508,39 @@ export async function getBanners(
  * Se lee de la base en vez de hardcodear un número: una cifra escrita a mano
  * en el JSX envejece mal y termina siendo mentira sin que nadie se entere.
  */
-export async function getUnidadesVendidas(): Promise<number> {
-  const supabase = await createServerSupabaseClient();
+async function getUnidadesVendidasSinCache(): Promise<number> {
+  const supabase = createPublicSupabaseClient();
   const { data } = await supabase.from("productos").select("unidades_vendidas");
   return (data ?? []).reduce((acc, p) => acc + (Number(p.unidades_vendidas) || 0), 0);
 }
+
+// ─── Caché ────────────────────────────────────────────────────────────────
+//
+// Las consultas de la tienda se guardan en la caché de datos de Next con la
+// etiqueta "tienda". Las páginas estáticas ya quedan cacheadas enteras (ver
+// `revalidate` en cada page.tsx), pero el catálogo depende de los filtros de
+// la URL y se arma en cada visita: con esto, al menos no consulta Supabase en
+// cada una.
+//
+// Se vencen solas a los 5 minutos, y en el acto cuando el admin cambia algo
+// (revalidarTienda en lib/revalidar.ts). Los argumentos forman parte de la
+// clave, así que cada combinación de filtros tiene su propia entrada.
+
+export const ETIQUETA_TIENDA = "tienda";
+
+function cacheTienda<A extends unknown[], R>(fn: (...args: A) => Promise<R>, clave: string) {
+  return unstable_cache(fn, [clave], { tags: [ETIQUETA_TIENDA], revalidate: 300 });
+}
+
+export const getProductos = cacheTienda(getProductosSinCache, "getProductos");
+export const getProductoBySlug = cacheTienda(getProductoBySlugSinCache, "getProductoBySlug");
+export const getProductosDestacados = cacheTienda(getProductosDestacadosSinCache, "getProductosDestacados");
+export const getProductosRelacionados = cacheTienda(getProductosRelacionadosSinCache, "getProductosRelacionados");
+export const getListaMayoristaDeProducto = cacheTienda(getListaMayoristaDeProductoSinCache, "getListaMayoristaDeProducto");
+export const getCategorias = cacheTienda(getCategoriasSinCache, "getCategorias");
+export const getCategoriasTree = cacheTienda(getCategoriasTreeSinCache, "getCategoriasTree");
+export const getAvailableFilters = cacheTienda(getAvailableFiltersSinCache, "getAvailableFilters");
+export const getColecciones = cacheTienda(getColeccionesSinCache, "getColecciones");
+export const getColeccionBySlug = cacheTienda(getColeccionBySlugSinCache, "getColeccionBySlug");
+export const getBanners = cacheTienda(getBannersSinCache, "getBanners");
+export const getUnidadesVendidas = cacheTienda(getUnidadesVendidasSinCache, "getUnidadesVendidas");

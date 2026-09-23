@@ -11,6 +11,9 @@ import Reveal from "@/components/mayorista/Reveal";
 import MayoristaCartShell from "@/components/mayorista/MayoristaCartShell";
 import ComprarKitMayorista from "@/components/mayorista/ComprarKitMayorista";
 
+// Datos privados de una lista mayorista: se arma en cada visita, nunca se cachea.
+export const dynamic = "force-dynamic";
+
 /**
  * Aviso para los links de listas que quedaron dando vueltas por WhatsApp.
  * El descuento por cantidad ahora vive en cada producto, así que se explica

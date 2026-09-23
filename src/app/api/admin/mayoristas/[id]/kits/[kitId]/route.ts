@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { conRevalidacion } from "@/lib/revalidar";
 
 const KIT_SELECT = `*, items:mayorista_kit_items(*, item:mayorista_items(*, imagenes:mayorista_imagenes(*)))`;
 
@@ -8,7 +9,7 @@ const KIT_SELECT = `*, items:mayorista_kit_items(*, item:mayorista_items(*, imag
  * Body: { nombre?, descripcion?, descuento_extra_pct?, orden?, items? }
  * Si viene `items` ([{ item_id, cantidad }]), reemplaza TODOS los items del kit.
  */
-export async function PATCH(
+async function patch(
   req: NextRequest,
   { params }: { params: Promise<{ id: string; kitId: string }> }
 ) {
@@ -67,7 +68,7 @@ export async function PATCH(
   return NextResponse.json(full);
 }
 
-export async function DELETE(
+async function del(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string; kitId: string }> }
 ) {
@@ -82,3 +83,7 @@ export async function DELETE(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
+
+// Si responden bien, invalidan la caché de la tienda: ver lib/revalidar.ts.
+export const PATCH = conRevalidacion(patch);
+export const DELETE = conRevalidacion(del);
