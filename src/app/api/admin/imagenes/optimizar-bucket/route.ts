@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { reprocesarPendientes } from "@/lib/imagenes";
 import { revalidarTienda } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 /**
  * Procesa a mano las fotos que todavía no tienen versión optimizada.
@@ -22,7 +23,7 @@ export const maxDuration = 60; // máximo del plan Hobby
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const url = new URL(req.url);
   const dryRun = url.searchParams.get("dryRun") === "1";

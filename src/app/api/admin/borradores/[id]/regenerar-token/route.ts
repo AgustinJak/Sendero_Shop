@@ -5,6 +5,7 @@ import {
 } from "@/lib/supabase-server";
 import { generateToken } from "@/lib/borrador";
 import type { PedidoBorrador } from "@/types";
+import { esAdmin } from "@/lib/admin";
 
 /**
  * Genera un nuevo token para el borrador y lo devuelve.
@@ -20,7 +21,7 @@ export async function POST(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import sharp from "sharp";
 import { createServiceRoleClient, createServerSupabaseClient } from "@/lib/supabase-server";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 const IMG_MAX_WIDTH = 1600;
 const IMG_WEBP_QUALITY = 80;
@@ -9,7 +10,7 @@ const IMG_WEBP_QUALITY = 80;
 async function post(req: NextRequest) {
   const authClient = await createServerSupabaseClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const formData = await req.formData();
   const file = formData.get("file") as File | null;

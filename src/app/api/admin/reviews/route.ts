@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 // GET /api/admin/reviews — listar todas las reviews (admin)
 export async function GET() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -29,7 +30,7 @@ async function patch(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -57,7 +58,7 @@ async function del(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

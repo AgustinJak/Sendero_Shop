@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
+import { esAdmin } from "@/lib/admin";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 // Video uploads disabled until further notice (Supabase Free plan 50MB/file limit)
@@ -9,7 +10,7 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10 MB
 export async function POST(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { fileName, fileType, fileSize, productoId } = await req.json();
 

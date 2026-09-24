@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient, createServerSupabaseClient } from "@/lib/supabase-server";
 import { importarImagenExterna } from "@/lib/imagenes";
 import { revalidarTienda } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 export const maxDuration = 30;
 
@@ -30,7 +31,7 @@ export async function PATCH(
 ) {
   const authClient = await createServerSupabaseClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const supabase = await createServiceRoleClient();
@@ -54,7 +55,7 @@ export async function DELETE(
 ) {
   const authClient = await createServerSupabaseClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const supabase = await createServiceRoleClient();

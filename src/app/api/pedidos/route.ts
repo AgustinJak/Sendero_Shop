@@ -3,7 +3,9 @@ import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
 import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
-import { rateLimitByIp } from "@/lib/rate-limit";
+import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
+import { esEmailValido } from "@/lib/email/seguridad";
+import { costoEnvioCorreo } from "@/lib/envio-servidor";
 import { resolverPrecios } from "@/lib/precios-server";
 import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
 import { buscarZonaSyb, type ZonaSyb } from "@/lib/envio-syb";
@@ -14,9 +16,20 @@ import {
 
 export async function POST(req: NextRequest) {
   try {
-    const { ok } = rateLimitByIp(req, "pedidos", { limit: 5, windowMs: 60_000 });
-    if (!ok) {
-      return NextResponse.json({ error: "Demasiadas solicitudes. Intentá en un minuto." }, { status: 429 });
+    // Límites persistentes (SHOP - Seguridad, punto 2). Van antes que todo,
+    // incluso antes del captcha: un bot que prueba tokens también gasta cupo.
+    // Una persona real no hace más de un par de pedidos en 10 minutos.
+    const ip = ipDe(req);
+    const claveIp = huella(ip);
+    const [okIpCorto, okIpDia] = await Promise.all([
+      dentroDelLimite(`pedido:ip:10m:${claveIp}`, 3, 600),
+      dentroDelLimite(`pedido:ip:24h:${claveIp}`, 10, 86_400),
+    ]);
+    if (!okIpCorto || !okIpDia) {
+      return NextResponse.json(
+        { error: "Recibimos varios pedidos seguidos desde tu conexión. Esperá unos minutos o escribinos por WhatsApp." },
+        { status: 429 }
+      );
     }
 
     const body = await req.json();
@@ -27,7 +40,6 @@ export async function POST(req: NextRequest) {
       direccion_envio,
       metodo_pago,
       items,
-      costoEnvio,
       captchaToken,
       sucursal_correo_id,
       sucursal_correo_nombre,
@@ -47,6 +59,7 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           secret: process.env.TURNSTILE_SECRET_KEY,
           response: captchaToken,
+          remoteip: ip,
         }),
       });
 
@@ -64,6 +77,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "El carrito está vacío" }, { status: 400 });
     }
 
+    // Una sola dirección válida: el transporte acepta varias separadas por coma
+    // y un pedido podía mandar la confirmación a cientos de personas.
+    if (!esEmailValido(datos_personales.email)) {
+      return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
+    }
+    const emailPedido: string = datos_personales.email.trim();
+
+    // Lista cerrada. "andreani" existe en la base por pedidos viejos, pero el
+    // checkout ya no lo ofrece y su costo no tendría quién calcularlo acá.
+    if (!["retiro", "correo_argentino", "syb"].includes(metodo_envio)) {
+      return NextResponse.json({ error: "Método de envío inválido" }, { status: 400 });
+    }
+    if (!["mercadopago", "transferencia", "efectivo"].includes(metodo_pago)) {
+      return NextResponse.json({ error: "Método de pago inválido" }, { status: 400 });
+    }
+
+    if (!(await dentroDelLimite(`pedido:email:1h:${huella(emailPedido)}`, 3, 3600))) {
+      return NextResponse.json(
+        { error: "Ya recibimos varios pedidos con este email en la última hora. Escribinos por WhatsApp si necesitás ayuda." },
+        { status: 429 }
+      );
+    }
+
     const supabase = await createServiceRoleClient();
 
     // Precios autoritativos: se recalculan contra la base, ignorando los que
@@ -78,22 +114,38 @@ export async function POST(req: NextRequest) {
     }
     const subtotal = preciados.subtotal;
 
-    // Generar número de pedido usando contador persistente en configuracion
-    // Esto garantiza que los números nunca se repiten aunque se eliminen pedidos
-    const { data: counterRow } = await supabase
-      .from("configuracion")
-      .select("value")
-      .eq("key", "pedido_counter")
-      .single();
+    // Pedidos del mismo email que siguen esperando el pago. Sirve para dos
+    // cosas: no crear dos veces el mismo pedido (un doble click, o un loop),
+    // y poner un tope a cuántos puede haber abiertos a la vez.
+    const emailComoPatron = emailPedido.replace(/[\\%_]/g, (c) => "\\" + c);
+    const { data: pendientes } = await supabase
+      .from("pedidos")
+      .select("id, numero_pedido, subtotal, metodo_pago, metodo_envio, created_at")
+      .ilike("email", emailComoPatron)
+      .eq("estado", "pendiente_pago")
+      .gte("created_at", new Date(Date.now() - 48 * 3600_000).toISOString())
+      .order("created_at", { ascending: false });
 
-    const nextNum = counterRow ? parseInt(counterRow.value, 10) + 1 : 1;
-
-    // Upsert the counter
-    await supabase
-      .from("configuracion")
-      .upsert({ key: "pedido_counter", value: String(nextNum) }, { onConflict: "key" });
-
-    const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
+    const hace10Min = Date.now() - 10 * 60_000;
+    const repetido = (pendientes ?? []).find(
+      (x) =>
+        new Date(x.created_at).getTime() > hace10Min &&
+        Number(x.subtotal) === subtotal &&
+        x.metodo_pago === metodo_pago &&
+        x.metodo_envio === metodo_envio
+    );
+    if (repetido) {
+      // Mismo pedido hace menos de 10 minutos: se devuelve el que ya existe.
+      // El checkout sigue igual (pago, confirmación) sin crear otro ni mandar
+      // otro email.
+      return NextResponse.json({ id: repetido.id, numero_pedido: repetido.numero_pedido });
+    }
+    if ((pendientes ?? []).length >= 3) {
+      return NextResponse.json(
+        { error: "Tenés varios pedidos esperando el pago. Completá alguno o escribinos por WhatsApp." },
+        { status: 429 }
+      );
+    }
 
     // Config autoritativa desde el server (no confiar en el cliente).
     const {
@@ -102,13 +154,18 @@ export async function POST(req: NextRequest) {
       sena_efectivo_porcentaje: senaPct,
     } = await getSiteConfig();
 
-    // El costo de envío es una cotización viva de Correo Argentino, así que se
-    // toma del cliente; se acota a un valor sano para que no reste del total.
-    const envioCliente = Number(costoEnvio);
-    let costoEnvioBase =
-      Number.isFinite(envioCliente) && envioCliente > 0
-        ? Math.min(envioCliente, 1_000_000)
-        : 0;
+    // El costo de envío lo calcula el servidor, nunca el navegador: antes se
+    // tomaba el costoEnvio del checkout y con "1" el envío costaba $1
+    // (SHOP - Seguridad, punto 4). Correo se recotiza con el paquete armado
+    // desde la base; la moto sale de nuestra tabla de zonas, más abajo.
+    let costoEnvioBase = 0;
+    if (metodo_envio === "correo_argentino") {
+      const envio = await costoEnvioCorreo(supabase, direccion_envio?.codigo_postal, tipo_envio, preciados.items);
+      if (!envio.ok) {
+        return NextResponse.json({ error: envio.error }, { status: envio.status });
+      }
+      costoEnvioBase = envio.precio;
+    }
 
     // El courier local sí tiene precio autoritativo del lado del servidor: es
     // una tabla nuestra, no una cotización externa. Se recalcula acá y se
@@ -154,6 +211,25 @@ export async function POST(req: NextRequest) {
     // comportamiento viejo: se confirma sin pagar nada.
     const estadoInicial: "pendiente_pago" | "pago_confirmado" =
       metodo_pago === "efectivo" && !llevaSena ? "pago_confirmado" : "pendiente_pago";
+
+    // El número se reserva recién acá, con todo validado y el envío cotizado:
+    // si algo de lo anterior falla, no se pierde un número.
+    // Generar número de pedido usando contador persistente en configuracion
+    // Esto garantiza que los números nunca se repiten aunque se eliminen pedidos
+    const { data: counterRow } = await supabase
+      .from("configuracion")
+      .select("value")
+      .eq("key", "pedido_counter")
+      .single();
+
+    const nextNum = counterRow ? parseInt(counterRow.value, 10) + 1 : 1;
+
+    // Upsert the counter
+    await supabase
+      .from("configuracion")
+      .upsert({ key: "pedido_counter", value: String(nextNum) }, { onConflict: "key" });
+
+    const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
 
     // Los dos campos opcionales que carga el cliente. Se recortan acá y no se
     // confía en el maxLength del formulario: si la nota pasa de 140, el

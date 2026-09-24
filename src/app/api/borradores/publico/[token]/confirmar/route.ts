@@ -20,6 +20,7 @@ import type {
   TipoEnvio,
   DireccionEnvio,
 } from "@/types";
+import { esEmailValido } from "@/lib/email/seguridad";
 
 interface ConfirmarBody {
   // Datos del cliente
@@ -99,6 +100,10 @@ export async function POST(
         { error: "Faltan datos personales" },
         { status: 400 }
       );
+    }
+    // Una sola dirección válida (ver lib/email/seguridad.ts).
+    if (!esEmailValido(body.datos_personales.email)) {
+      return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
     }
     if (!body.metodo_envio || !body.metodo_pago) {
       return NextResponse.json(

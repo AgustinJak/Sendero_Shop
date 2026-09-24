@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient, createServerSupabaseClient } from "@/lib/supabase-server";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 export async function GET() {
   const supabase = await createServiceRoleClient();
@@ -17,7 +18,7 @@ export async function GET() {
 async function post(req: NextRequest) {
   const authClient = await createServerSupabaseClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const body = await req.json();
   const supabase = await createServiceRoleClient();

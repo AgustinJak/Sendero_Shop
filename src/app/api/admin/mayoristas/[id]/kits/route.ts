@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 const KIT_SELECT = `*, items:mayorista_kit_items(*, item:mayorista_items(*, imagenes:mayorista_imagenes(*)))`;
 
@@ -14,7 +15,7 @@ async function post(
 ) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id: lista_id } = await params;
   const body = await req.json();

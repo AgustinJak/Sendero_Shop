@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { importShipping, PROVINCIA_A_CODIGO } from "@/lib/correo-argentino";
 import type { Pedido, PedidoItem } from "@/types";
+import { esAdmin } from "@/lib/admin";
 
 export async function POST(
   _req: NextRequest,
@@ -11,7 +12,7 @@ export async function POST(
     // 1. Auth
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!esAdmin(user)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 

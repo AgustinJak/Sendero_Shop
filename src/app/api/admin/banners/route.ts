@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient, createServerSupabaseClient } from "@/lib/supabase-server";
 import { importarImagenExterna } from "@/lib/imagenes";
 import { revalidarTienda } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 export const maxDuration = 30;
 
@@ -39,7 +40,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const authClient = await createServerSupabaseClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const supabase = await createServiceRoleClient();
   const body = await conImagenImportada(supabase, await req.json());

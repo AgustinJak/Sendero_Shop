@@ -9,6 +9,7 @@ import {
   DEFAULT_EXPIRACION_HORAS,
 } from "@/lib/borrador";
 import type { MetodoPago, PedidoBorradorItem, SenaTipo } from "@/types";
+import { esAdmin } from "@/lib/admin";
 
 /**
  * Listar borradores. Soporta filtro opcional por estado.
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
     const {
       data: { user },
     } = await supabase.auth.getUser();
-    if (!user) {
+    if (!esAdmin(user)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 

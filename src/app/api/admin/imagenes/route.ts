@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { CACHE_UN_ANIO, generarVersiones } from "@/lib/imagenes";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"];
 const ALLOWED_VIDEO_TYPES = ["video/mp4", "video/webm"];
@@ -14,7 +15,7 @@ const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
 async function post(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const formData = await req.formData();
   const file = formData.get("file") as File;

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient, createServerSupabaseClient } from "@/lib/supabase-server";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 async function patch(
   req: NextRequest,
@@ -8,7 +9,7 @@ async function patch(
 ) {
   const authClient = await createServerSupabaseClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json();
@@ -47,7 +48,7 @@ async function del(
 ) {
   const authClient = await createServerSupabaseClient();
   const { data: { user } } = await authClient.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const supabase = await createServiceRoleClient();

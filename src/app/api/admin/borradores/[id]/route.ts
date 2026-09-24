@@ -5,6 +5,7 @@ import {
 } from "@/lib/supabase-server";
 import { validateBorradorItem } from "@/lib/borrador";
 import type { PedidoBorrador, PedidoBorradorItem, SenaTipo } from "@/types";
+import { esAdmin } from "@/lib/admin";
 
 /**
  * Detalle de un borrador.
@@ -18,7 +19,7 @@ export async function GET(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -61,7 +62,7 @@ export async function PATCH(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
@@ -313,7 +314,7 @@ export async function DELETE(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email/send";
 import { pagoRecibidoEmail, pedidoEnviadoEmail, pedidoListoRetiroEmail, pedidoEntregadoEmail, pedidoCanceladoEmail } from "@/lib/email/templates";
 import { getWhatsapp } from "@/lib/site-config";
 import type { Pedido } from "@/types";
+import { esAdmin } from "@/lib/admin";
 
 export async function PATCH(
   req: NextRequest,
@@ -14,7 +15,7 @@ export async function PATCH(
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (!user) {
+    if (!esAdmin(user)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
@@ -135,7 +136,7 @@ export async function DELETE(
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

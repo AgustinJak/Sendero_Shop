@@ -27,6 +27,14 @@ export async function GET(req: NextRequest) {
   }
 
   const supabase = await createServiceRoleClient();
+
+  // --- Fase 0: contadores de rate limit vencidos (lib/limite.ts) ---
+  // Hay una fila por IP y por email que pidió algo; la ventana más larga es
+  // de 24 h, así que lo de más de 2 días ya no cuenta para nada.
+  await supabase
+    .from("limites_api")
+    .delete()
+    .lt("ventana_inicio", new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString());
   const ahora = Date.now();
 
   // --- Fase 1: cancelar los impagos ---

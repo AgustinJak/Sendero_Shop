@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { optimizarEnStorage, rutaDesdeUrlPublica } from "@/lib/imagenes";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 // Bajar, recomprimir y subir una foto de 6 MB puede llevar varios segundos;
 // el default de Vercel es corto. 60 es el máximo del plan Hobby.
@@ -20,7 +21,7 @@ export const maxDuration = 60;
 async function post(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { productoId, url, orden, tipo } = await req.json();
 

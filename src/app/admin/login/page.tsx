@@ -1,8 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { createClient } from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { esAdmin } from "@/lib/admin";
+
+const SIN_ACCESO = "Esta cuenta no tiene acceso al panel.";
+
+/**
+ * El proxy manda acá con ?sin_permiso=1 a quien tiene sesión pero no es admin.
+ * Va aparte y dentro de un Suspense porque useSearchParams lo exige en una
+ * página estática.
+ */
+function AvisoSinPermiso({ hayOtroError }: { hayOtroError: boolean }) {
+  const params = useSearchParams();
+  if (hayOtroError || !params.has("sin_permiso")) return null;
+  return (
+    <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
+      {SIN_ACCESO}
+    </div>
+  );
+}
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState("");
@@ -17,13 +35,22 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithPassword({
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (authError) {
       setError("Credenciales incorrectas");
+      setLoading(false);
+      return;
+    }
+
+    // La contraseña puede ser correcta y la cuenta no ser admin: se cierra la
+    // sesión para no dejar una sesión sin permisos dando vueltas.
+    if (!esAdmin(data.user)) {
+      await supabase.auth.signOut();
+      setError(SIN_ACCESO);
       setLoading(false);
       return;
     }
@@ -43,6 +70,9 @@ export default function AdminLoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="bg-navy rounded-xl border border-lavanda/10 p-6 space-y-4">
+          <Suspense>
+            <AvisoSinPermiso hayOtroError={!!error} />
+          </Suspense>
           {error && (
             <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 text-red-400 text-sm">
               {error}

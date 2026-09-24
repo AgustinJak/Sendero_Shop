@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 /** Guarda las zonas y precios del courier local. Solo admin. */
 async function put(req: NextRequest) {
@@ -8,7 +9,7 @@ async function put(req: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

@@ -3,6 +3,10 @@ import { formatPrice } from "@/lib/utils";
 import { resolveTrackingUrl } from "@/lib/correo-argentino";
 import { getMetodoEnvioLabel, METODO_ENVIO_LABELS } from "@/lib/estado-labels";
 import { SYB_HORARIO_DETALLE } from "@/lib/envio-syb";
+// Todo dato que no está escrito en este archivo pasa por escaparHtml: el nombre,
+// el teléfono o la sucursal los escribe el cliente, y con HTML sin escapar la
+// tienda mandaba emails de phishing desde su propio dominio. Ver SHOP - Seguridad.
+import { escaparHtml } from "./seguridad";
 
 // ==========================================
 // Shared styles
@@ -85,11 +89,11 @@ function itemsTable(items: PedidoItem[]): string {
       (item) => `
     <tr>
       <td style="padding:8px 0;border-bottom:1px solid ${COLORS.lavanda}11;color:${COLORS.niebla};font-size:14px;">
-        <strong>${item.nombre_producto}</strong>
+        <strong>${escaparHtml(item.nombre_producto)}</strong>
         ${
           item.opciones_seleccionadas?.length
             ? `<br><span style="font-size:12px;color:${COLORS.lavanda};">${item.opciones_seleccionadas
-                .map((o) => `${o.grupo_nombre}: ${o.opcion_valor}`)
+                .map((o) => `${escaparHtml(o.grupo_nombre)}: ${escaparHtml(o.opcion_valor)}`)
                 .join(" · ")}</span>`
             : ""
         }
@@ -169,7 +173,7 @@ export function pedidoConfirmadoEmail(
   const content = `
     <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">¡Recibimos tu pedido!</h2>
     <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
-      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, tu pedido fue registrado correctamente.
+      Hola <strong style="color:${COLORS.niebla};">${escaparHtml(pedido.nombre_cliente)}</strong>, tu pedido fue registrado correctamente.
     </p>
 
     <!-- Número de pedido -->
@@ -202,7 +206,7 @@ export function pedidoConfirmadoEmail(
           }
           ${pedido.sucursal_correo_nombre ? `
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Sucursal de retiro</p>
-          <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;">${pedido.sucursal_correo_nombre}</p>
+          <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;">${escaparHtml(pedido.sucursal_correo_nombre)}</p>
           ` : ""}
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Método de pago</p>
           <p style="margin:0;color:${COLORS.niebla};font-size:14px;">${metodoPagoLabel}</p>
@@ -217,15 +221,15 @@ export function pedidoConfirmadoEmail(
       <tr>
         <td style="padding:16px;">
           <p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-weight:bold;">Datos para transferencia</p>
-          ${datosBancarios?.cbu ? `<p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">CBU</p><p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-family:monospace;">${datosBancarios.cbu}</p>` : ""}
-          ${datosBancarios?.alias ? `<p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Alias</p><p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-family:monospace;">${datosBancarios.alias}</p>` : ""}
+          ${datosBancarios?.cbu ? `<p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">CBU</p><p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-family:monospace;">${escaparHtml(datosBancarios.cbu)}</p>` : ""}
+          ${datosBancarios?.alias ? `<p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Alias</p><p style="margin:0 0 12px;color:${COLORS.niebla};font-size:14px;font-family:monospace;">${escaparHtml(datosBancarios.alias)}</p>` : ""}
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Monto a transferir</p>
           <p style="margin:0 0 12px;color:${COLORS.ambar};font-size:18px;font-weight:bold;">${formatPrice(pedido.total)}</p>
           <p style="margin:0 0 12px;color:${COLORS.lavanda};font-size:13px;">
             Tenés <strong style="color:${COLORS.niebla};">48 horas</strong> para enviar el comprobante. Después el pedido se cancela automáticamente.
           </p>
           <p style="margin:0;text-align:center;">
-            <a href="https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola! Te envío el comprobante del pedido ${pedido.numero_pedido} por ${formatPrice(pedido.total)}`)}"
+            <a href="https://wa.me/${escaparHtml(whatsapp)}?text=${encodeURIComponent(`Hola! Te envío el comprobante del pedido ${pedido.numero_pedido} por ${formatPrice(pedido.total)}`)}"
                style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
               Enviar comprobante por WhatsApp
             </a>
@@ -262,7 +266,7 @@ export function pedidoConfirmadoEmail(
           <p style="margin:12px 0 0;padding-top:12px;border-top:1px solid ${COLORS.purpura}33;color:${COLORS.lavanda};font-size:12px;">
             Pagá la seña desde la página de tu pedido con MercadoPago${
               datosBancarios?.cbu || datosBancarios?.alias
-                ? `, o transferí a ${datosBancarios.alias ? `<strong style="color:${COLORS.niebla};">${datosBancarios.alias}</strong>` : `<strong style="color:${COLORS.niebla};font-family:monospace;">${datosBancarios.cbu}</strong>`} y mandanos el comprobante por WhatsApp`
+                ? `, o transferí a ${datosBancarios.alias ? `<strong style="color:${COLORS.niebla};">${escaparHtml(datosBancarios.alias)}</strong>` : `<strong style="color:${COLORS.niebla};font-family:monospace;">${escaparHtml(datosBancarios.cbu)}</strong>`} y mandanos el comprobante por WhatsApp`
                 : ""
             }.
             Si no se abona en <strong style="color:${COLORS.niebla};">48 horas</strong>, el pedido se cancela automáticamente.
@@ -303,7 +307,7 @@ export function pedidoConfirmadoEmail(
             Te avisamos cuando esté listo para que coordinemos el retiro en Villa Crespo.
           </p>
           <p style="margin:0;text-align:center;">
-            <a href="https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola! Consulta sobre el pedido ${pedido.numero_pedido}`)}"
+            <a href="https://wa.me/${escaparHtml(whatsapp)}?text=${encodeURIComponent(`Hola! Consulta sobre el pedido ${pedido.numero_pedido}`)}"
                style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
               Consultar por WhatsApp
             </a>
@@ -317,7 +321,7 @@ export function pedidoConfirmadoEmail(
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${escaparHtml(whatsapp)}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -337,7 +341,7 @@ export function pagoRecibidoEmail(pedido: Pedido, whatsapp: string): {
   const content = `
     <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">¡Recibimos tu pago!</h2>
     <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
-      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, confirmamos que recibimos el pago de tu pedido.
+      Hola <strong style="color:${COLORS.niebla};">${escaparHtml(pedido.nombre_cliente)}</strong>, confirmamos que recibimos el pago de tu pedido.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
@@ -356,7 +360,7 @@ export function pagoRecibidoEmail(pedido: Pedido, whatsapp: string): {
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${escaparHtml(whatsapp)}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -376,7 +380,7 @@ export function pedidoEnviadoEmail(pedido: Pedido, whatsapp: string): {
   const content = `
     <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">¡Tu pedido fue enviado!</h2>
     <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
-      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, tu pedido ya está en camino.
+      Hola <strong style="color:${COLORS.niebla};">${escaparHtml(pedido.nombre_cliente)}</strong>, tu pedido ya está en camino.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
@@ -401,10 +405,12 @@ export function pedidoEnviadoEmail(pedido: Pedido, whatsapp: string): {
       <tr>
         <td style="padding:16px;">
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Código de seguimiento</p>
-          <p style="margin:0;color:${COLORS.niebla};font-size:16px;font-family:monospace;font-weight:bold;">${pedido.tracking_code}</p>
+          <p style="margin:0;color:${COLORS.niebla};font-size:16px;font-family:monospace;font-weight:bold;">${escaparHtml(pedido.tracking_code)}</p>
           ${
-            trackingUrl
-              ? `<p style="margin:8px 0 0;"><a href="${trackingUrl}" style="color:${COLORS.ambar};font-size:13px;text-decoration:none;">${
+            // Solo http(s): el link lo carga el admin, pero un javascript: en un href
+            // no tiene nada que hacer en un email.
+            trackingUrl && /^https?:\/\//i.test(trackingUrl)
+              ? `<p style="margin:8px 0 0;"><a href="${escaparHtml(trackingUrl)}" style="color:${COLORS.ambar};font-size:13px;text-decoration:none;">${
                   esCorreoArg ? "Consultar estado en Correo Argentino →" : "Seguir envío →"
                 }</a></p>${
                   esCorreoArg
@@ -425,7 +431,7 @@ export function pedidoEnviadoEmail(pedido: Pedido, whatsapp: string): {
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${escaparHtml(whatsapp)}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -445,7 +451,7 @@ export function pedidoListoRetiroEmail(pedido: Pedido, whatsapp: string): {
   const content = `
     <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">Tu pedido está listo para retirar</h2>
     <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
-      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, tu pedido ya está listo y te esperamos para que lo retires.
+      Hola <strong style="color:${COLORS.niebla};">${escaparHtml(pedido.nombre_cliente)}</strong>, tu pedido ya está listo y te esperamos para que lo retires.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
@@ -470,7 +476,7 @@ export function pedidoListoRetiroEmail(pedido: Pedido, whatsapp: string): {
     </table>
 
     <p style="margin:0;text-align:center;">
-      <a href="https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hola! Quiero coordinar el retiro del pedido ${pedido.numero_pedido}`)}"
+      <a href="https://wa.me/${escaparHtml(whatsapp)}?text=${encodeURIComponent(`Hola! Quiero coordinar el retiro del pedido ${pedido.numero_pedido}`)}"
          style="display:inline-block;padding:10px 24px;background-color:#25D366;color:#fff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:bold;">
         Coordinar retiro por WhatsApp
       </a>
@@ -479,7 +485,7 @@ export function pedidoListoRetiroEmail(pedido: Pedido, whatsapp: string): {
     ${verPedidoButton(pedido.id)}
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${escaparHtml(whatsapp)}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -499,7 +505,7 @@ export function pedidoEntregadoEmail(pedido: Pedido, whatsapp: string): {
   const content = `
     <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">¡Tu pedido fue entregado!</h2>
     <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
-      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, esperamos que disfrutes tu compra.
+      Hola <strong style="color:${COLORS.niebla};">${escaparHtml(pedido.nombre_cliente)}</strong>, esperamos que disfrutes tu compra.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
@@ -531,7 +537,7 @@ export function pedidoEntregadoEmail(pedido: Pedido, whatsapp: string): {
     </p>
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${escaparHtml(whatsapp)}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -552,7 +558,7 @@ export function pedidoCanceladoEmail(
   const content = `
     <h2 style="margin:0 0 8px;color:${COLORS.niebla};font-size:18px;">Tu pedido fue cancelado</h2>
     <p style="margin:0 0 20px;color:${COLORS.lavanda};font-size:14px;">
-      Hola <strong style="color:${COLORS.niebla};">${pedido.nombre_cliente}</strong>, lamentamos informarte que tu pedido fue cancelado.
+      Hola <strong style="color:${COLORS.niebla};">${escaparHtml(pedido.nombre_cliente)}</strong>, lamentamos informarte que tu pedido fue cancelado.
     </p>
 
     <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.navyDeep};border-radius:8px;margin-bottom:20px;">
@@ -571,7 +577,7 @@ export function pedidoCanceladoEmail(
       <tr>
         <td style="padding:16px;">
           <p style="margin:0 0 4px;color:${COLORS.lavanda};font-size:12px;">Motivo</p>
-          <p style="margin:0;color:${COLORS.niebla};font-size:14px;">${motivo}</p>
+          <p style="margin:0;color:${COLORS.niebla};font-size:14px;">${escaparHtml(motivo)}</p>
         </td>
       </tr>
     </table>`
@@ -590,7 +596,7 @@ export function pedidoCanceladoEmail(
     </p>
 
     <p style="margin:24px 0 0;color:${COLORS.lavanda};font-size:13px;text-align:center;">
-      Si tenés alguna duda, escribinos por <a href="https://wa.me/${whatsapp}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
+      Si tenés alguna duda, escribinos por <a href="https://wa.me/${escaparHtml(whatsapp)}" style="color:${COLORS.ambar};text-decoration:none;">WhatsApp</a>
     </p>
   `;
 
@@ -620,15 +626,15 @@ export function nuevoPedidoAdminEmail(pedido: Pedido & { items: PedidoItem[] }):
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:8px;">Cliente</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:8px;">${pedido.nombre_cliente}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:8px;">${escaparHtml(pedido.nombre_cliente)}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Email</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.email}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${escaparHtml(pedido.email)}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Teléfono</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.telefono}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${escaparHtml(pedido.telefono)}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Envío</td>
@@ -636,11 +642,11 @@ export function nuevoPedidoAdminEmail(pedido: Pedido & { items: PedidoItem[] }):
             </tr>
             ${pedido.sucursal_correo_nombre ? `<tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Sucursal</td>
-              <td style="color:${COLORS.niebla};font-size:13px;text-align:right;padding-top:4px;">${pedido.sucursal_correo_nombre}</td>
+              <td style="color:${COLORS.niebla};font-size:13px;text-align:right;padding-top:4px;">${escaparHtml(pedido.sucursal_correo_nombre)}</td>
             </tr>` : ""}
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Pago</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.metodo_pago === "mercadopago" ? "MercadoPago" : pedido.metodo_pago}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.metodo_pago === "mercadopago" ? "MercadoPago" : escaparHtml(pedido.metodo_pago)}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Total</td>
@@ -687,19 +693,19 @@ export function pagoConfirmadoAdminEmail(pedido: Pedido & { items: PedidoItem[] 
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:8px;">Cliente</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:8px;">${pedido.nombre_cliente}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:8px;">${escaparHtml(pedido.nombre_cliente)}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Email</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.email}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${escaparHtml(pedido.email)}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Teléfono</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.telefono}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${escaparHtml(pedido.telefono)}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">MP Payment ID</td>
-              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${pedido.mp_payment_id || "—"}</td>
+              <td style="color:${COLORS.niebla};font-size:14px;text-align:right;padding-top:4px;">${escaparHtml(pedido.mp_payment_id || "—")}</td>
             </tr>
             <tr>
               <td style="color:${COLORS.lavanda};font-size:12px;padding-top:4px;">Total</td>

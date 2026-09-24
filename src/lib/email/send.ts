@@ -1,4 +1,5 @@
 import { transporter, FROM_EMAIL } from "./transporter";
+import { esEmailValido, limpiarLinea } from "./seguridad";
 
 export async function sendEmail({
   to,
@@ -18,11 +19,22 @@ export async function sendEmail({
     return false;
   }
 
+  // Última barrera, pase lo que pase en la ruta que llama: una sola
+  // dirección válida por email, y nada de saltos de línea en los headers.
+  // Ver lib/email/seguridad.ts.
+  if (!esEmailValido(to)) {
+    console.error(`[Email] Destinatario rechazado (no es una dirección válida): ${limpiarLinea(to).slice(0, 80)}`);
+    return false;
+  }
+  if (replyTo && !esEmailValido(replyTo)) {
+    replyTo = undefined;
+  }
+
   try {
     await transporter.sendMail({
       from: from || FROM_EMAIL,
       to,
-      subject,
+      subject: limpiarLinea(subject),
       html,
       ...(replyTo && { replyTo }),
     });

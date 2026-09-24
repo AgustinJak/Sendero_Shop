@@ -3,6 +3,7 @@ import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supab
 import { generarEtiquetaPDF } from "@/lib/etiqueta-envio";
 import { etiquetaZPL, nombreArchivoZPL } from "@/lib/etiqueta-zpl";
 import type { Pedido } from "@/types";
+import { esAdmin } from "@/lib/admin";
 
 /**
  * Devuelve la etiqueta de envío del pedido, en PDF o en ZPL.
@@ -27,7 +28,7 @@ export async function GET(
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) {
+  if (!esAdmin(user)) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 

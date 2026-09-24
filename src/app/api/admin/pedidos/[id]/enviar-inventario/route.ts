@@ -6,6 +6,7 @@ import {
   type InventarioItem,
 } from "@/lib/inventario-webhook";
 import type { Pedido, PedidoItem, VarianteSeleccion } from "@/types";
+import { esAdmin } from "@/lib/admin";
 
 type PedidoItemConSku = PedidoItem & {
   productos?: { sku: string | null } | null;
@@ -21,7 +22,7 @@ export async function POST(
     // 1. Auth (admin)
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
+    if (!esAdmin(user)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { conRevalidacion } from "@/lib/revalidar";
+import { esAdmin } from "@/lib/admin";
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const db = await createServiceRoleClient();
@@ -32,7 +33,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 async function patch(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const body = await req.json();
@@ -57,7 +58,7 @@ async function patch(req: NextRequest, { params }: { params: Promise<{ id: strin
 async function del(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  if (!esAdmin(user)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const { id } = await params;
   const db = await createServiceRoleClient();
