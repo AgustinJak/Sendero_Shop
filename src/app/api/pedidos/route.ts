@@ -4,6 +4,7 @@ import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
 import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
 import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
+import { verificarCaptcha } from "@/lib/captcha";
 import { esEmailValido } from "@/lib/email/seguridad";
 import { costoEnvioCorreo } from "@/lib/envio-servidor";
 import { resolverPrecios } from "@/lib/precios-server";
@@ -47,26 +48,11 @@ export async function POST(req: NextRequest) {
       nota_repartidor,
     } = body;
 
-    // Verificar Turnstile CAPTCHA si está configurado
-    if (process.env.TURNSTILE_SECRET_KEY) {
-      if (!captchaToken) {
-        return NextResponse.json({ error: "Completá la verificación de seguridad" }, { status: 400 });
-      }
-
-      const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          secret: process.env.TURNSTILE_SECRET_KEY,
-          response: captchaToken,
-          remoteip: ip,
-        }),
-      });
-
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        return NextResponse.json({ error: "Verificación de seguridad fallida. Recargá e intentá de nuevo." }, { status: 403 });
-      }
+    // Captcha: falla cerrado en producción y cada token sirve una sola vez
+    // (ver lib/captcha.ts).
+    const captcha = await verificarCaptcha(captchaToken, ip);
+    if (!captcha.ok) {
+      return NextResponse.json({ error: captcha.error }, { status: captcha.status });
     }
 
     // Validaciones básicas

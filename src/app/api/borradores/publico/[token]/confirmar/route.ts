@@ -3,7 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
 import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
-import { rateLimitByIp } from "@/lib/rate-limit";
+import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
+import { verificarCaptcha } from "@/lib/captcha";
 import {
   calculateSubtotal,
   calculateDescuento,
@@ -47,12 +48,10 @@ export async function POST(
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    // 0. Rate limit (más estricto que checkout normal por ser público con token)
-    const { ok } = rateLimitByIp(req, "borrador-confirmar", {
-      limit: 3,
-      windowMs: 60_000,
-    });
-    if (!ok) {
+    // 0. Rate limit persistente (lib/limite.ts): el anterior vivía en la
+    // memoria de cada instancia de Vercel y no limitaba nada.
+    const ip = ipDe(req);
+    if (!(await dentroDelLimite(`borrador:ip:10m:${huella(ip)}`, 5, 600))) {
       return NextResponse.json(
         { error: "Demasiadas solicitudes. Intentá en un minuto." },
         { status: 429 }
@@ -66,32 +65,10 @@ export async function POST(
 
     const body = (await req.json()) as ConfirmarBody;
 
-    // 1. Validar Turnstile (mismo flujo que /api/pedidos)
-    if (process.env.TURNSTILE_SECRET_KEY) {
-      if (!body.captchaToken) {
-        return NextResponse.json(
-          { error: "Completá la verificación de seguridad" },
-          { status: 400 }
-        );
-      }
-      const verifyRes = await fetch(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            secret: process.env.TURNSTILE_SECRET_KEY,
-            response: body.captchaToken,
-          }),
-        }
-      );
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
-        return NextResponse.json(
-          { error: "Verificación de seguridad fallida. Recargá e intentá de nuevo." },
-          { status: 403 }
-        );
-      }
+    // 1. Captcha: mismo módulo que /api/pedidos (lib/captcha.ts).
+    const captcha = await verificarCaptcha(body.captchaToken, ip);
+    if (!captcha.ok) {
+      return NextResponse.json({ error: captcha.error }, { status: captcha.status });
     }
 
     // 2. Validaciones básicas
