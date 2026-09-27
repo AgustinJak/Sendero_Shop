@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listarSucursales, PROVINCIA_A_CODIGO } from "@/lib/correo-argentino";
+import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
 
 export async function GET(req: NextRequest) {
   try {
+    // Consulta a la API de Correo con nuestra cuenta, igual que cotizar.
+    if (!(await dentroDelLimite(`sucursales:ip:10m:${huella(ipDe(req))}`, 30, 600))) {
+      return NextResponse.json(
+        { error: "Hiciste muchas consultas seguidas. Probá en unos minutos." },
+        { status: 429 }
+      );
+    }
+
     const provincia = req.nextUrl.searchParams.get("provincia");
     const cpCliente = req.nextUrl.searchParams.get("cp");
 
@@ -16,7 +25,7 @@ export async function GET(req: NextRequest) {
     const code = PROVINCIA_A_CODIGO[provincia];
     if (!code) {
       return NextResponse.json(
-        { error: `Provincia no reconocida: ${provincia}` },
+        { error: "Provincia no reconocida" },
         { status: 400 }
       );
     }

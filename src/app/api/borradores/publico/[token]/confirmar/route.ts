@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
@@ -22,6 +22,9 @@ import type {
   DireccionEnvio,
 } from "@/types";
 import { esEmailValido } from "@/lib/email/seguridad";
+import { validarDatosCliente, validarEnvio } from "@/lib/validar-pedido";
+import { siguienteNumeroPedido } from "@/lib/numero-pedido";
+import { enviarCompraAMeta, guardarAtribucionMeta } from "@/lib/meta-capi";
 
 interface ConfirmarBody {
   // Datos del cliente
@@ -88,12 +91,26 @@ export async function POST(
         { status: 400 }
       );
     }
-    if (body.metodo_envio !== "retiro" && !body.direccion_envio?.codigo_postal) {
-      return NextResponse.json(
-        { error: "Faltan datos de envío" },
-        { status: 400 }
-      );
+    // Los pedidos a medida se retiran o van por Correo: no hay moto.
+    if (!["retiro", "correo_argentino"].includes(body.metodo_envio)) {
+      return NextResponse.json({ error: "Método de envío inválido" }, { status: 400 });
     }
+    if (!["mercadopago", "transferencia", "efectivo"].includes(body.metodo_pago)) {
+      return NextResponse.json({ error: "Método de pago inválido" }, { status: 400 });
+    }
+
+    // Nombre, DNI (acá es opcional), teléfono y dirección, con largos y
+    // formatos (lib/validar-pedido.ts). De acá en adelante, solo datos limpios.
+    const cliente = validarDatosCliente(body.datos_personales, { dniObligatorio: false });
+    if (!cliente.ok) {
+      return NextResponse.json({ error: cliente.error }, { status: 400 });
+    }
+    const envioLimpio = validarEnvio(body.metodo_envio, body);
+    if (!envioLimpio.ok) {
+      return NextResponse.json({ error: envioLimpio.error }, { status: 400 });
+    }
+    const datosCliente = { ...cliente.datos, email: body.datos_personales.email.trim() };
+    const { direccion_envio, tipo_envio, sucursal_correo_id, sucursal_correo_nombre } = envioLimpio.datos;
 
     const service = await createServiceRoleClient();
 
@@ -164,7 +181,7 @@ export async function POST(
       costoEnvio = Number(borrador.costo_envio_override);
     } else {
       // Cotizar con Correo Argentino
-      const cp = body.direccion_envio?.codigo_postal;
+      const cp = direccion_envio?.codigo_postal;
       if (!cp || !/^\d{4}$/.test(cp)) {
         return NextResponse.json(
           { error: "Código postal inválido" },
@@ -175,7 +192,7 @@ export async function POST(
       try {
         const cot = await cotizar(cp, pkg);
         const rate =
-          body.tipo_envio === "sucursal" ? cot.sucursal : cot.domicilio;
+          tipo_envio === "sucursal" ? cot.sucursal : cot.domicilio;
         if (!rate) {
           return NextResponse.json(
             { error: "No pudimos cotizar el envío para ese CP" },
@@ -215,17 +232,15 @@ export async function POST(
     const estadoInicial: EstadoPedido =
       body.metodo_pago === "efectivo" ? "pago_confirmado" : "pendiente_pago";
 
-    // 9. Generar número de pedido (mismo contador que checkout normal)
-    const { data: counterRow } = await service
-      .from("configuracion")
-      .select("value")
-      .eq("key", "pedido_counter")
-      .single();
-    const nextNum = counterRow ? parseInt(counterRow.value, 10) + 1 : 1;
-    await service
-      .from("configuracion")
-      .upsert({ key: "pedido_counter", value: String(nextNum) }, { onConflict: "key" });
-    const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
+    // 9. Número de pedido: mismo contador que el checkout, reservado de forma
+    //    atómica (lib/numero-pedido.ts).
+    let numeroPedido: string;
+    try {
+      numeroPedido = await siguienteNumeroPedido(service);
+    } catch (err) {
+      console.error("[borrador confirmar] no se pudo reservar el número:", err);
+      return NextResponse.json({ error: "Error al crear el pedido" }, { status: 500 });
+    }
 
     // 10. Descripción del descuento
     let descuentoDescripcion: string | null = null;
@@ -243,20 +258,20 @@ export async function POST(
       .insert({
         numero_pedido: numeroPedido,
         estado: estadoInicial,
-        nombre_cliente: body.datos_personales.nombre_completo,
-        dni: body.datos_personales.dni || "",
-        email: body.datos_personales.email,
-        telefono: body.datos_personales.telefono,
-        direccion_envio: body.direccion_envio || null,
+        nombre_cliente: datosCliente.nombre_completo,
+        dni: datosCliente.dni,
+        email: datosCliente.email,
+        telefono: datosCliente.telefono,
+        direccion_envio: direccion_envio,
         metodo_envio: body.metodo_envio,
-        tipo_envio: body.tipo_envio || null,
+        tipo_envio: tipo_envio || null,
         costo_envio: costoEnvio,
         metodo_pago: body.metodo_pago,
         recargo_mp: recargoMP,
         subtotal,
         total,
-        sucursal_correo_id: body.sucursal_correo_id || null,
-        sucursal_correo_nombre: body.sucursal_correo_nombre || null,
+        sucursal_correo_id: sucursal_correo_id || null,
+        sucursal_correo_nombre: sucursal_correo_nombre || null,
         // Custom orders
         borrador_id: borrador.id,
         descuento_monto: descuento,
@@ -323,19 +338,26 @@ export async function POST(
       );
     }
 
+    // 13b. Meta Ads: igual que el checkout (lib/meta-capi.ts). La URL va sin
+    //      el token del link: es privado.
+    await guardarAtribucionMeta(service, pedidoRow.id, req, "/pedido-custom");
+    if (estadoInicial === "pago_confirmado") {
+      after(() => enviarCompraAMeta(pedidoRow.id));
+    }
+
     // 14. Enviar emails (no bloqueante para errores)
     try {
       const fullPedido = {
         id: pedidoRow.id,
         numero_pedido: pedidoRow.numero_pedido,
         estado: estadoInicial,
-        nombre_cliente: body.datos_personales.nombre_completo,
-        dni: body.datos_personales.dni || "",
-        email: body.datos_personales.email,
-        telefono: body.datos_personales.telefono,
-        direccion_envio: body.direccion_envio || null,
+        nombre_cliente: datosCliente.nombre_completo,
+        dni: datosCliente.dni,
+        email: datosCliente.email,
+        telefono: datosCliente.telefono,
+        direccion_envio: direccion_envio,
         metodo_envio: body.metodo_envio,
-        tipo_envio: body.tipo_envio || null,
+        tipo_envio: tipo_envio || null,
         costo_envio: costoEnvio,
         metodo_pago: body.metodo_pago,
         recargo_mp: recargoMP,
@@ -345,8 +367,8 @@ export async function POST(
         mp_payment_id: null,
         tracking_code: null,
         tracking_url: null,
-        sucursal_correo_id: body.sucursal_correo_id || null,
-        sucursal_correo_nombre: body.sucursal_correo_nombre || null,
+        sucursal_correo_id: sucursal_correo_id || null,
+        sucursal_correo_nombre: sucursal_correo_nombre || null,
         correo_shipping_id: null,
         correo_imported_at: null,
         correo_import_response: null,
@@ -395,7 +417,7 @@ export async function POST(
 
       const whatsapp = await getWhatsapp();
       const clientEmail = pedidoConfirmadoEmail(fullPedido, whatsapp, datosBancarios);
-      await sendEmail({ to: body.datos_personales.email, ...clientEmail });
+      await sendEmail({ to: datosCliente.email, ...clientEmail });
 
       if (process.env.SMTP_USER) {
         const adminEmail = nuevoPedidoAdminEmail(fullPedido);

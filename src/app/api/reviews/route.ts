@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
+import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
+import { esEmailValido } from "@/lib/email/seguridad";
 
 // GET /api/reviews?producto_id=xxx — reviews aprobados de un producto
 export async function GET(req: NextRequest) {
@@ -18,7 +20,8 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("[Reviews] Select error:", error.message);
+    return NextResponse.json({ error: "No pudimos cargar las reseñas" }, { status: 500 });
   }
 
   return NextResponse.json(data);
@@ -26,15 +29,32 @@ export async function GET(req: NextRequest) {
 
 // POST /api/reviews — crear review (público)
 export async function POST(req: NextRequest) {
-  const body = await req.json();
-  const { producto_id, nombre_cliente, email, rating, comentario, pedido_id } = body;
+  // Cada intento consulta los pedidos de un email: con tope, no sirve para
+  // averiguar quién compró qué probando emails (SHOP - Seguridad, punto 7).
+  if (!(await dentroDelLimite(`resena:ip:1h:${huella(ipDe(req))}`, 5, 3600))) {
+    return NextResponse.json({ error: "Hiciste varios intentos seguidos. Probá más tarde." }, { status: 429 });
+  }
 
-  if (!producto_id || !nombre_cliente || !email || !rating) {
+  const body = await req.json();
+  const { producto_id, rating } = body;
+  const nombre_cliente = typeof body.nombre_cliente === "string" ? body.nombre_cliente.replace(/\s+/g, " ").trim() : "";
+  const email = typeof body.email === "string" ? body.email.trim() : "";
+  const comentario = typeof body.comentario === "string" ? body.comentario.trim() : "";
+
+  if (typeof producto_id !== "string" || !producto_id || !nombre_cliente || !email || !rating) {
     return NextResponse.json({ error: "Campos requeridos: producto_id, nombre_cliente, email, rating" }, { status: 400 });
   }
 
-  if (rating < 1 || rating > 5) {
+  if (!Number.isInteger(Number(rating)) || rating < 1 || rating > 5) {
     return NextResponse.json({ error: "Rating debe ser entre 1 y 5" }, { status: 400 });
+  }
+
+  if (!esEmailValido(email)) {
+    return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
+  }
+
+  if (nombre_cliente.length > 80 || comentario.length > 2000) {
+    return NextResponse.json({ error: "El nombre o el comentario son demasiado largos" }, { status: 400 });
   }
 
   const supabase = await createServiceRoleClient();
@@ -88,7 +108,7 @@ export async function POST(req: NextRequest) {
 
   if (error) {
     console.error("[Reviews] Insert error:", error.message);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: "No pudimos guardar la reseña" }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, message: "Reseña enviada. Será revisada antes de publicarse." });

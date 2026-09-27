@@ -11,6 +11,7 @@ import SectionHeader from "@/components/ui/SectionHeader";
 import ReviewList from "@/components/reviews/ReviewList";
 import TrackItemList from "@/components/productos/TrackItemList";
 import { createServiceRoleClient } from "@/lib/supabase-server";
+import { jsonLdSeguro, limpiarDescripcion } from "@/lib/html-seguro";
 
 // Se arma una vez y Vercel la sirve ya hecha. Se regenera sola a los 5 minutos,
 // y en el acto cuando el admin cambia algo (ver lib/revalidar.ts).
@@ -179,7 +180,7 @@ export default async function ProductoPage({ params }: Props) {
       </nav>
 
       <ProductDetail
-        producto={producto}
+        producto={{ ...producto, descripcion: limpiarDescripcion(producto.descripcion) }}
         whatsapp={whatsapp}
         reviewCount={reviewCount}
         avgRating={avgRating}
@@ -213,11 +214,11 @@ export default async function ProductoPage({ params }: Props) {
       {/* JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdSeguro(jsonLd) }}
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdSeguro(breadcrumbLd) }}
       />
     </div>
   );

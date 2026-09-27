@@ -3,6 +3,7 @@ import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supab
 import { normalizarSku, skuEnUso } from "@/lib/sku";
 import { conRevalidacion } from "@/lib/revalidar";
 import { esAdmin } from "@/lib/admin";
+import { limpiarDescripcion } from "@/lib/html-seguro";
 
 async function post(req: NextRequest) {
   const supabase = await createServerSupabaseClient();
@@ -30,7 +31,7 @@ async function post(req: NextRequest) {
     .insert({
       nombre: body.nombre,
       slug: body.slug,
-      descripcion: body.descripcion || "",
+      descripcion: limpiarDescripcion(body.descripcion),
       precio: body.precio,
       precio_oferta: body.precio_oferta || null,
       categoria_id: body.categoria_id || null,

@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sendEmail } from "@/lib/email/send";
 import { FROM_AYUDA } from "@/lib/email/transporter";
-import { rateLimitByIp } from "@/lib/rate-limit";
+import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
 import { escaparHtml, esEmailValido, limpiarLinea } from "@/lib/email/seguridad";
 
 export async function POST(req: NextRequest) {
-  const { ok } = rateLimitByIp(req, "contacto", { limit: 3, windowMs: 60_000 });
-  if (!ok) {
-    return NextResponse.json({ error: "Demasiados mensajes. Intentá en un minuto." }, { status: 429 });
+  // Cada mensaje es un email a nuestra casilla: sin tope, se puede llenar
+  // la bandeja o quemar la cuota del SMTP (SHOP - Seguridad, punto 7).
+  const ip = huella(ipDe(req));
+  const [okCorto, okDia] = await Promise.all([
+    dentroDelLimite(`contacto:ip:10m:${ip}`, 3, 600),
+    dentroDelLimite(`contacto:ip:24h:${ip}`, 10, 86_400),
+  ]);
+  if (!okCorto || !okDia) {
+    return NextResponse.json({ error: "Recibimos varios mensajes seguidos. Probá en un rato o escribinos por WhatsApp." }, { status: 429 });
   }
 
   const { nombre, email, mensaje } = await req.json();

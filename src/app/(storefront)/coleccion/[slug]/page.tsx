@@ -5,6 +5,7 @@ import { cache } from "react";
 import { getColeccionBySlug } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
+import { jsonLdSeguro } from "@/lib/html-seguro";
 
 // Se arma una vez y Vercel la sirve ya hecha. Se regenera sola a los 5 minutos,
 // y en el acto cuando el admin cambia algo (ver lib/revalidar.ts).
@@ -119,7 +120,7 @@ export default async function ColeccionPage({ params }: Props) {
       {/* JSON-LD */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdSeguro(jsonLd) }}
       />
     </div>
   );

@@ -61,6 +61,20 @@ export async function POST(req: NextRequest) {
           currency_id: "ARS",
         },
       ];
+    } else if (Number(pedido.descuento_monto) > 0) {
+      // MP no acepta ítems con precio negativo, así que el descuento de un
+      // pedido a medida no puede ir como línea aparte. Se cobra el total en
+      // una sola línea: con el detalle por producto, MP cobraba la suma sin el
+      // descuento, y el webhook lo compara contra el total del pedido.
+      items = [
+        {
+          id: pedido_id,
+          title: `Pedido ${pedido.numero_pedido}`,
+          quantity: 1,
+          unit_price: Number(pedido.total),
+          currency_id: "ARS",
+        },
+      ];
     } else {
       items = pedido.items.map(
         (item: {
@@ -136,9 +150,12 @@ export async function POST(req: NextRequest) {
       preference_id: result.id,
     });
   } catch (err: unknown) {
-    const errObj = err as Record<string, unknown>;
-    const message = errObj?.message || errObj?.cause || JSON.stringify(err);
+    // El detalle queda en el log; al navegador no se le pasa la respuesta
+    // interna de Mercado Pago.
     console.error("MP create-preference error:", JSON.stringify(err, null, 2));
-    return NextResponse.json({ error: `Error MP: ${message}` }, { status: 500 });
+    return NextResponse.json(
+      { error: "No pudimos iniciar el pago con Mercado Pago. Probá de nuevo en un momento." },
+      { status: 500 }
+    );
   }
 }

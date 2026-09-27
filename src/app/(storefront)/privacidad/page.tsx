@@ -20,7 +20,7 @@ export default async function PrivacidadPage() {
       </h1>
 
       <div className="space-y-6 text-lavanda-light text-sm leading-relaxed [&_p]:mb-3 [&_p:last-child]:mb-0 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-5 [&_h3]:mb-2 [&_h3]:text-niebla [&_ul]:list-disc [&_ul]:pl-6 [&_ul]:mb-3 [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:mb-3 [&_li]:mb-1 [&_a]:text-ambar [&_a]:underline [&_strong]:font-bold [&_strong]:text-niebla">
-        <p className="text-xs text-texto-3">Última actualización: Marzo 2026</p>
+        <p className="text-xs text-texto-3">Última actualización: Septiembre 2026</p>
 
         <Section title="1. Datos que recopilamos">
           <p>Al realizar una compra, recopilamos los siguientes datos personales:</p>
@@ -39,6 +39,7 @@ export default async function PrivacidadPage() {
             <li>Procesar y gestionar pedidos</li>
             <li>Enviar notificaciones sobre el estado del pedido</li>
             <li>Responder consultas de soporte</li>
+            <li>Medir el resultado de nuestros anuncios en Facebook e Instagram</li>
             <li>Cumplir con obligaciones legales y fiscales</li>
           </ul>
         </Section>
@@ -60,6 +61,11 @@ export default async function PrivacidadPage() {
             <li>MercadoPago (procesamiento de pagos)</li>
             <li>Correo Argentino / Andreani (envíos)</li>
             <li>Google Analytics (analítica web anonimizada)</li>
+            <li>
+              Meta (Facebook e Instagram), para medir nuestros anuncios: cuando confirmamos el pago
+              de un pedido le informamos el importe, los productos y tu email y teléfono cifrados
+              (un código que no permite leerlos, pero sí relacionarlos con una cuenta de Meta)
+            </li>
           </ul>
         </Section>
 
@@ -67,7 +73,10 @@ export default async function PrivacidadPage() {
           <p>
             Utilizamos cookies técnicas necesarias para el funcionamiento del carrito de compras y
             la sesión del usuario. También utilizamos Google Analytics para entender cómo los usuarios
-            navegan el sitio. Podés desactivar las cookies desde la configuración de tu navegador.
+            navegan el sitio, y el píxel de Meta para saber qué visitas llegan desde nuestros anuncios
+            en Facebook e Instagram. Podés desactivar las cookies desde la configuración de tu
+            navegador, y elegir qué anuncios ves desde las preferencias de anuncios de tu cuenta de
+            Meta.
           </p>
         </Section>
 

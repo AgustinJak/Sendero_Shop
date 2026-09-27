@@ -143,6 +143,9 @@ async function preciarProductoCatalogo(
   // Adicionales por variantes: se recalculan desde la base, ignorando los
   // valores que vinieron del cliente.
   const opcionesPedidas = Array.isArray(linea.opciones) ? linea.opciones : [];
+  if (opcionesPedidas.length > 20) {
+    throw new Error("Demasiadas opciones en un producto del pedido");
+  }
   let adicionales = 0;
   const opcionesFinales: VarianteSeleccion[] = [];
 
@@ -174,12 +177,20 @@ async function preciarProductoCatalogo(
       }
 
       // Opción que no pertenece a este producto: no suma precio, pero se
-      // conserva la etiqueta para no perder el dato del pedido.
+      // conserva la etiqueta para no perder el dato del pedido. Como la
+      // etiqueta viene entera del cliente, se guardan solo los campos
+      // conocidos y con largo máximo (SHOP - Seguridad, punto 6).
       if (!encontrada) {
         console.warn(
           `Opción desconocida ${sel.opcion_id} para producto ${producto.id}`
         );
-        opcionesFinales.push({ ...sel, precio_adicional: 0 });
+        opcionesFinales.push({
+          grupo_id: String(sel.grupo_id ?? "").slice(0, 64),
+          grupo_nombre: String(sel.grupo_nombre ?? "").slice(0, 80),
+          opcion_id: String(sel.opcion_id ?? "").slice(0, 64),
+          opcion_valor: String(sel.opcion_valor ?? "").slice(0, 120),
+          precio_adicional: 0,
+        });
         continue;
       }
 

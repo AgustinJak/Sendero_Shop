@@ -1,10 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pagoRecibidoEmail, pedidoEnviadoEmail, pedidoListoRetiroEmail, pedidoEntregadoEmail, pedidoCanceladoEmail } from "@/lib/email/templates";
 import { getWhatsapp } from "@/lib/site-config";
 import type { Pedido } from "@/types";
 import { esAdmin } from "@/lib/admin";
+import { enviarCompraAMeta } from "@/lib/meta-capi";
 
 export async function PATCH(
   req: NextRequest,
@@ -81,6 +82,12 @@ export async function PATCH(
     if (error) {
       console.error("[Admin PATCH] Supabase error:", error.message);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Transferencia o seña confirmada a mano: es la compra para Meta Ads. Sale
+    // una sola vez por pedido aunque se vuelva a este estado (lib/meta-capi.ts).
+    if (updates.estado === "pago_confirmado") {
+      after(() => enviarCompraAMeta(id));
     }
 
     // Send transactional emails on state changes

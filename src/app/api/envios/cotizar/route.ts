@@ -2,9 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { cotizar } from "@/lib/correo-argentino";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { buscarZonaSybPorCP, type ZonaSyb } from "@/lib/envio-syb";
+import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
 
 export async function POST(req: NextRequest) {
   try {
+    // Cada cotización es una consulta a la API de Correo con nuestra cuenta.
+    // Una persona prueba unos pocos códigos postales (SHOP - Seguridad, punto 7).
+    if (!(await dentroDelLimite(`cotizar:ip:10m:${huella(ipDe(req))}`, 30, 600))) {
+      return NextResponse.json(
+        { error: "Hiciste muchas cotizaciones seguidas. Probá en unos minutos." },
+        { status: 429 }
+      );
+    }
+
     const body = await req.json();
     const { codigoPostal, paquete } = body as {
       codigoPostal?: string;

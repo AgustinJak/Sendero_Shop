@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pedidoConfirmadoEmail, nuevoPedidoAdminEmail } from "@/lib/email/templates";
@@ -6,6 +6,9 @@ import { getWhatsapp, getSiteConfig } from "@/lib/site-config";
 import { dentroDelLimite, huella, ipDe } from "@/lib/limite";
 import { verificarCaptcha } from "@/lib/captcha";
 import { esEmailValido } from "@/lib/email/seguridad";
+import { validarDatosCliente, validarEnvio } from "@/lib/validar-pedido";
+import { siguienteNumeroPedido } from "@/lib/numero-pedido";
+import { enviarCompraAMeta, guardarAtribucionMeta } from "@/lib/meta-capi";
 import { costoEnvioCorreo } from "@/lib/envio-servidor";
 import { resolverPrecios } from "@/lib/precios-server";
 import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
@@ -35,15 +38,15 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json();
     const {
-      datos_personales,
+      datos_personales: datosCrudos,
       metodo_envio,
-      tipo_envio,
-      direccion_envio,
+      tipo_envio: tipoEnvioCrudo,
+      direccion_envio: direccionCruda,
       metodo_pago,
       items,
       captchaToken,
-      sucursal_correo_id,
-      sucursal_correo_nombre,
+      sucursal_correo_id: sucursalIdCruda,
+      sucursal_correo_nombre: sucursalNombreCruda,
       entre_calles,
       nota_repartidor,
     } = body;
@@ -56,7 +59,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Validaciones básicas
-    if (!datos_personales?.nombre_completo || !datos_personales?.email) {
+    if (!datosCrudos?.nombre_completo || !datosCrudos?.email) {
       return NextResponse.json({ error: "Datos personales incompletos" }, { status: 400 });
     }
     if (!items || items.length === 0) {
@@ -65,10 +68,10 @@ export async function POST(req: NextRequest) {
 
     // Una sola dirección válida: el transporte acepta varias separadas por coma
     // y un pedido podía mandar la confirmación a cientos de personas.
-    if (!esEmailValido(datos_personales.email)) {
+    if (!esEmailValido(datosCrudos.email)) {
       return NextResponse.json({ error: "El email no es válido" }, { status: 400 });
     }
-    const emailPedido: string = datos_personales.email.trim();
+    const emailPedido: string = datosCrudos.email.trim();
 
     // Lista cerrada. "andreani" existe en la base por pedidos viejos, pero el
     // checkout ya no lo ofrece y su costo no tendría quién calcularlo acá.
@@ -78,6 +81,24 @@ export async function POST(req: NextRequest) {
     if (!["mercadopago", "transferencia", "efectivo"].includes(metodo_pago)) {
       return NextResponse.json({ error: "Método de pago inválido" }, { status: 400 });
     }
+
+    // Nombre, DNI, teléfono y dirección, con largos y formatos (lib/validar-pedido.ts).
+    // De acá en adelante se usan solo los datos ya limpios.
+    const cliente = validarDatosCliente(datosCrudos, { dniObligatorio: true });
+    if (!cliente.ok) {
+      return NextResponse.json({ error: cliente.error }, { status: 400 });
+    }
+    const envioLimpio = validarEnvio(metodo_envio, {
+      direccion_envio: direccionCruda,
+      tipo_envio: tipoEnvioCrudo,
+      sucursal_correo_id: sucursalIdCruda,
+      sucursal_correo_nombre: sucursalNombreCruda,
+    });
+    if (!envioLimpio.ok) {
+      return NextResponse.json({ error: envioLimpio.error }, { status: 400 });
+    }
+    const datos_personales = { ...cliente.datos, email: emailPedido };
+    const { direccion_envio, tipo_envio, sucursal_correo_id, sucursal_correo_nombre } = envioLimpio.datos;
 
     if (!(await dentroDelLimite(`pedido:email:1h:${huella(emailPedido)}`, 3, 3600))) {
       return NextResponse.json(
@@ -163,7 +184,9 @@ export async function POST(req: NextRequest) {
         .select("*")
         .eq("activo", true);
 
-      const zona = buscarZonaSyb(direccion_envio ?? {}, (zonasSyb ?? []) as ZonaSyb[]);
+      const zona = direccion_envio
+        ? buscarZonaSyb(direccion_envio, (zonasSyb ?? []) as ZonaSyb[])
+        : null;
       if (!zona) {
         return NextResponse.json(
           { error: "Esa dirección no tiene cobertura para envío en el día. Elegí Correo Argentino." },
@@ -200,22 +223,13 @@ export async function POST(req: NextRequest) {
 
     // El número se reserva recién acá, con todo validado y el envío cotizado:
     // si algo de lo anterior falla, no se pierde un número.
-    // Generar número de pedido usando contador persistente en configuracion
-    // Esto garantiza que los números nunca se repiten aunque se eliminen pedidos
-    const { data: counterRow } = await supabase
-      .from("configuracion")
-      .select("value")
-      .eq("key", "pedido_counter")
-      .single();
-
-    const nextNum = counterRow ? parseInt(counterRow.value, 10) + 1 : 1;
-
-    // Upsert the counter
-    await supabase
-      .from("configuracion")
-      .upsert({ key: "pedido_counter", value: String(nextNum) }, { onConflict: "key" });
-
-    const numeroPedido = `SS-${String(nextNum).padStart(5, "0")}`;
+    let numeroPedido: string;
+    try {
+      numeroPedido = await siguienteNumeroPedido(supabase);
+    } catch (err) {
+      console.error("No se pudo reservar el número de pedido:", err);
+      return NextResponse.json({ error: "Error al crear el pedido" }, { status: 500 });
+    }
 
     // Los dos campos opcionales que carga el cliente. Se recortan acá y no se
     // confía en el maxLength del formulario: si la nota pasa de 140, el
@@ -291,6 +305,13 @@ export async function POST(req: NextRequest) {
       // Rollback: delete the pedido
       await supabase.from("pedidos").delete().eq("id", pedido.id);
       return NextResponse.json({ error: "Error al crear los items del pedido" }, { status: 500 });
+    }
+
+    // Meta Ads: se guarda de dónde vino el cliente, para mandar la compra
+    // cuando el pedido se pague. Si ya nace pagado, sale ahora (lib/meta-capi.ts).
+    await guardarAtribucionMeta(supabase, pedido.id, req, "/checkout");
+    if (estadoInicial === "pago_confirmado") {
+      after(() => enviarCompraAMeta(pedido.id));
     }
 
     // Send emails (non-blocking)

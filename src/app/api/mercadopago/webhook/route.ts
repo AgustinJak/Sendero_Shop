@@ -1,9 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import { createServiceRoleClient } from "@/lib/supabase-server";
 import { sendEmail } from "@/lib/email/send";
 import { pagoRecibidoEmail, pagoConfirmadoAdminEmail } from "@/lib/email/templates";
 import { getWhatsapp } from "@/lib/site-config";
+import { escaparHtml } from "@/lib/email/seguridad";
+import { enviarCompraAMeta } from "@/lib/meta-capi";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MP_ACCESS_TOKEN!,
@@ -50,6 +52,31 @@ export async function POST(req: NextRequest) {
     if (payment.status === "approved") {
       // Only update if still pending payment
       if (pedido.estado === "pendiente_pago") {
+        // El pago se consulta a MP con nuestro token, así que no se puede
+        // inventar. Lo que se controla acá es que sea por lo que vale el
+        // pedido: el total, o la seña si el pedido lleva seña. Si no coincide,
+        // no se confirma solo y se avisa para revisarlo a mano
+        // (SHOP - Seguridad, punto 11). Pagar de más no es un riesgo: se acepta.
+        const esperado = pedido.tiene_sena ? Number(pedido.monto_sena) : Number(pedido.total);
+        const cobrado = Number(payment.transaction_amount);
+        if (payment.currency_id !== "ARS" || !(cobrado >= esperado - 1)) {
+          console.error(
+            `Webhook: pago ${paymentId} de ${payment.currency_id} ${cobrado} para ${pedido.numero_pedido}, que espera ARS ${esperado}. No se confirma.`
+          );
+          await supabase
+            .from("pedidos")
+            .update({ mp_payment_id: String(paymentId) })
+            .eq("id", pedidoId);
+          if (process.env.SMTP_USER) {
+            await sendEmail({
+              to: process.env.SMTP_USER,
+              subject: `Revisar pago de ${pedido.numero_pedido}: el monto no coincide`,
+              html: `<p>Mercado Pago aprobó el pago ${escaparHtml(String(paymentId))} por ${escaparHtml(String(payment.currency_id))} ${escaparHtml(String(cobrado))} para el pedido ${escaparHtml(pedido.numero_pedido)}, que espera ARS ${escaparHtml(String(esperado))}.</p><p>El pedido sigue en "pendiente de pago". Revisalo en Mercado Pago y confirmalo a mano desde el panel si corresponde.</p>`,
+            });
+          }
+          return NextResponse.json({ ok: true });
+        }
+
         const updates: Record<string, unknown> = {
           estado: "pago_confirmado",
           mp_payment_id: String(paymentId),
@@ -61,10 +88,21 @@ export async function POST(req: NextRequest) {
           updates.sena_pagada_at = new Date().toISOString();
         }
 
-        await supabase
+        // MP suele mandar dos avisos casi juntos por el mismo pago. El UPDATE
+        // solo toca el pedido si sigue pendiente: el segundo aviso no cambia
+        // nada y no manda los emails otra vez.
+        const { data: confirmados } = await supabase
           .from("pedidos")
           .update(updates)
-          .eq("id", pedidoId);
+          .eq("id", pedidoId)
+          .eq("estado", "pendiente_pago")
+          .select("id");
+        if (!confirmados?.length) {
+          return NextResponse.json({ ok: true });
+        }
+
+        // La compra para Meta Ads, después de responder (lib/meta-capi.ts).
+        after(() => enviarCompraAMeta(pedidoId));
 
         // Send confirmation email
         try {

@@ -1,4 +1,7 @@
 /* ─── Google Tag Manager + GA4 E-commerce Events ─── */
+/* Cada evento sale también al píxel de Meta (lib/meta-pixel.ts). */
+
+import { contenidosMeta, metaTrack } from "@/lib/meta-pixel";
 
 type GtagEvent = Record<string, unknown>;
 
@@ -41,6 +44,13 @@ export function trackViewItem(product: {
         },
       ],
     },
+  });
+  metaTrack("ViewContent", {
+    content_type: "product",
+    content_ids: [product.id],
+    content_name: product.name,
+    ...(product.category ? { content_category: product.category } : {}),
+    value: product.price,
   });
 }
 
@@ -98,6 +108,11 @@ export function trackAddToCart(item: {
       ],
     },
   });
+  metaTrack("AddToCart", {
+    ...contenidosMeta([{ id: item.id, quantity: item.quantity, price: item.price }]),
+    content_name: item.name,
+    value: item.price * item.quantity,
+  });
 }
 
 export function trackRemoveFromCart(item: {
@@ -148,6 +163,10 @@ export function trackBeginCheckout(items: {
       })),
     },
   });
+  metaTrack("InitiateCheckout", {
+    ...contenidosMeta(items.map((i) => ({ id: i.id, quantity: i.quantity, price: i.price }))),
+    value: total,
+  });
 }
 
 export function trackPurchase(order: {
@@ -177,5 +196,13 @@ export function trackPurchase(order: {
         quantity: item.quantity,
       })),
     },
+  });
+  // Para Meta esto todavía no es una compra: el pedido se creó pero no se
+  // pagó (transferencias, señas, pagos de MP que no se completan). Sale como
+  // AddPaymentInfo, y el Purchase lo manda el servidor cuando se confirma el
+  // pago (lib/meta-capi.ts). Así los anuncios aprenden de ventas reales.
+  metaTrack("AddPaymentInfo", {
+    ...contenidosMeta(order.items.map((i) => ({ id: i.id, quantity: i.quantity, price: i.price }))),
+    value: order.total,
   });
 }

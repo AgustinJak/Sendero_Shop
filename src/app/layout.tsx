@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { Inter, Cinzel } from "next/font/google";
 import ServiceWorkerRegister from "@/components/layout/ServiceWorkerRegister";
+import MetaPixel from "@/components/layout/MetaPixel";
 // import PushNotificationPrompt from "@/components/layout/PushNotificationPrompt";
 import "./globals.css";
 
@@ -85,6 +86,11 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "https://sendero3d.com",
   },
+  // Verificación del dominio en el administrador comercial de Meta (Seguridad
+  // de la marca → Dominios → método "etiqueta meta"). Solo el código, no el tag.
+  ...(process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION && {
+    other: { "facebook-domain-verification": process.env.NEXT_PUBLIC_META_DOMAIN_VERIFICATION },
+  }),
 };
 
 export default function RootLayout({
@@ -130,6 +136,8 @@ ev.forEach(function(e){w.addEventListener(e,cargar,op)});setTimeout(cargar,8000)
         )}
         {children}
         <ServiceWorkerRegister />
+        {/* Píxel de Meta: carga como GTM y no en /admin (lib/meta-pixel.ts). */}
+        {process.env.NEXT_PUBLIC_META_PIXEL_ID && <MetaPixel />}
         {/* <PushNotificationPrompt /> */}
       </body>
     </html>

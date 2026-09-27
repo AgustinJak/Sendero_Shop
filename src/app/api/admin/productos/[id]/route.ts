@@ -3,6 +3,7 @@ import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supab
 import { normalizarSku, skuEnUso } from "@/lib/sku";
 import { conRevalidacion } from "@/lib/revalidar";
 import { esAdmin } from "@/lib/admin";
+import { limpiarDescripcion } from "@/lib/html-seguro";
 
 async function patch(
   req: NextRequest,
@@ -27,6 +28,11 @@ async function patch(
     if (field in body) {
       updates[field] = body[field];
     }
+  }
+
+  // La ficha dibuja la descripción como HTML: se guarda ya limpia (lib/html-seguro.ts).
+  if ("descripcion" in updates) {
+    updates.descripcion = limpiarDescripcion(updates.descripcion);
   }
 
   // El SKU se carga a mano desde el 2026-08-26 (lo genera el inventario), así
