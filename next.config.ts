@@ -8,6 +8,10 @@ import type { NextConfig } from "next";
 // (queda en el log de Vercel). Cuando pase un tiempo sin avisos de cosas
 // legítimas, se cambia el nombre del header para que bloquee.
 //
+// Solo `report-uri`, sin `report-to`: con los dos, Chrome usa `report-to` e
+// ignora `report-uri`, y esos avisos nunca llegaron al log (probado en
+// producción el 2026-09-28). Con `report-uri` el navegador avisa en el acto.
+//
 // 'unsafe-inline' en scripts es obligatorio con el caché actual: Next mete
 // scripts en línea en cada página y la alternativa (nonces) obliga a armar
 // cada página en cada visita.
@@ -40,7 +44,6 @@ const CSP = [
   "form-action 'self' https://www.facebook.com",
   "frame-ancestors 'self'",
   "report-uri /api/csp-report",
-  "report-to csp",
 ].join("; ");
 
 const seguridad = [
@@ -53,7 +56,6 @@ const seguridad = [
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   // Nada del sitio usa cámara, micrófono ni ubicación.
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), browsing-topics=()" },
-  { key: "Reporting-Endpoints", value: 'csp="/api/csp-report"' },
   { key: "Content-Security-Policy-Report-Only", value: CSP },
 ];
 
