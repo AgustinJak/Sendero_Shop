@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import type { Producto, VarianteSeleccion, MayoristaTramo } from "@/types";
 import { formatPrice, whatsappLink, PROSE_CLASSES } from "@/lib/utils";
-import { trackViewItem } from "@/lib/analytics";
+import { trackCustomizeProduct, trackViewItem } from "@/lib/analytics";
 import ProductGallery from "./ProductGallery";
 import VariantSelector from "./VariantSelector";
 import AddToCartButton from "./AddToCartButton";
@@ -33,6 +33,17 @@ export default function ProductDetail({
   tramos = [],
 }: ProductDetailProps) {
   const [selecciones, setSelecciones] = useState<VarianteSeleccion[]>([]);
+  // CustomizeProduct sale con la primera variante elegida, no con cada clic. Se
+  // guarda el id y no un sí/no: al pasar de una ficha a otra sin recargar, el
+  // componente se reutiliza.
+  const personalizado = useRef<string | null>(null);
+  const elegirVariantes = (nuevas: VarianteSeleccion[]) => {
+    setSelecciones(nuevas);
+    if (personalizado.current !== producto.id) {
+      personalizado.current = producto.id;
+      trackCustomizeProduct({ id: producto.id, name: producto.nombre });
+    }
+  };
   const [cantidad, setCantidad] = useState(1);
   const { cart, addItem } = useCartContext();
 
@@ -163,7 +174,7 @@ export default function ProductDetail({
           <VariantSelector
             grupos={producto.variante_grupos}
             selecciones={selecciones}
-            onChange={setSelecciones}
+            onChange={elegirVariantes}
             precioReglas={producto.precio_reglas}
           />
         )}

@@ -81,6 +81,30 @@ export function trackViewItemList(
   });
 }
 
+/** Búsqueda desde el buscador del header. */
+export function trackSearch(termino: string) {
+  push({ event: "search", search_term: termino });
+  metaTrack("Search", { search_string: termino });
+}
+
+/**
+ * Primera variante elegida en una ficha (color, tamaño…). Una vez por ficha:
+ * cada clic en una opción no es un evento nuevo para Meta.
+ */
+export function trackCustomizeProduct(product: { id: string; name: string }) {
+  metaTrack("CustomizeProduct", {
+    content_type: "product",
+    content_ids: [product.id],
+    content_name: product.name,
+  });
+}
+
+/** Consulta enviada por el formulario de /contacto. Los clics en WhatsApp cuentan como Contact (lib/meta-pixel.ts). */
+export function trackLead(origen: string) {
+  push({ event: "generate_lead", lead_source: origen });
+  metaTrack("Lead", { content_name: origen });
+}
+
 // ─── Cart events ───
 
 export function trackAddToCart(item: {

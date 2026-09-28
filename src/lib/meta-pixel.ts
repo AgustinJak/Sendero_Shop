@@ -3,8 +3,10 @@
  * "SHOP - Integración Meta Ads" en el vault.
  *
  * Qué manda el navegador: PageView en cada página, ViewContent en la ficha,
- * AddToCart, InitiateCheckout, AddPaymentInfo cuando se crea el pedido y
- * Contact al tocar un link de WhatsApp. La compra (Purchase) NO sale de acá:
+ * CustomizeProduct con la primera variante elegida, Search desde el buscador,
+ * AddToCart, InitiateCheckout, AddPaymentInfo cuando se crea el pedido, Lead
+ * con el formulario de contacto y Contact al tocar un link de WhatsApp (los
+ * eventos salen de lib/analytics.ts). La compra (Purchase) NO sale de acá:
  * la manda el servidor por la API de conversiones cuando el pedido se paga
  * (lib/meta-capi.ts), porque en el navegador solo se sabe que se creó.
  *

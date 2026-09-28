@@ -15,8 +15,11 @@ import type { NextConfig } from "next";
 // De dónde sale cada dominio: Supabase (imágenes, videos y el panel), Turnstile
 // (captcha del checkout), GA4 por GTM (el contenedor solo tiene esa etiqueta),
 // YouTube (videos en las fichas), la API de localidades del checkout y el
-// píxel de Meta (lib/meta-pixel.ts): el script sale de connect.facebook.net y
-// los eventos van a www.facebook.com.
+// píxel de Meta (lib/meta-pixel.ts). El script sale de connect.facebook.net y
+// manda los eventos a www.facebook.com por un formulario dentro de un iframe
+// (por eso va también en frame-src y form-action). El gateway de Datahash
+// (capig.datah04.com) queda afuera a propósito: es pago y no se usa; la compra
+// la manda nuestro servidor (lib/meta-capi.ts).
 const SUPABASE = "https://zxvjyqezicalyjhvobow.supabase.co";
 const GOOGLE =
   "https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.g.doubleclick.net https://*.google.com https://*.google.com.ar";
@@ -29,12 +32,12 @@ const CSP = [
   "font-src 'self' data:",
   `media-src 'self' blob: ${SUPABASE}`,
   `connect-src 'self' ${SUPABASE} wss://zxvjyqezicalyjhvobow.supabase.co https://apis.datos.gob.ar https://challenges.cloudflare.com ${GOOGLE} ${META}`,
-  "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.youtube.com https://www.googletagmanager.com",
+  "frame-src https://challenges.cloudflare.com https://www.youtube-nocookie.com https://www.youtube.com https://www.googletagmanager.com https://www.facebook.com",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
   "object-src 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
+  "form-action 'self' https://www.facebook.com",
   "frame-ancestors 'self'",
   "report-uri /api/csp-report",
   "report-to csp",

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import HornetDropdown from "@/components/animations/HornetDropdown";
 import CartBadge from "@/components/carrito/CartBadge";
 import type { Categoria } from "@/types";
+import { trackSearch } from "@/lib/analytics";
 
 interface HeaderClientProps {
   categorias: Categoria[];
@@ -28,6 +29,7 @@ export default function HeaderClient({ categorias, children }: HeaderClientProps
     e.preventDefault();
     const q = searchQuery.trim();
     if (!q) return;
+    trackSearch(q);
     router.push(`/catalogo?q=${encodeURIComponent(q)}`);
     setSearchOpen(false);
     setSearchQuery("");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackLead } from "@/lib/analytics";
 
 export default function ContactForm() {
   const [form, setForm] = useState({ nombre: "", email: "", mensaje: "" });
@@ -18,6 +19,7 @@ export default function ContactForm() {
       });
 
       if (res.ok) {
+        trackLead("Formulario de contacto");
         setStatus("sent");
         setForm({ nombre: "", email: "", mensaje: "" });
       } else {
