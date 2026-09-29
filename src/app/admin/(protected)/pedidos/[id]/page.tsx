@@ -4,6 +4,9 @@ import { formatPrice } from "@/lib/utils";
 import type { Pedido, PedidoItem } from "@/types";
 import PedidoActions from "@/components/admin/PedidoActions";
 import { getMetodoEnvioLabel } from "@/lib/estado-labels";
+import { ORIGENES, type Origen } from "@/lib/origen";
+
+const nombreOrigen = (o: string) => ORIGENES[o as Origen] ?? o;
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -106,6 +109,14 @@ export default async function PedidoDetailPage({ params }: Props) {
               <div>
                 <span className="text-lavanda/60">Teléfono</span>
                 <p className="text-lavanda-light">{p.telefono}</p>
+              </div>
+              {/* De dónde llegó a la tienda (analítica propia, desde el 2026-09-29). */}
+              <div className="col-span-2">
+                <span className="text-lavanda/60">Llegó desde</span>
+                <p className="text-lavanda-light">
+                  {p.origen ? nombreOrigen(p.origen) : "Sin dato (pedido anterior al 29/9/2026)"}
+                  {p.campania && <span className="text-lavanda/60"> · campaña {p.campania}</span>}
+                </p>
               </div>
             </div>
           </div>

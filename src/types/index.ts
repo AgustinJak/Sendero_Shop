@@ -206,6 +206,9 @@ export interface Pedido {
   enviado_inventario: boolean;
   inventario_pedido_id: string | null;
   inventario_enviado_en: string | null;
+  // De dónde llegó el cliente (analítica propia, desde 2026-09-29; null antes)
+  origen?: string | null;
+  campania?: string | null;
   // Custom orders / mayoristas
   borrador_id: string | null;
   descuento_monto: number;

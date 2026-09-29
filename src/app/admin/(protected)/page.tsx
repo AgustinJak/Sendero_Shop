@@ -5,12 +5,13 @@ import type { EstadoPedido, MetodoPago } from "@/types";
 import { getEstadoLabel } from "@/lib/estado-labels";
 import {
   Busquedas,
-  Cobranza,
   Embudo,
   GraficoDiario,
   Hoy,
   Origenes,
   Productos,
+  Provincias,
+  ResumenPeriodo,
   SelectorPeriodo,
   type DatosPanel,
 } from "@/components/admin/PanelAnalitica";
@@ -27,23 +28,46 @@ const ESTADO_COLORS: Record<EstadoPedido, string> = {
 };
 
 const PERIODOS = [7, 30, 90];
+const FECHA = /^\d{4}-\d{2}-\d{2}$/;
+
+function hoyArgentina(): string {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Argentina/Buenos_Aires" }).format(new Date());
+}
+
+function restarDias(iso: string, dias: number): string {
+  const d = new Date(`${iso}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - dias);
+  return d.toISOString().slice(0, 10);
+}
 
 /**
  * Dashboard del admin: analítica propia de la tienda (SHOP - Analítica
- * propia). Todos los números salen de la función `panel_analitica` de la
- * base; "Hoy" es siempre el día en curso y el resto, el período elegido.
+ * propia). Todos los números salen de la función `panel_analitica_rango` de
+ * la base; "Hoy" es siempre el día en curso y el resto, el período elegido:
+ * `?p=7|30|90`, o `?desde=AAAA-MM-DD&hasta=AAAA-MM-DD`. La base ajusta el
+ * rango (no pasa de hoy, dura como mucho un año).
  */
 export default async function AdminDashboard({
   searchParams,
 }: {
-  searchParams: Promise<{ p?: string }>;
+  searchParams: Promise<{ p?: string; desde?: string; hasta?: string }>;
 }) {
-  const { p } = await searchParams;
-  const dias = PERIODOS.includes(Number(p)) ? Number(p) : 30;
+  const sp = await searchParams;
+  const hoy = hoyArgentina();
+  let dias: number | null = PERIODOS.includes(Number(sp.p)) ? Number(sp.p) : null;
+  let desde: string;
+  let hasta: string;
+  if (dias === null && FECHA.test(sp.desde ?? "") && FECHA.test(sp.hasta ?? "")) {
+    [desde, hasta] = sp.desde! <= sp.hasta! ? [sp.desde!, sp.hasta!] : [sp.hasta!, sp.desde!];
+  } else {
+    dias = dias ?? 30;
+    hasta = hoy;
+    desde = restarDias(hoy, dias - 1);
+  }
   const supabase = await createServiceRoleClient();
 
   const [{ data: panel, error }, { data: pedidosRecientes }] = await Promise.all([
-    supabase.rpc("panel_analitica", { p_dias: dias }),
+    supabase.rpc("panel_analitica_rango", { p_desde: desde, p_hasta: hasta }),
     supabase
       .from("pedidos")
       .select("id, numero_pedido, nombre_cliente, estado, total, created_at, metodo_pago")
@@ -61,7 +85,7 @@ export default async function AdminDashboard({
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-[family-name:var(--font-cinzel)] text-xl font-bold text-niebla">Dashboard</h1>
-        <SelectorPeriodo dias={dias} />
+        <SelectorPeriodo dias={dias} desde={datos?.desde ?? desde} hasta={datos?.hasta ?? hasta} />
       </div>
 
       {!datos ? (
@@ -77,7 +101,7 @@ export default async function AdminDashboard({
           )}
 
           <Hoy hoy={datos.hoy} />
-          <Cobranza cobranza={datos.cobranza} />
+          <ResumenPeriodo comparacion={datos.comparacion} cobranza={datos.cobranza} />
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div className="lg:col-span-2">
@@ -91,6 +115,7 @@ export default async function AdminDashboard({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <Origenes origenes={datos.origenes} campanias={datos.campanias} />
             <Busquedas busquedas={datos.busquedas} />
+            <Provincias provincias={datos.provincias} />
           </div>
         </>
       )}

@@ -48,6 +48,21 @@ export interface DatosPanel {
   busquedas: { termino: string; veces: number; resultados: number | null }[];
   dispositivos: Record<string, number>;
   cobranza: { pendientes: number; monto_pendiente: number; creados: number; pagados: number; cobrado: number };
+  provincias: { provincia: string; visitantes: number; pagados: number; ingresos: number }[];
+  comparacion: {
+    actual: Totales;
+    anterior: Totales;
+    anterior_desde: string;
+    anterior_hasta: string;
+    visitas_comparables: boolean;
+  };
+}
+
+interface Totales {
+  visitantes: number;
+  pedidos: number;
+  pagados: number;
+  cobrado: number;
 }
 
 const n = (v: number) => v.toLocaleString("es-AR");
@@ -84,21 +99,65 @@ function Numero({ etiqueta, valor, acento, detalle }: { etiqueta: string; valor:
   );
 }
 
-export function SelectorPeriodo({ dias }: { dias: number }) {
+/**
+ * 7 / 30 / 90 días, o un rango libre. El rango va por un formulario GET común:
+ * funciona sin JavaScript y el período queda en la URL.
+ */
+export function SelectorPeriodo({ dias, desde, hasta }: { dias: number | null; desde: string; hasta: string }) {
   return (
-    <div className="flex gap-1 bg-navy rounded-lg border border-lavanda/10 p-1 text-xs">
-      {[7, 30, 90].map((d) => (
-        <Link
-          key={d}
-          href={`/admin?p=${d}`}
-          className={`px-3 py-1.5 rounded-md transition-colors ${
-            d === dias ? "bg-ambar/15 text-ambar font-semibold" : "text-lavanda/70 hover:text-niebla"
-          }`}
-        >
-          {d} días
-        </Link>
-      ))}
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex gap-1 bg-navy rounded-lg border border-lavanda/10 p-1 text-xs">
+        {[7, 30, 90].map((d) => (
+          <Link
+            key={d}
+            href={`/admin?p=${d}`}
+            className={`px-3 py-1.5 rounded-md transition-colors ${
+              d === dias ? "bg-ambar/15 text-ambar font-semibold" : "text-lavanda/70 hover:text-niebla"
+            }`}
+          >
+            {d} días
+          </Link>
+        ))}
+      </div>
+      <form
+        action="/admin"
+        className={`flex items-center gap-1 bg-navy rounded-lg border p-1 text-xs ${
+          dias === null ? "border-ambar/40" : "border-lavanda/10"
+        }`}
+      >
+        <input
+          type="date"
+          name="desde"
+          defaultValue={desde}
+          aria-label="Desde"
+          className="bg-transparent text-lavanda-light px-1 py-1 [color-scheme:dark]"
+        />
+        <span className="text-lavanda/50">a</span>
+        <input
+          type="date"
+          name="hasta"
+          defaultValue={hasta}
+          aria-label="Hasta"
+          className="bg-transparent text-lavanda-light px-1 py-1 [color-scheme:dark]"
+        />
+        <button type="submit" className="px-2 py-1 rounded-md text-ambar hover:bg-ambar/10 transition-colors">
+          Ver
+        </button>
+      </form>
     </div>
+  );
+}
+
+/** "▲ 25%" contra el período anterior, o por qué no se puede comparar. */
+function Variacion({ actual, anterior, comparable = true }: { actual: number; anterior: number; comparable?: boolean }) {
+  if (!comparable) return <span>sin datos del período anterior</span>;
+  if (anterior === 0) return <span>{actual > 0 ? "el período anterior fue 0" : "igual que el período anterior"}</span>;
+  const cambio = Math.round(((actual - anterior) / anterior) * 100);
+  if (cambio === 0) return <span>igual que el período anterior</span>;
+  return (
+    <span className={cambio > 0 ? "text-emerald-400" : "text-red-400"}>
+      {cambio > 0 ? "▲" : "▼"} {Math.abs(cambio)}% vs. período anterior
+    </span>
   );
 }
 
@@ -359,22 +418,103 @@ export function Busquedas({ busquedas }: { busquedas: DatosPanel["busquedas"] })
   );
 }
 
-export function Cobranza({ cobranza }: { cobranza: DatosPanel["cobranza"] }) {
+function TarjetaComparada({
+  etiqueta,
+  valor,
+  acento,
+  children,
+}: {
+  etiqueta: string;
+  valor: string;
+  acento?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="bg-navy rounded-xl border border-lavanda/10 p-4">
+      <p className="text-xs text-lavanda/60 uppercase tracking-wider">{etiqueta}</p>
+      <p className={`text-2xl font-bold mt-1 ${acento ? "text-ambar" : "text-niebla"}`}>{valor}</p>
+      <p className="text-xs text-lavanda/50 mt-1">{children}</p>
+    </div>
+  );
+}
+
+/**
+ * El período elegido contra el anterior del mismo largo, más lo que falta
+ * cobrar. Las visitas solo se comparan si el período anterior ya se medía;
+ * pedidos pagados y cobrado, siempre (hay datos de antes).
+ */
+export function ResumenPeriodo({
+  comparacion,
+  cobranza,
+}: {
+  comparacion: DatosPanel["comparacion"];
+  cobranza: DatosPanel["cobranza"];
+}) {
+  const { actual, anterior } = comparacion;
   const pctPago = porcentaje(cobranza.pagados, cobranza.creados, 10);
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <Numero
-        etiqueta="Por cobrar"
-        valor={formatPrice(cobranza.monto_pendiente)}
-        acento={cobranza.pendientes > 0}
-        detalle={`${n(cobranza.pendientes)} ${cobranza.pendientes === 1 ? "pedido esperando" : "pedidos esperando"} el pago`}
-      />
-      <Numero
-        etiqueta="Pedidos del período"
-        valor={`${n(cobranza.pagados)} de ${n(cobranza.creados)}`}
-        detalle={pctPago ? `se pagaron (${pctPago})` : "se pagaron"}
-      />
-      <Numero etiqueta="Cobrado en el período" valor={formatPrice(cobranza.cobrado)} acento />
+    <div>
+      <h2 className="text-xs text-lavanda/60 uppercase tracking-wider mb-2">
+        Período · comparado con {fecha(comparacion.anterior_desde)} a {fecha(comparacion.anterior_hasta)}
+      </h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <TarjetaComparada etiqueta="Visitantes" valor={n(actual.visitantes)}>
+          <Variacion actual={actual.visitantes} anterior={anterior.visitantes} comparable={comparacion.visitas_comparables} />
+        </TarjetaComparada>
+        <TarjetaComparada etiqueta="Pedidos pagados" valor={n(actual.pagados)}>
+          <Variacion actual={actual.pagados} anterior={anterior.pagados} />
+          {cobranza.creados > 0 && (
+            <span className="block">
+              {n(cobranza.pagados)} de {n(cobranza.creados)} creados desde que se mide{pctPago ? ` (${pctPago})` : ""}
+            </span>
+          )}
+        </TarjetaComparada>
+        <TarjetaComparada etiqueta="Cobrado" valor={formatPrice(actual.cobrado)} acento>
+          <Variacion actual={actual.cobrado} anterior={anterior.cobrado} />
+        </TarjetaComparada>
+        <TarjetaComparada etiqueta="Por cobrar" valor={formatPrice(cobranza.monto_pendiente)} acento={cobranza.pendientes > 0}>
+          {n(cobranza.pendientes)} {cobranza.pendientes === 1 ? "pedido esperando" : "pedidos esperando"} el pago
+        </TarjetaComparada>
+      </div>
     </div>
+  );
+}
+
+export function Provincias({ provincias }: { provincias: DatosPanel["provincias"] }) {
+  return (
+    <Tarjeta titulo="De dónde son">
+      {provincias.length === 0 ? (
+        <p className="p-4 text-sm text-lavanda/40">Sin datos en este período.</p>
+      ) : (
+        <>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-xs text-lavanda/60 text-left">
+                  <th className="px-4 py-2 font-medium">Provincia</th>
+                  <th className="px-2 py-2 font-medium text-right">Visitantes</th>
+                  <th className="px-2 py-2 font-medium text-right">Compras</th>
+                  <th className="px-4 py-2 font-medium text-right">Ingresos</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-lavanda/5">
+                {provincias.slice(0, 15).map((p) => (
+                  <tr key={p.provincia} className="hover:bg-lavanda/5">
+                    <td className="px-4 py-2 text-lavanda-light">{p.provincia}</td>
+                    <td className="px-2 py-2 text-right text-niebla">{n(p.visitantes)}</td>
+                    <td className="px-2 py-2 text-right text-niebla">{n(p.pagados)}</td>
+                    <td className="px-4 py-2 text-right text-niebla">{formatPrice(p.ingresos)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="px-4 py-3 text-[11px] text-lavanda/50 border-t border-lavanda/10">
+            La provincia de las visitas sale de la conexión (aproximada); la de las compras, de la
+            dirección de envío. Los retiros no tienen dirección.
+          </p>
+        </>
+      )}
+    </Tarjeta>
   );
 }
