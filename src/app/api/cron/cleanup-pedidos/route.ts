@@ -35,6 +35,13 @@ export async function GET(req: NextRequest) {
     .from("limites_api")
     .delete()
     .lt("ventana_inicio", new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString());
+
+  // Eventos de la analítica propia de más de 13 meses: alcanza para comparar
+  // un mes con el mismo del año anterior (SHOP - Analítica propia).
+  await supabase
+    .from("analitica_eventos")
+    .delete()
+    .lt("creado_at", new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString());
   const ahora = Date.now();
 
   // --- Fase 1: cancelar los impagos ---

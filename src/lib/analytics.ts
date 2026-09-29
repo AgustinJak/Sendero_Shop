@@ -2,6 +2,7 @@
 /* Cada evento sale también al píxel de Meta (lib/meta-pixel.ts). */
 
 import { contenidosMeta, metaTrack } from "@/lib/meta-pixel";
+import { pulso } from "@/lib/pulso";
 
 type GtagEvent = Record<string, unknown>;
 
@@ -52,6 +53,7 @@ export function trackViewItem(product: {
     ...(product.category ? { content_category: product.category } : {}),
     value: product.price,
   });
+  pulso({ tipo: "producto", producto_id: product.id });
 }
 
 export function trackViewItemList(
@@ -137,6 +139,7 @@ export function trackAddToCart(item: {
     content_name: item.name,
     value: item.price * item.quantity,
   });
+  pulso({ tipo: "carrito", producto_id: item.id, cantidad: item.quantity });
 }
 
 export function trackRemoveFromCart(item: {
@@ -191,6 +194,7 @@ export function trackBeginCheckout(items: {
     ...contenidosMeta(items.map((i) => ({ id: i.id, quantity: i.quantity, price: i.price }))),
     value: total,
   });
+  pulso({ tipo: "checkout" });
 }
 
 export function trackPurchase(order: {

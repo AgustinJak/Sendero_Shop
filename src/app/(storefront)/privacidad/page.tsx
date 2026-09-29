@@ -78,6 +78,13 @@ export default async function PrivacidadPage() {
             navegador, y elegir qué anuncios ves desde las preferencias de anuncios de tu cuenta de
             Meta.
           </p>
+          <p>
+            Además llevamos nuestras propias estadísticas de visitas, sin cookies y sin datos
+            personales: contamos cuántas personas entran y qué productos miran con un código que
+            cambia todos los días, sin guardar tu dirección IP. En tu navegador solo recordamos
+            desde dónde llegaste a la tienda (por ejemplo, un anuncio o Instagram), para saber qué
+            canales funcionan.
+          </p>
         </Section>
 
         <Section title="6. Derechos del usuario">

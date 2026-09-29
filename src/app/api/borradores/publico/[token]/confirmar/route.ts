@@ -284,6 +284,9 @@ export async function POST(
         // Seña
         tiene_sena: tieneSena,
         monto_sena: montoSena,
+        // Llega por un link armado por el admin, no navegando la tienda: el
+        // dashboard lo separa de los canales (SHOP - Analítica propia).
+        origen: "a_medida",
       })
       .select("id, numero_pedido")
       .single();

@@ -8,6 +8,7 @@ import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
 import { buscarZonaSyb, SYB_LABEL, SYB_PLAZO, type ZonaSyb } from "@/lib/envio-syb";
 import { NOTA_MAX_CARACTERES } from "@/lib/nota-repartidor";
 import { trackBeginCheckout, trackPurchase } from "@/lib/analytics";
+import { origenParaPedido } from "@/lib/pulso";
 import { Turnstile } from "@marsidev/react-turnstile";
 import type {
   CheckoutData,
@@ -476,7 +477,7 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
 
     try {
       const sucursalData = sucursalSeleccionada ? sucursalesCA.find(s => s.id === sucursalSeleccionada) : null;
-      const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number; captchaToken?: string; sucursal_correo_id?: string; sucursal_correo_nombre?: string; cotizacion_real?: boolean } = {
+      const body: CheckoutData & { items: typeof cart.items; costoEnvio: number; recargoMP: number; subtotal: number; total: number; captchaToken?: string; sucursal_correo_id?: string; sucursal_correo_nombre?: string; cotizacion_real?: boolean; origen?: string; campania?: string | null } = {
         datos_personales: datos,
         metodo_envio: metodoEnvio,
         tipo_envio:
@@ -497,6 +498,8 @@ export default function CheckoutForm({ zonas, configuracion, envioGratisDesde = 
         ...(sucursalSeleccionada && { sucursal_correo_id: sucursalSeleccionada }),
         ...(sucursalData && { sucursal_correo_nombre: `${sucursalData.nombre} — ${sucursalData.direccion}, ${sucursalData.ciudad}` }),
         cotizacion_real: true,
+        // De dónde llegó (analítica propia, lib/pulso.ts).
+        ...origenParaPedido(),
       };
 
       const res = await fetch("/api/pedidos", {

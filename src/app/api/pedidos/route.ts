@@ -9,6 +9,8 @@ import { esEmailValido } from "@/lib/email/seguridad";
 import { validarDatosCliente, validarEnvio } from "@/lib/validar-pedido";
 import { siguienteNumeroPedido } from "@/lib/numero-pedido";
 import { enviarCompraAMeta, guardarAtribucionMeta } from "@/lib/meta-capi";
+import { medirEnEsteEntorno, registrarEvento } from "@/lib/analitica-servidor";
+import { limpiarCampania, limpiarOrigen } from "@/lib/origen";
 import { costoEnvioCorreo } from "@/lib/envio-servidor";
 import { resolverPrecios } from "@/lib/precios-server";
 import { requiereSena, calcularSenaEfectivo } from "@/lib/sena";
@@ -49,7 +51,13 @@ export async function POST(req: NextRequest) {
       sucursal_correo_nombre: sucursalNombreCruda,
       entre_calles,
       nota_repartidor,
+      origen: origenCrudo,
+      campania: campaniaCruda,
     } = body;
+
+    // De dónde llegó el cliente (lib/pulso.ts), para las ventas por canal del dashboard.
+    const origen = limpiarOrigen(origenCrudo) ?? "directo";
+    const campania = limpiarCampania(campaniaCruda);
 
     // Captcha: falla cerrado en producción y cada token sirve una sola vez
     // (ver lib/captcha.ts).
@@ -274,6 +282,8 @@ export async function POST(req: NextRequest) {
         // null cuando tiene_sena es false, y > 0 cuando es true.
         tiene_sena: llevaSena,
         monto_sena: montoSena,
+        origen,
+        campania,
       })
       .select("id, numero_pedido")
       .single();
@@ -310,6 +320,20 @@ export async function POST(req: NextRequest) {
     // Meta Ads: se guarda de dónde vino el cliente, para mandar la compra
     // cuando el pedido se pague. Si ya nace pagado, sale ahora (lib/meta-capi.ts).
     await guardarAtribucionMeta(supabase, pedido.id, req, "/checkout");
+
+    // Analítica propia: el pedido creado queda anotado aunque después no se
+    // pague y el cron lo borre (lib/analitica-servidor.ts).
+    if (medirEnEsteEntorno()) {
+      after(() =>
+        registrarEvento(supabase, req, {
+          tipo: "pedido",
+          ruta: "/checkout",
+          cantidad: preciados.items.reduce((n, i) => n + i.cantidad, 0),
+          origen,
+          campania,
+        })
+      );
+    }
     if (estadoInicial === "pago_confirmado") {
       after(() => enviarCompraAMeta(pedido.id));
     }

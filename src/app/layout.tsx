@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Inter, Cinzel } from "next/font/google";
 import ServiceWorkerRegister from "@/components/layout/ServiceWorkerRegister";
 import MetaPixel from "@/components/layout/MetaPixel";
+import Pulso from "@/components/layout/Pulso";
 // import PushNotificationPrompt from "@/components/layout/PushNotificationPrompt";
 import "./globals.css";
 
@@ -138,6 +139,8 @@ ev.forEach(function(e){w.addEventListener(e,cargar,op)});setTimeout(cargar,8000)
         <ServiceWorkerRegister />
         {/* Píxel de Meta: carga como GTM y no en /admin (lib/meta-pixel.ts). */}
         {process.env.NEXT_PUBLIC_META_PIXEL_ID && <MetaPixel />}
+        {/* Analítica propia para el dashboard del admin (lib/pulso.ts). */}
+        <Pulso />
         {/* <PushNotificationPrompt /> */}
       </body>
     </html>

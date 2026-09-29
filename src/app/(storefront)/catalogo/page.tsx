@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { getProductos, getAvailableFilters, getCategoriasTree, getBanners } from "@/lib/queries";
 import ProductGrid from "@/components/productos/ProductGrid";
 import TrackItemList from "@/components/productos/TrackItemList";
+import RegistrarBusqueda from "@/components/catalogo/RegistrarBusqueda";
 import FilterSidebar, { MobileFilterToggle } from "@/components/catalogo/CatalogFilters";
 import SortSelect from "@/components/catalogo/SortSelect";
 import ActiveFilters from "@/components/catalogo/ActiveFilters";
@@ -122,6 +123,10 @@ export default async function CatalogoPage({ searchParams }: Props) {
               <GridLoadingOverlay>
                 <ProductGrid productos={productos} prioridad />
               </GridLoadingOverlay>
+              {/* Solo en la primera página: cambiar de página no es otra búsqueda. */}
+              {params.q && page === 1 && (
+                <RegistrarBusqueda termino={params.q.trim().toLowerCase().slice(0, 80)} resultados={total} />
+              )}
               <TrackItemList
                 listName="Catálogo"
                 products={productos.map((p) => ({
