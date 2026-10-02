@@ -1,8 +1,12 @@
 /**
  * Cliente del webhook Shop → Inventario Sendero 3D.
  *
- * Envía pedidos al sistema de inventario con firma HMAC-SHA256.
- * Idempotente por `numero_pedido`: reenvíos seguros sin duplicar.
+ * Dos eventos, mismo endpoint y misma firma:
+ * - `pedido.confirmado`: el pedido entero, lo manda el botón "Enviar a
+ *   Inventario" del admin. Idempotente por `numero_pedido`.
+ * - `pedido.estado_cambiado`: solo número, estado y fecha. Hoy se manda al
+ *   marcar "entregado", para que el Inventario lo pase a COMPLETADO y consuma
+ *   las reservas (lib/inventario-estado.ts).
  *
  * Endpoint: POST {INVENTARIO_WEBHOOK_URL}
  *   Headers:
@@ -10,6 +14,10 @@
  *     x-shop-signature: HMAC-SHA256(`${timestamp}.${rawBody}`, SECRET) hex lowercase
  *     x-shop-timestamp: Unix timestamp en SEGUNDOS
  *     x-shop-tenant: sendero3d
+ *
+ * Ojo: la firma es sobre `timestamp.cuerpo`, no sobre el cuerpo solo, y el
+ * timestamp va en segundos, no en milisegundos. Es lo que el receptor ya
+ * verifica para pedido.confirmado; el evento nuevo no lo cambia.
  */
 
 import { createHmac } from "crypto";
@@ -87,6 +95,26 @@ export interface PedidoInventarioPayload {
   items: InventarioItem[];
 }
 
+/**
+ * Evento genérico de cambio de estado. Payload mínimo a propósito: el
+ * Inventario ya tiene el pedido, y reenviar los items solo abre la puerta a
+ * que los dos lados discrepen. `fecha` es cuándo cambió el estado, no cuándo
+ * sale el aviso.
+ */
+export interface EstadoCambiadoPayload {
+  evento: "pedido.estado_cambiado";
+  numero_pedido: string;
+  estado_shop: string;
+  fecha: string;
+}
+
+/** 200 del evento de estado: `ok` si actuó, `ignorado` si no maneja ese estado. */
+export interface RespuestaEstado {
+  ok?: boolean;
+  ignorado?: unknown;
+  [clave: string]: unknown;
+}
+
 export interface RespuestaInventario {
   ok: true;
   pedidoId: string;
@@ -112,12 +140,12 @@ export class InventarioWebhookError extends Error {
 // ---------- Cliente ----------
 
 /**
- * Envía un pedido al inventario. Lanza `InventarioWebhookError` con status y
- * cuerpo de respuesta si el inventario responde no-OK.
+ * Firma y manda un evento al inventario. Lanza `InventarioWebhookError` con
+ * status y cuerpo de respuesta si el inventario responde no-OK. Si no
+ * responde en 10 segundos, lanza un error sin status (cuenta como transitorio
+ * para los reintentos).
  */
-export async function enviarPedidoAInventario(
-  payload: PedidoInventarioPayload
-): Promise<RespuestaInventario> {
+async function postFirmado<T>(payload: object): Promise<T> {
   const { url, secret, tenant } = getConfig();
 
   // El cuerpo se firma EXACTAMENTE como se envía. No re-serializar después.
@@ -137,6 +165,7 @@ export async function enviarPedidoAInventario(
       "x-shop-tenant": tenant,
     },
     body: rawBody,
+    signal: AbortSignal.timeout(10_000),
   });
 
   // Capturar texto crudo primero — algunos errores no son JSON
@@ -162,22 +191,34 @@ export async function enviarPedidoAInventario(
     );
   }
 
-  return body as RespuestaInventario;
+  return body as T;
+}
+
+/** Manda un pedido entero (`pedido.confirmado`). */
+export async function enviarPedidoAInventario(
+  payload: PedidoInventarioPayload
+): Promise<RespuestaInventario> {
+  return postFirmado<RespuestaInventario>(payload);
+}
+
+/** Manda un cambio de estado (`pedido.estado_cambiado`). */
+export async function enviarEstadoAInventario(
+  payload: EstadoCambiadoPayload
+): Promise<RespuestaEstado> {
+  return postFirmado<RespuestaEstado>(payload);
 }
 
 /**
- * Envía con reintentos (backoff exponencial) para errores transitorios.
- * NO reintenta 4xx — son bugs del shop o del secret, reintentar es ruido.
+ * Reintenta con backoff exponencial (1 s, 2 s, ...) los errores transitorios:
+ * 5xx, timeout o red. NO reintenta 4xx: son errores del shop, del secret o de
+ * datos, y reintentar es ruido.
  */
-export async function enviarConReintentos(
-  payload: PedidoInventarioPayload,
-  maxIntentos = 3
-): Promise<RespuestaInventario> {
+export async function conReintentos<T>(enviar: () => Promise<T>, maxIntentos = 3): Promise<T> {
   let ultimoError: unknown;
 
   for (let intento = 1; intento <= maxIntentos; intento++) {
     try {
-      return await enviarPedidoAInventario(payload);
+      return await enviar();
     } catch (err) {
       ultimoError = err;
       const status =
@@ -191,4 +232,12 @@ export async function enviarConReintentos(
 
   // Inalcanzable, pero TS necesita el throw
   throw ultimoError;
+}
+
+/** El pedido entero con reintentos. Lo usa el botón "Enviar a Inventario". */
+export async function enviarConReintentos(
+  payload: PedidoInventarioPayload,
+  maxIntentos = 3
+): Promise<RespuestaInventario> {
+  return conReintentos(() => enviarPedidoAInventario(payload), maxIntentos);
 }

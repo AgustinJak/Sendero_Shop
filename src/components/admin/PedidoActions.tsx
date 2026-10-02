@@ -333,6 +333,7 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
                 Enviado el {new Date(pedido.inventario_enviado_en).toLocaleString("es-AR")}
               </p>
             )}
+            <AvisoEntregaInventario pedido={pedido} />
           </div>
         ) : (
           <>
@@ -523,5 +524,44 @@ export default function PedidoActions({ pedido }: { pedido: Pedido }) {
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Resultado del aviso de entrega al Inventario (lib/inventario-estado.ts).
+ * Solo aparece en pedidos entregados que ya tuvieron un intento.
+ */
+const AVISO_TEXTO: Record<string, { texto: string; clase: string }> = {
+  ok: { texto: "Entrega avisada: el inventario cerró el pedido.", clase: "text-emerald-400" },
+  ignorado: {
+    texto: "El inventario recibió el aviso y no cambió nada: ya estaba cerrado o el estado no aplica.",
+    clase: "text-lavanda/60",
+  },
+  reintentar: {
+    texto: "No se pudo avisar la entrega: el inventario no respondió. Se reintenta todos los días.",
+    clase: "text-yellow-400",
+  },
+  sin_pedido: { texto: "El inventario no tiene este pedido: no se pudo cerrar allá.", clase: "text-red-400" },
+  firma: { texto: "El inventario rechazó la firma del aviso: revisar el secret del webhook.", clase: "text-red-400" },
+  rechazado: { texto: "El inventario rechazó el aviso de entrega.", clase: "text-red-400" },
+  sin_enviar: { texto: "Entregado sin haberse enviado al inventario.", clase: "text-lavanda/60" },
+};
+
+function AvisoEntregaInventario({ pedido }: { pedido: Pedido }) {
+  if (pedido.estado !== "entregado" || !pedido.inventario_aviso) return null;
+  const aviso = AVISO_TEXTO[pedido.inventario_aviso];
+  if (!aviso) return null;
+  return (
+    <div className="pt-2 space-y-0.5">
+      <p className={aviso.clase}>{aviso.texto}</p>
+      {pedido.inventario_aviso !== "ok" && pedido.inventario_aviso_detalle && (
+        <p className="text-lavanda/40 break-words">{pedido.inventario_aviso_detalle}</p>
+      )}
+      {pedido.inventario_aviso_at && (
+        <p className="text-lavanda/40">
+          Último intento: {new Date(pedido.inventario_aviso_at).toLocaleString("es-AR")}
+        </p>
+      )}
+    </div>
   );
 }

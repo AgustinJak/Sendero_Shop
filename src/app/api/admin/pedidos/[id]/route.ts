@@ -6,6 +6,7 @@ import { getWhatsapp } from "@/lib/site-config";
 import type { Pedido } from "@/types";
 import { esAdmin } from "@/lib/admin";
 import { enviarCompraAMeta } from "@/lib/meta-capi";
+import { avisarEntregaAInventario } from "@/lib/inventario-estado";
 
 export async function PATCH(
   req: NextRequest,
@@ -43,6 +44,10 @@ export async function PATCH(
 
     if (updates.estado === "cancelado") {
       updates.cancelado_at = new Date().toISOString();
+    }
+    // Cuándo se entregó: el aviso al Inventario manda esta fecha, no la del envío.
+    if (updates.estado === "entregado") {
+      updates.entregado_at = new Date().toISOString();
     }
 
     // Timestamps automáticos cuando se marca seña/saldo como pagado.
@@ -88,6 +93,13 @@ export async function PATCH(
     // una sola vez por pedido aunque se vuelva a este estado (lib/meta-capi.ts).
     if (updates.estado === "pago_confirmado") {
       after(() => enviarCompraAMeta(id));
+    }
+
+    // Entregado: el Inventario cierra el pedido y consume las reservas. El
+    // resultado queda en el pedido y el cron reintenta lo que falle
+    // (lib/inventario-estado.ts).
+    if (updates.estado === "entregado") {
+      after(() => avisarEntregaAInventario(id));
     }
 
     // Send transactional emails on state changes

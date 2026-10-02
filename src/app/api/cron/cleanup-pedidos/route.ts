@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase-server";
+import { reintentarAvisosDeEntrega } from "@/lib/inventario-estado";
 
 const HORAS_PARA_CANCELAR = 48;
 const HORAS_PARA_BORRAR = 48;
@@ -42,6 +43,12 @@ export async function GET(req: NextRequest) {
     .from("analitica_eventos")
     .delete()
     .lt("creado_at", new Date(Date.now() - 400 * 24 * 60 * 60 * 1000).toISOString());
+
+  // Avisos de entrega al Inventario que no terminaron bien (el Inventario
+  // caído, un 404, la firma): se reintentan una vez por día durante 30 días.
+  // Ver lib/inventario-estado.ts.
+  const avisosReintentados = await reintentarAvisosDeEntrega(supabase);
+  if (avisosReintentados) console.log(`Cron: ${avisosReintentados} avisos de entrega reintentados`);
   const ahora = Date.now();
 
   // --- Fase 1: cancelar los impagos ---

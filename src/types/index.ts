@@ -206,6 +206,11 @@ export interface Pedido {
   enviado_inventario: boolean;
   inventario_pedido_id: string | null;
   inventario_enviado_en: string | null;
+  // Aviso de entrega al Inventario (pedido.estado_cambiado, lib/inventario-estado.ts)
+  entregado_at?: string | null;
+  inventario_aviso?: "ok" | "ignorado" | "reintentar" | "sin_pedido" | "firma" | "rechazado" | "sin_enviar" | null;
+  inventario_aviso_detalle?: string | null;
+  inventario_aviso_at?: string | null;
   // De dónde llegó el cliente (analítica propia, desde 2026-09-29; null antes)
   origen?: string | null;
   campania?: string | null;

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createServerSupabaseClient, createServiceRoleClient } from "@/lib/supabase-server";
 import {
   enviarConReintentos,
@@ -7,6 +7,7 @@ import {
 } from "@/lib/inventario-webhook";
 import type { Pedido, PedidoItem, VarianteSeleccion } from "@/types";
 import { esAdmin } from "@/lib/admin";
+import { avisarEntregaAInventario } from "@/lib/inventario-estado";
 
 type PedidoItemConSku = PedidoItem & {
   productos?: { sku: string | null } | null;
@@ -147,6 +148,10 @@ export async function POST(
       console.error("[enviar-inventario] error guardando flag:", updErr.message);
       // No tiramos error — el pedido ya está en el inventario, solo no marcamos.
       // El admin puede reenviar y va a recibir duplicate=true sin daño.
+    } else if (pedido.estado === "entregado") {
+      // Se mandó tarde, con el pedido ya entregado: además del alta, el
+      // Inventario tiene que cerrarlo (lib/inventario-estado.ts).
+      after(() => avisarEntregaAInventario(id));
     }
 
     return NextResponse.json(result);
